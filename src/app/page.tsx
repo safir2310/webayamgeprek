@@ -222,68 +222,49 @@ const getMemberId = () => {
 
 // Header Component with Notification and Chat
 interface HeaderProps {
-  title: string
   notificationCount?: number
   onNotificationClick?: () => void
   onChatClick?: () => void
-  showBackButton?: boolean
-  onBackClick?: () => void
-  rightAction?: React.ReactNode
+  memberName?: string
 }
 
 function Header({
-  title,
   notificationCount = 0,
   onNotificationClick,
   onChatClick,
-  showBackButton = false,
-  onBackClick,
-  rightAction
+  memberName
 }: HeaderProps) {
   return (
-    <div className="bg-gradient-to-r from-orange-500 to-orange-400 p-4 pt-8">
+    <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-3 pt-8">
       <div className="flex items-center justify-between">
-        {showBackButton && onBackClick ? (
+        <div className="flex items-center gap-2">
+          <User className="w-5 h-5 text-white" />
+          <span className="text-white font-semibold text-sm">
+            {memberName || 'Guest'}
+          </span>
+        </div>
+        <div className="flex items-center gap-2">
           <Button
             variant="ghost"
             size="icon"
-            onClick={onBackClick}
+            onClick={onNotificationClick}
+            className="text-white hover:bg-white/20 relative"
+          >
+            <Bell className="w-5 h-5" />
+            {notificationCount > 0 && (
+              <Badge className="absolute -top-1 -right-1 bg-red-500 text-xs h-5 w-5 flex items-center justify-center p-0">
+                {notificationCount}
+              </Badge>
+            )}
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onChatClick}
             className="text-white hover:bg-white/20"
           >
-            <X className="w-6 h-6" />
+            <MessageCircle className="w-5 h-5" />
           </Button>
-        ) : (
-          <div className="w-10" />
-        )}
-
-        <h1 className="text-white text-xl font-bold flex-1 text-center">{title}</h1>
-
-        <div className="flex items-center gap-2">
-          {rightAction || (
-            <>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onNotificationClick}
-                className="text-white hover:bg-white/20 relative"
-              >
-                <Bell className="w-6 h-6" />
-                {notificationCount > 0 && (
-                  <Badge className="absolute -top-1 -right-1 bg-red-500 text-xs h-5 w-5 flex items-center justify-center p-0">
-                    {notificationCount}
-                  </Badge>
-                )}
-              </Button>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onChatClick}
-                className="text-white hover:bg-white/20"
-              >
-                <MessageCircle className="w-6 h-6" />
-              </Button>
-            </>
-          )}
         </div>
       </div>
     </div>
@@ -655,27 +636,15 @@ export default function RestaurantApp() {
       <div className="min-h-screen bg-gray-50 pb-20">
         {/* Header with Notification and Chat */}
         <Header
-          title="Ayam Geprek Sambal Ijo"
+          memberName={memberData?.user?.name || user?.name || 'Guest'}
           notificationCount={notificationCount}
           onNotificationClick={() => setShowNotifications(true)}
           onChatClick={() => setShowChat(true)}
-          rightAction={
-            <button
-              onClick={() => setScreen('account')}
-              className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
-            >
-              <User className="w-5 h-5 text-white" />
-            </button>
-          }
         />
 
         {/* Greeting Section */}
-        <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-4 pb-6 rounded-b-3xl -mt-2">
-          <p className="text-white/80 text-sm mb-1">Halo, {memberData?.user?.name || user?.name || 'Guest'} 👋</p>
-        </div>
-
-        {/* Member Card with Tabs */}
-        <div className="px-4 -mt-4">
+        <div className="px-4 py-2">
+          {/* Member Card with Tabs */}
           <Tabs defaultValue="card" value={memberCardTab} onValueChange={(v) => setMemberCardTab(v as 'card' | 'barcode')} className="w-full">
             <div className={`${getCardGradient(getMemberTier(points))} rounded-t-2xl px-4 pt-4 pb-2`}>
               <TabsList className="bg-white/20 backdrop-blur-sm border-none h-9 p-1">
@@ -1069,9 +1038,7 @@ export default function RestaurantApp() {
       <div className="min-h-screen bg-gray-50 pb-24">
         {/* Header */}
         <Header
-          title="Menu"
-          showBackButton={true}
-          onBackClick={() => setScreen('home')}
+          memberName={memberData?.user?.name || user?.name || 'Guest'}
           notificationCount={notificationCount}
           onNotificationClick={() => setShowNotifications(true)}
           onChatClick={() => setShowChat(true)}
@@ -1197,9 +1164,7 @@ export default function RestaurantApp() {
       <div className="min-h-screen bg-gray-50 pb-24">
         {/* Header */}
         <Header
-          title="Keranjang"
-          showBackButton={true}
-          onBackClick={() => setScreen('home')}
+          memberName={memberData?.user?.name || user?.name || 'Guest'}
           notificationCount={notificationCount}
           onNotificationClick={() => setShowNotifications(true)}
           onChatClick={() => setShowChat(true)}
@@ -1483,9 +1448,7 @@ export default function RestaurantApp() {
       <div className="min-h-screen bg-gray-50 pb-24">
         {/* Header */}
         <Header
-          title="Status Pesanan"
-          showBackButton={true}
-          onBackClick={() => setScreen('home')}
+          memberName={memberData?.user?.name || user?.name || 'Guest'}
           notificationCount={notificationCount}
           onNotificationClick={() => setShowNotifications(true)}
           onChatClick={() => setShowChat(true)}
@@ -1600,16 +1563,14 @@ export default function RestaurantApp() {
       <div className="min-h-screen bg-gray-50 pb-24">
         {/* Header */}
         <Header
-          title="Akun"
-          showBackButton={true}
-          onBackClick={() => setScreen('home')}
+          memberName={memberData?.user?.name || user?.name || 'Guest'}
           notificationCount={notificationCount}
           onNotificationClick={() => setShowNotifications(true)}
           onChatClick={() => setShowChat(true)}
         />
 
         {/* Profile Card */}
-        <div className="px-4 mt-4">
+        <div className="px-4 mt-2">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-4 mb-4">
