@@ -235,7 +235,7 @@ function Header({
   memberName
 }: HeaderProps) {
   return (
-    <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-2 pt-8">
+    <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-2 pt-8 rounded-b-3xl shadow-lg">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
           <User className="w-5 h-5 text-white" />
