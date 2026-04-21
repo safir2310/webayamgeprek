@@ -335,7 +335,7 @@ export default function RestaurantApp() {
   // Notification & Chat state
   const [showNotifications, setShowNotifications] = useState(false)
   const [showChat, setShowChat] = useState(false)
-  const [notificationCount, setNotificationCount] = useState(3)
+  const [notificationCount, setNotificationCount] = useState(0)
   const [notifications, setNotifications] = useState<any[]>([])
   const [chatMessages, setChatMessages] = useState<any[]>([])
   const [chatInput, setChatInput] = useState('')
@@ -1304,6 +1304,147 @@ export default function RestaurantApp() {
             </button>
           </div>
         </div>
+
+        {/* Notification Dialog */}
+        <Dialog open={showNotifications} onOpenChange={(open) => {
+          setShowNotifications(open)
+          if (open) markNotificationsAsRead()
+        }}>
+          <DialogContent className="max-w-md">
+            <DialogTitle className="sr-only">Notifikasi</DialogTitle>
+            <div className="flex items-center gap-3 mb-4">
+              <Bell className="w-6 h-6 text-orange-500" />
+              <h2 className="text-xl font-bold">Notifikasi</h2>
+            </div>
+            <ScrollArea className="max-h-96">
+              <div className="space-y-3">
+                {notifications.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Tidak ada notifikasi</p>
+                  </div>
+                ) : (
+                  notifications.map((notif) => {
+                    const icon = notif.type === 'order' ? CheckCircle :
+                                 notif.type === 'promo' ? BadgePercent :
+                                 notif.type === 'success' ? Gift : Bell
+                    const iconColor = notif.type === 'order' ? 'text-green-600' :
+                                     notif.type === 'promo' ? 'text-blue-600' :
+                                     notif.type === 'success' ? 'text-orange-600' : 'text-gray-600'
+                    const bgClass = notif.type === 'order' ? 'bg-green-100' :
+                                    notif.type === 'promo' ? 'bg-blue-100' :
+                                    notif.type === 'success' ? 'bg-orange-100' : 'bg-gray-100'
+                    const timeAgo = formatTimeAgo(notif.createdAt)
+
+                    return (
+                      <Card key={notif.id} className={notif.isRead ? 'opacity-60' : ''}>
+                        <CardContent className="p-4">
+                          <div className="flex gap-3">
+                            <div className={`w-10 h-10 ${bgClass} rounded-full flex items-center justify-center flex-shrink-0`}>
+                              {typeof icon === 'function' ? (
+                                <icon className={`w-5 h-5 ${iconColor}`} />
+                              ) : (
+                                <Bell className={`w-5 h-5 ${iconColor}`} />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{notif.title}</p>
+                              <p className="text-xs text-muted-foreground">{notif.message}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })
+                )}
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
+
+        {/* Chat Dialog */}
+        <Dialog open={showChat} onOpenChange={(open) => {
+          setShowChat(open)
+          if (open) markChatAsRead()
+        }}>
+          <DialogContent className="max-w-md h-[600px] flex flex-col p-0">
+            <DialogTitle className="sr-only">Customer Service</DialogTitle>
+            <div className="p-4 border-b bg-gradient-to-r from-orange-500 to-orange-400">
+              <div className="flex items-center gap-3">
+                <MessageCircle className="w-6 h-6 text-white" />
+                <h2 className="text-xl font-bold text-white">Customer Service</h2>
+              </div>
+              <p className="text-white/80 text-sm mt-1">Online • Biasanya membalas dalam 5 menit</p>
+            </div>
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4">
+                {chatMessages.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Belum ada percakapan</p>
+                    <p className="text-sm mt-2">Mulai dengan mengirim pesan</p>
+                  </div>
+                ) : (
+                  chatMessages.map((msg) => {
+                    const isAdmin = msg.senderRole === 'admin'
+                    const time = new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+
+                    return (
+                      <div key={msg.id} className={`flex gap-3 ${isAdmin ? '' : 'justify-end'}`}>
+                        {isAdmin ? (
+                          <>
+                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-sm">👨‍💼</span>
+                            </div>
+                            <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%]">
+                              <p className="text-sm">{msg.message}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{time}</p>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="bg-orange-500 text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-[80%]">
+                              <p className="text-sm">{msg.message}</p>
+                              <p className="text-xs text-white/80 mt-1">{time}</p>
+                            </div>
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-sm">👤</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </ScrollArea>
+            <div className="p-4 border-t">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Tulis pesan..."
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      sendChatMessage()
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <Button
+                  size="icon"
+                  onClick={sendChatMessage}
+                  className="bg-orange-500 hover:bg-orange-600"
+                  disabled={!chatInput.trim()}
+                >
+                  <svg className="w-5 h-5 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19V5m0 0l-7 7m7-7l7 7" />
+                  </svg>
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     )
   }
@@ -1473,6 +1614,147 @@ export default function RestaurantApp() {
             </button>
           </div>
         </div>
+
+        {/* Notification Dialog */}
+        <Dialog open={showNotifications} onOpenChange={(open) => {
+          setShowNotifications(open)
+          if (open) markNotificationsAsRead()
+        }}>
+          <DialogContent className="max-w-md">
+            <DialogTitle className="sr-only">Notifikasi</DialogTitle>
+            <div className="flex items-center gap-3 mb-4">
+              <Bell className="w-6 h-6 text-orange-500" />
+              <h2 className="text-xl font-bold">Notifikasi</h2>
+            </div>
+            <ScrollArea className="max-h-96">
+              <div className="space-y-3">
+                {notifications.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Tidak ada notifikasi</p>
+                  </div>
+                ) : (
+                  notifications.map((notif) => {
+                    const icon = notif.type === 'order' ? CheckCircle :
+                                 notif.type === 'promo' ? BadgePercent :
+                                 notif.type === 'success' ? Gift : Bell
+                    const iconColor = notif.type === 'order' ? 'text-green-600' :
+                                     notif.type === 'promo' ? 'text-blue-600' :
+                                     notif.type === 'success' ? 'text-orange-600' : 'text-gray-600'
+                    const bgClass = notif.type === 'order' ? 'bg-green-100' :
+                                    notif.type === 'promo' ? 'bg-blue-100' :
+                                    notif.type === 'success' ? 'bg-orange-100' : 'bg-gray-100'
+                    const timeAgo = formatTimeAgo(notif.createdAt)
+
+                    return (
+                      <Card key={notif.id} className={notif.isRead ? 'opacity-60' : ''}>
+                        <CardContent className="p-4">
+                          <div className="flex gap-3">
+                            <div className={`w-10 h-10 ${bgClass} rounded-full flex items-center justify-center flex-shrink-0`}>
+                              {typeof icon === 'function' ? (
+                                <icon className={`w-5 h-5 ${iconColor}`} />
+                              ) : (
+                                <Bell className={`w-5 h-5 ${iconColor}`} />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{notif.title}</p>
+                              <p className="text-xs text-muted-foreground">{notif.message}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })
+                )}
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
+
+        {/* Chat Dialog */}
+        <Dialog open={showChat} onOpenChange={(open) => {
+          setShowChat(open)
+          if (open) markChatAsRead()
+        }}>
+          <DialogContent className="max-w-md h-[600px] flex flex-col p-0">
+            <DialogTitle className="sr-only">Customer Service</DialogTitle>
+            <div className="p-4 border-b bg-gradient-to-r from-orange-500 to-orange-400">
+              <div className="flex items-center gap-3">
+                <MessageCircle className="w-6 h-6 text-white" />
+                <h2 className="text-xl font-bold text-white">Customer Service</h2>
+              </div>
+              <p className="text-white/80 text-sm mt-1">Online • Biasanya membalas dalam 5 menit</p>
+            </div>
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4">
+                {chatMessages.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Belum ada percakapan</p>
+                    <p className="text-sm mt-2">Mulai dengan mengirim pesan</p>
+                  </div>
+                ) : (
+                  chatMessages.map((msg) => {
+                    const isAdmin = msg.senderRole === 'admin'
+                    const time = new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+
+                    return (
+                      <div key={msg.id} className={`flex gap-3 ${isAdmin ? '' : 'justify-end'}`}>
+                        {isAdmin ? (
+                          <>
+                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-sm">👨‍💼</span>
+                            </div>
+                            <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%]">
+                              <p className="text-sm">{msg.message}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{time}</p>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="bg-orange-500 text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-[80%]">
+                              <p className="text-sm">{msg.message}</p>
+                              <p className="text-xs text-white/80 mt-1">{time}</p>
+                            </div>
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-sm">👤</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </ScrollArea>
+            <div className="p-4 border-t">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Tulis pesan..."
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      sendChatMessage()
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <Button
+                  size="icon"
+                  onClick={sendChatMessage}
+                  className="bg-orange-500 hover:bg-orange-600"
+                  disabled={!chatInput.trim()}
+                >
+                  <svg className="w-5 h-5 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19V5m0 0l-7 7m7-7l7 7" />
+                  </svg>
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     )
   }
@@ -1705,6 +1987,147 @@ export default function RestaurantApp() {
             </button>
           </div>
         </div>
+
+        {/* Notification Dialog */}
+        <Dialog open={showNotifications} onOpenChange={(open) => {
+          setShowNotifications(open)
+          if (open) markNotificationsAsRead()
+        }}>
+          <DialogContent className="max-w-md">
+            <DialogTitle className="sr-only">Notifikasi</DialogTitle>
+            <div className="flex items-center gap-3 mb-4">
+              <Bell className="w-6 h-6 text-orange-500" />
+              <h2 className="text-xl font-bold">Notifikasi</h2>
+            </div>
+            <ScrollArea className="max-h-96">
+              <div className="space-y-3">
+                {notifications.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Tidak ada notifikasi</p>
+                  </div>
+                ) : (
+                  notifications.map((notif) => {
+                    const icon = notif.type === 'order' ? CheckCircle :
+                                 notif.type === 'promo' ? BadgePercent :
+                                 notif.type === 'success' ? Gift : Bell
+                    const iconColor = notif.type === 'order' ? 'text-green-600' :
+                                     notif.type === 'promo' ? 'text-blue-600' :
+                                     notif.type === 'success' ? 'text-orange-600' : 'text-gray-600'
+                    const bgClass = notif.type === 'order' ? 'bg-green-100' :
+                                    notif.type === 'promo' ? 'bg-blue-100' :
+                                    notif.type === 'success' ? 'bg-orange-100' : 'bg-gray-100'
+                    const timeAgo = formatTimeAgo(notif.createdAt)
+
+                    return (
+                      <Card key={notif.id} className={notif.isRead ? 'opacity-60' : ''}>
+                        <CardContent className="p-4">
+                          <div className="flex gap-3">
+                            <div className={`w-10 h-10 ${bgClass} rounded-full flex items-center justify-center flex-shrink-0`}>
+                              {typeof icon === 'function' ? (
+                                <icon className={`w-5 h-5 ${iconColor}`} />
+                              ) : (
+                                <Bell className={`w-5 h-5 ${iconColor}`} />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{notif.title}</p>
+                              <p className="text-xs text-muted-foreground">{notif.message}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })
+                )}
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
+
+        {/* Chat Dialog */}
+        <Dialog open={showChat} onOpenChange={(open) => {
+          setShowChat(open)
+          if (open) markChatAsRead()
+        }}>
+          <DialogContent className="max-w-md h-[600px] flex flex-col p-0">
+            <DialogTitle className="sr-only">Customer Service</DialogTitle>
+            <div className="p-4 border-b bg-gradient-to-r from-orange-500 to-orange-400">
+              <div className="flex items-center gap-3">
+                <MessageCircle className="w-6 h-6 text-white" />
+                <h2 className="text-xl font-bold text-white">Customer Service</h2>
+              </div>
+              <p className="text-white/80 text-sm mt-1">Online • Biasanya membalas dalam 5 menit</p>
+            </div>
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4">
+                {chatMessages.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Belum ada percakapan</p>
+                    <p className="text-sm mt-2">Mulai dengan mengirim pesan</p>
+                  </div>
+                ) : (
+                  chatMessages.map((msg) => {
+                    const isAdmin = msg.senderRole === 'admin'
+                    const time = new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+
+                    return (
+                      <div key={msg.id} className={`flex gap-3 ${isAdmin ? '' : 'justify-end'}`}>
+                        {isAdmin ? (
+                          <>
+                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-sm">👨‍💼</span>
+                            </div>
+                            <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%]">
+                              <p className="text-sm">{msg.message}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{time}</p>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="bg-orange-500 text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-[80%]">
+                              <p className="text-sm">{msg.message}</p>
+                              <p className="text-xs text-white/80 mt-1">{time}</p>
+                            </div>
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-sm">👤</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </ScrollArea>
+            <div className="p-4 border-t">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Tulis pesan..."
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      sendChatMessage()
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <Button
+                  size="icon"
+                  onClick={sendChatMessage}
+                  className="bg-orange-500 hover:bg-orange-600"
+                  disabled={!chatInput.trim()}
+                >
+                  <svg className="w-5 h-5 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19V5m0 0l-7 7m7-7l7 7" />
+                  </svg>
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     )
   }
@@ -1897,6 +2320,147 @@ export default function RestaurantApp() {
             </button>
           </div>
         </div>
+
+        {/* Notification Dialog */}
+        <Dialog open={showNotifications} onOpenChange={(open) => {
+          setShowNotifications(open)
+          if (open) markNotificationsAsRead()
+        }}>
+          <DialogContent className="max-w-md">
+            <DialogTitle className="sr-only">Notifikasi</DialogTitle>
+            <div className="flex items-center gap-3 mb-4">
+              <Bell className="w-6 h-6 text-orange-500" />
+              <h2 className="text-xl font-bold">Notifikasi</h2>
+            </div>
+            <ScrollArea className="max-h-96">
+              <div className="space-y-3">
+                {notifications.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Tidak ada notifikasi</p>
+                  </div>
+                ) : (
+                  notifications.map((notif) => {
+                    const icon = notif.type === 'order' ? CheckCircle :
+                                 notif.type === 'promo' ? BadgePercent :
+                                 notif.type === 'success' ? Gift : Bell
+                    const iconColor = notif.type === 'order' ? 'text-green-600' :
+                                     notif.type === 'promo' ? 'text-blue-600' :
+                                     notif.type === 'success' ? 'text-orange-600' : 'text-gray-600'
+                    const bgClass = notif.type === 'order' ? 'bg-green-100' :
+                                    notif.type === 'promo' ? 'bg-blue-100' :
+                                    notif.type === 'success' ? 'bg-orange-100' : 'bg-gray-100'
+                    const timeAgo = formatTimeAgo(notif.createdAt)
+
+                    return (
+                      <Card key={notif.id} className={notif.isRead ? 'opacity-60' : ''}>
+                        <CardContent className="p-4">
+                          <div className="flex gap-3">
+                            <div className={`w-10 h-10 ${bgClass} rounded-full flex items-center justify-center flex-shrink-0`}>
+                              {typeof icon === 'function' ? (
+                                <icon className={`w-5 h-5 ${iconColor}`} />
+                              ) : (
+                                <Bell className={`w-5 h-5 ${iconColor}`} />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{notif.title}</p>
+                              <p className="text-xs text-muted-foreground">{notif.message}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })
+                )}
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
+
+        {/* Chat Dialog */}
+        <Dialog open={showChat} onOpenChange={(open) => {
+          setShowChat(open)
+          if (open) markChatAsRead()
+        }}>
+          <DialogContent className="max-w-md h-[600px] flex flex-col p-0">
+            <DialogTitle className="sr-only">Customer Service</DialogTitle>
+            <div className="p-4 border-b bg-gradient-to-r from-orange-500 to-orange-400">
+              <div className="flex items-center gap-3">
+                <MessageCircle className="w-6 h-6 text-white" />
+                <h2 className="text-xl font-bold text-white">Customer Service</h2>
+              </div>
+              <p className="text-white/80 text-sm mt-1">Online • Biasanya membalas dalam 5 menit</p>
+            </div>
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4">
+                {chatMessages.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Belum ada percakapan</p>
+                    <p className="text-sm mt-2">Mulai dengan mengirim pesan</p>
+                  </div>
+                ) : (
+                  chatMessages.map((msg) => {
+                    const isAdmin = msg.senderRole === 'admin'
+                    const time = new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+
+                    return (
+                      <div key={msg.id} className={`flex gap-3 ${isAdmin ? '' : 'justify-end'}`}>
+                        {isAdmin ? (
+                          <>
+                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-sm">👨‍💼</span>
+                            </div>
+                            <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%]">
+                              <p className="text-sm">{msg.message}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{time}</p>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="bg-orange-500 text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-[80%]">
+                              <p className="text-sm">{msg.message}</p>
+                              <p className="text-xs text-white/80 mt-1">{time}</p>
+                            </div>
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-sm">👤</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })
+                )}
+              </div>
+            </ScrollArea>
+            <div className="p-4 border-t">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Tulis pesan..."
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      sendChatMessage()
+                    }
+                  }}
+                  className="flex-1"
+                />
+                <Button
+                  size="icon"
+                  onClick={sendChatMessage}
+                  className="bg-orange-500 hover:bg-orange-600"
+                  disabled={!chatInput.trim()}
+                >
+                  <svg className="w-5 h-5 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19V5m0 0l-7 7m7-7l7 7" />
+                  </svg>
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     )
   }
