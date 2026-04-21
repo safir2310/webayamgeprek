@@ -220,6 +220,21 @@ const getMemberId = () => {
   return String(digits)
 }
 
+// Helper function to format time ago
+const formatTimeAgo = (dateString: string) => {
+  const date = new Date(dateString)
+  const now = new Date()
+  const diffMs = now.getTime() - date.getTime()
+  const diffMins = Math.floor(diffMs / 60000)
+  const diffHours = Math.floor(diffMs / 3600000)
+  const diffDays = Math.floor(diffMs / 86400000)
+
+  if (diffMins < 1) return 'Baru saja'
+  if (diffMins < 60) return `${diffMins} menit yang lalu`
+  if (diffHours < 24) return `${diffHours} jam yang lalu`
+  return `${diffDays} hari yang lalu`
+}
+
 // Header Component with Notification and Chat
 interface HeaderProps {
   notificationCount?: number
@@ -321,6 +336,9 @@ export default function RestaurantApp() {
   const [showNotifications, setShowNotifications] = useState(false)
   const [showChat, setShowChat] = useState(false)
   const [notificationCount, setNotificationCount] = useState(3)
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [chatMessages, setChatMessages] = useState<any[]>([])
+  const [chatInput, setChatInput] = useState('')
 
   // Splash screen effect
   useEffect(() => {
@@ -376,6 +394,10 @@ export default function RestaurantApp() {
           } catch (error) {
             console.error('Failed to fetch member data:', error)
           }
+
+          // Fetch notifications and chat
+          fetchNotifications(data.user.id)
+          fetchChatMessages(data.user.id)
         }
 
         toast({
@@ -425,6 +447,97 @@ export default function RestaurantApp() {
       title: 'Logout Berhasil',
       description: 'Sampai jumpa lagi!',
     })
+  }
+
+  // Fetch notifications from database
+  const fetchNotifications = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/notifications?userId=${userId}`)
+      const data = await response.json()
+
+      if (response.ok) {
+        setNotifications(data.notifications || [])
+        setNotificationCount(data.unreadCount || 0)
+      }
+    } catch (error) {
+      console.error('Failed to fetch notifications:', error)
+    }
+  }
+
+  // Fetch chat messages from database
+  const fetchChatMessages = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/chat?userId=${userId}`)
+      const data = await response.json()
+
+      if (response.ok) {
+        setChatMessages(data.messages || [])
+      }
+    } catch (error) {
+      console.error('Failed to fetch chat messages:', error)
+    }
+  }
+
+  // Send chat message
+  const sendChatMessage = async () => {
+    if (!chatInput.trim() || !user?.id) return
+
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          senderRole: 'user',
+          message: chatInput.trim()
+        })
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setChatMessages(prev => [...prev, data.chatMessage])
+        setChatInput('')
+      }
+    } catch (error) {
+      console.error('Failed to send message:', error)
+      toast({
+        title: 'Gagal mengirim pesan',
+        description: 'Terjadi kesalahan, silakan coba lagi',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  // Mark all notifications as read
+  const markNotificationsAsRead = async () => {
+    if (!user?.id) return
+
+    try {
+      await fetch('/api/notifications/read-all', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      })
+      setNotificationCount(0)
+    } catch (error) {
+      console.error('Failed to mark notifications as read:', error)
+    }
+  }
+
+  // Mark all chat messages as read
+  const markChatAsRead = async () => {
+    if (!user?.id) return
+
+    try {
+      await fetch('/api/chat/read-all', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: user.id })
+      })
+    } catch (error) {
+      console.error('Failed to mark chat as read:', error)
+    }
   }
 
   const addToCart = (product: Product) => {
@@ -925,7 +1038,10 @@ export default function RestaurantApp() {
         </div>
 
         {/* Notification Dialog */}
-        <Dialog open={showNotifications} onOpenChange={setShowNotifications}>
+        <Dialog open={showNotifications} onOpenChange={(open) => {
+          setShowNotifications(open)
+          if (open) markNotificationsAsRead()
+        }}>
           <DialogContent className="max-w-md">
             <DialogTitle className="sr-only">Notifikasi</DialogTitle>
             <div className="flex items-center gap-3 mb-4">
@@ -934,55 +1050,55 @@ export default function RestaurantApp() {
             </div>
             <ScrollArea className="max-h-96">
               <div className="space-y-3">
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex gap-3">
-                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <CheckCircle className="w-5 h-5 text-green-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">Pesanan Selesai</p>
-                        <p className="text-xs text-muted-foreground">Pesanan Anda #ORD001 telah selesai. Silakan ambil di kasir.</p>
-                        <p className="text-xs text-muted-foreground mt-1">5 menit yang lalu</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex gap-3">
-                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <Gift className="w-5 h-5 text-orange-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">Poin Rewards</p>
-                        <p className="text-xs text-muted-foreground">Anda mendapatkan 150 poin dari pesanan terakhir!</p>
-                        <p className="text-xs text-muted-foreground mt-1">1 jam yang lalu</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-4">
-                    <div className="flex gap-3">
-                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                        <BadgePercent className="w-5 h-5 text-blue-600" />
-                      </div>
-                      <div>
-                        <p className="font-medium text-sm">Promo Spesial</p>
-                        <p className="text-xs text-muted-foreground">Dapatkan diskon 20% untuk pesanan pertama Anda!</p>
-                        <p className="text-xs text-muted-foreground mt-1">2 jam yang lalu</p>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                {notifications.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Tidak ada notifikasi</p>
+                  </div>
+                ) : (
+                  notifications.map((notif) => {
+                    const icon = notif.type === 'order' ? CheckCircle :
+                                 notif.type === 'promo' ? BadgePercent :
+                                 notif.type === 'success' ? Gift : Bell
+                    const iconColor = notif.type === 'order' ? 'text-green-600' :
+                                     notif.type === 'promo' ? 'text-blue-600' :
+                                     notif.type === 'success' ? 'text-orange-600' : 'text-gray-600'
+                    const bgClass = notif.type === 'order' ? 'bg-green-100' :
+                                    notif.type === 'promo' ? 'bg-blue-100' :
+                                    notif.type === 'success' ? 'bg-orange-100' : 'bg-gray-100'
+                    const timeAgo = formatTimeAgo(notif.createdAt)
+
+                    return (
+                      <Card key={notif.id} className={notif.isRead ? 'opacity-60' : ''}>
+                        <CardContent className="p-4">
+                          <div className="flex gap-3">
+                            <div className={`w-10 h-10 ${bgClass} rounded-full flex items-center justify-center flex-shrink-0`}>
+                              {typeof icon === 'function' ? (
+                                <icon className={`w-5 h-5 ${iconColor}`} />
+                              ) : (
+                                <Bell className={`w-5 h-5 ${iconColor}`} />
+                              )}
+                            </div>
+                            <div>
+                              <p className="font-medium text-sm">{notif.title}</p>
+                              <p className="text-xs text-muted-foreground">{notif.message}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{timeAgo}</p>
+                            </div>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    )
+                  })
+                )}
               </div>
             </ScrollArea>
           </DialogContent>
         </Dialog>
 
         {/* Chat Dialog */}
-        <Dialog open={showChat} onOpenChange={setShowChat}>
+        <Dialog open={showChat} onOpenChange={(open) => {
+          setShowChat(open)
+          if (open) markChatAsRead()
+        }}>
           <DialogContent className="max-w-md h-[600px] flex flex-col p-0">
             <DialogTitle className="sr-only">Customer Service</DialogTitle>
             <div className="p-4 border-b bg-gradient-to-r from-orange-500 to-orange-400">
@@ -994,47 +1110,64 @@ export default function RestaurantApp() {
             </div>
             <ScrollArea className="flex-1 p-4">
               <div className="space-y-4">
-                {/* Message from CS */}
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">👨‍💼</span>
+                {chatMessages.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Belum ada percakapan</p>
+                    <p className="text-sm mt-2">Mulai dengan mengirim pesan</p>
                   </div>
-                  <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%]">
-                    <p className="text-sm">Halo! Selamat datang di Ayam Geprek Sambal Ijo. Ada yang bisa saya bantu?</p>
-                    <p className="text-xs text-muted-foreground mt-1">10:30</p>
-                  </div>
-                </div>
-                {/* Message from user */}
-                <div className="flex gap-3 justify-end">
-                  <div className="bg-orange-500 text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-[80%]">
-                    <p className="text-sm">Halo, saya ingin bertanya tentang menu ayam geprek</p>
-                    <p className="text-xs text-white/80 mt-1">10:31</p>
-                  </div>
-                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">👤</span>
-                  </div>
-                </div>
-                {/* Message from CS */}
-                <div className="flex gap-3">
-                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                    <span className="text-sm">👨‍💼</span>
-                  </div>
-                  <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%]">
-                    <p className="text-sm">Tentu saja! Kami memiliki variasi ayam geprek: Original, Keju, dan Telur. Semua dilengkapi sambal ijo pedas yang khas. Ada yang ingin Anda tanyakan lebih lanjut?</p>
-                    <p className="text-xs text-muted-foreground mt-1">10:32</p>
-                  </div>
-                </div>
+                ) : (
+                  chatMessages.map((msg) => {
+                    const isAdmin = msg.senderRole === 'admin'
+                    const time = new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })
+
+                    return (
+                      <div key={msg.id} className={`flex gap-3 ${isAdmin ? '' : 'justify-end'}`}>
+                        {isAdmin ? (
+                          <>
+                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-sm">👨‍💼</span>
+                            </div>
+                            <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%]">
+                              <p className="text-sm">{msg.message}</p>
+                              <p className="text-xs text-muted-foreground mt-1">{time}</p>
+                            </div>
+                          </>
+                        ) : (
+                          <>
+                            <div className="bg-orange-500 text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-[80%]">
+                              <p className="text-sm">{msg.message}</p>
+                              <p className="text-xs text-white/80 mt-1">{time}</p>
+                            </div>
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                              <span className="text-sm">👤</span>
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )
+                  })
+                )}
               </div>
             </ScrollArea>
             <div className="p-4 border-t">
               <div className="flex gap-2">
                 <Input
                   placeholder="Tulis pesan..."
+                  value={chatInput}
+                  onChange={(e) => setChatInput(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault()
+                      sendChatMessage()
+                    }
+                  }}
                   className="flex-1"
                 />
                 <Button
                   size="icon"
+                  onClick={sendChatMessage}
                   className="bg-orange-500 hover:bg-orange-600"
+                  disabled={!chatInput.trim()}
                 >
                   <svg className="w-5 h-5 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19V5m0 0l-7 7m7-7l7 7" />
