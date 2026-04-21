@@ -50,7 +50,8 @@ import {
   CreditCardIcon,
   BadgePercent,
   Gift,
-  MessageCircle
+  MessageCircle,
+  ShieldCheck
 } from 'lucide-react'
 
 type ScreenType = 'splash' | 'login' | 'register' | 'home' | 'menu' | 'cart' | 'checkout' | 'orderStatus' | 'account' | 'pos' | 'shift'
@@ -654,7 +655,7 @@ export default function RestaurantApp() {
 
             <Separator />
 
-            <div className="flex justify-center gap-4">
+            <div className="flex justify-center gap-3">
               <Button
                 variant="outline"
                 size="lg"
@@ -662,6 +663,14 @@ export default function RestaurantApp() {
               >
                 <Utensils className="mr-2 h-5 w-5" />
                 POS Kasir
+              </Button>
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={() => window.location.href = '/admin/login'}
+              >
+                <ShieldCheck className="mr-2 h-5 w-5" />
+                Admin Panel
               </Button>
             </div>
           </CardContent>
@@ -867,7 +876,8 @@ export default function RestaurantApp() {
                   </div>
                 </div>
               </div>
-            </Tabs>
+            </TabsContent>
+          </Tabs>
 
         {/* Menu Items */}
         <div className="p-4 space-y-2">
