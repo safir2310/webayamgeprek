@@ -1,0 +1,243 @@
+// Restaurant Management System - Ayam Geprek Sambal Ijo
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// Users
+model User {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String   @unique
+  password  String
+  role      String   @default("user") // user, cashier, admin
+  avatar    String?
+  address   String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart       Cart[]
+  orders     Order[]
+  shifts     Shift[]
+  members    Member[]
+}
+
+// Categories
+model Category {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  image       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  products Product[]
+}
+
+// Products
+model Product {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  price       Float
+  stock       Int      @default(0)
+  barcode     String?  @unique
+  image       String?
+  categoryId  String
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  category       Category          @relation(fields: [categoryId], references: [id])
+  cartItems      CartItem[]
+  orderItems     OrderItem[]
+  transactionItems TransactionItem[]
+  stockLogs      StockLog[]
+}
+
+// Cart
+model Cart {
+  id        String   @id @default(cuid())
+  userId    String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user     User      @relation(fields: [userId], references: [id])
+  items    CartItem[]
+}
+
+// Cart Items
+model CartItem {
+  id        String   @id @default(cuid())
+  cartId    String
+  productId String
+  qty       Int      @default(1)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  cart    Cart    @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+}
+
+// Orders
+model Order {
+  id              String   @id @default(cuid())
+  userId          String
+  orderNumber     String   @unique
+  status          String   @default("pending") // pending, paid, processing, completed, cancelled
+  subtotal        Float
+  tax             Float    @default(0)
+  discount        Float    @default(0)
+  total           Float
+  note            String?
+  address         String?
+  paymentMethod   String   // cash, qris, transfer
+  paymentStatus   String   @default("pending") // pending, paid, failed
+  qrCode          String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  user     User        @relation(fields: [userId], references: [id])
+  items    OrderItem[]
+  payments Payment[]
+}
+
+// Order Items
+model OrderItem {
+  id        String   @id @default(cuid())
+  orderId   String
+  productId String
+  qty       Int
+  price     Float
+  subtotal  Float
+  createdAt DateTime @default(now())
+
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product @relation(fields: [productId], references: [id])
+}
+
+// Payments
+model Payment {
+  id              String   @id @default(cuid())
+  orderId         String?
+  transactionId   String?
+  amount          Float
+  method          String   // cash, qris, transfer
+  status          String   @default("pending") // pending, paid, failed, refunded
+  qrisImage       String?
+  qrisInvoiceId   String?
+  callbackData    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  order        Order?        @relation(fields: [orderId], references: [id])
+  transaction  Transaction?  @relation(fields: [transactionId], references: [id])
+}
+
+// Transactions (POS)
+model Transaction {
+  id              String   @id @default(cuid())
+  shiftId         String?
+  cashierId       String?
+  transactionNumber String @unique
+  subtotal        Float
+  tax             Float    @default(0)
+  discount        Float    @default(0)
+  total           Float
+  paymentMethod   String   // cash, qris, transfer
+  status          String   @default("completed") // completed, voided
+  note            String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  shift     Shift?            @relation(fields: [shiftId], references: [id])
+  items     TransactionItem[]
+  payments  Payment[]
+  voids     VoidLog[]
+}
+
+// Transaction Items
+model TransactionItem {
+  id             String   @id @default(cuid())
+  transactionId  String
+  productId      String
+  qty            Int
+  price          Float
+  subtotal       Float
+  createdAt      DateTime @default(now())
+
+  transaction Transaction @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  product     Product     @relation(fields: [productId], references: [id])
+}
+
+// Shifts
+model Shift {
+  id              String   @id @default(cuid())
+  cashierId       String
+  openingCash     Float    @default(0)
+  closingCash     Float?
+  expectedCash    Float?
+  difference      Float?
+  status          String   @default("open") // open, closed
+  openedAt        DateTime @default(now())
+  closedAt        DateTime?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  cashier       User          @relation(fields: [cashierId], references: [id])
+  transactions  Transaction[]
+}
+
+// Stock Logs
+model StockLog {
+  id          String   @id @default(cuid())
+  productId   String
+  qty         Int      // positive for restock, negative for usage
+  type        String   // restock, sale, void, adjustment
+  reason      String?
+  createdAt   DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+}
+
+// Void Logs
+model VoidLog {
+  id             String   @id @default(cuid())
+  transactionId  String
+  reason         String
+  supervisorPin  String
+  supervisorId   String?
+  createdAt      DateTime @default(now())
+
+  transaction Transaction @relation(fields: [transactionId], references: [id])
+}
+
+// Members
+model Member {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  points      Int      @default(0)
+  tier        String   @default("regular") // regular, silver, gold, platinum
+  totalSpent  Float    @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+// WhatsApp Messages
+model WhatsAppMessage {
+  id        String   @id @default(cuid())
+  phone     String
+  message   String
+  type      String   // order, payment, shift, stock
+  status    String   @default("pending") // pending, sent, failed
+  sentAt    DateTime?
+  createdAt DateTime @default(now())
+}
