@@ -49,7 +49,8 @@ import {
   HelpCircle,
   CreditCardIcon,
   BadgePercent,
-  Gift
+  Gift,
+  MessageCircle
 } from 'lucide-react'
 
 type ScreenType = 'splash' | 'login' | 'register' | 'home' | 'menu' | 'cart' | 'checkout' | 'orderStatus' | 'account' | 'pos' | 'shift'
@@ -219,6 +220,76 @@ const getMemberId = () => {
   return String(digits)
 }
 
+// Header Component with Notification and Chat
+interface HeaderProps {
+  title: string
+  notificationCount?: number
+  onNotificationClick?: () => void
+  onChatClick?: () => void
+  showBackButton?: boolean
+  onBackClick?: () => void
+  rightAction?: React.ReactNode
+}
+
+function Header({
+  title,
+  notificationCount = 0,
+  onNotificationClick,
+  onChatClick,
+  showBackButton = false,
+  onBackClick,
+  rightAction
+}: HeaderProps) {
+  return (
+    <div className="bg-gradient-to-r from-orange-500 to-orange-400 p-4 pt-8">
+      <div className="flex items-center justify-between">
+        {showBackButton && onBackClick ? (
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={onBackClick}
+            className="text-white hover:bg-white/20"
+          >
+            <X className="w-6 h-6" />
+          </Button>
+        ) : (
+          <div className="w-10" />
+        )}
+
+        <h1 className="text-white text-xl font-bold flex-1 text-center">{title}</h1>
+
+        <div className="flex items-center gap-2">
+          {rightAction || (
+            <>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onNotificationClick}
+                className="text-white hover:bg-white/20 relative"
+              >
+                <Bell className="w-6 h-6" />
+                {notificationCount > 0 && (
+                  <Badge className="absolute -top-1 -right-1 bg-red-500 text-xs h-5 w-5 flex items-center justify-center p-0">
+                    {notificationCount}
+                  </Badge>
+                )}
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={onChatClick}
+                className="text-white hover:bg-white/20"
+              >
+                <MessageCircle className="w-6 h-6" />
+              </Button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function RestaurantApp() {
   const [screen, setScreen] = useState<ScreenType>('splash')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -251,6 +322,11 @@ export default function RestaurantApp() {
   const [posCart, setPosCart] = useState<CartItem[]>([])
   const [isShiftOpen, setIsShiftOpen] = useState(false)
   const [shiftAmount, setShiftAmount] = useState(0)
+
+  // Notification & Chat state
+  const [showNotifications, setShowNotifications] = useState(false)
+  const [showChat, setShowChat] = useState(false)
+  const [notificationCount, setNotificationCount] = useState(3)
 
   // Splash screen effect
   useEffect(() => {
@@ -577,22 +653,29 @@ export default function RestaurantApp() {
   if (screen === 'home') {
     return (
       <div className="min-h-screen bg-gray-50 pb-20">
-        {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-orange-400 p-4 pt-8 rounded-b-3xl">
-          <div className="flex justify-between items-center mb-4">
-            <div>
-              <p className="text-white/80 text-sm">Halo, {memberData?.user?.name || user?.name || 'Guest'} 👋</p>
-              <h1 className="text-white text-2xl font-bold">Ayam Geprek Sambal Ijo</h1>
-            </div>
+        {/* Header with Notification and Chat */}
+        <Header
+          title="Ayam Geprek Sambal Ijo"
+          notificationCount={notificationCount}
+          onNotificationClick={() => setShowNotifications(true)}
+          onChatClick={() => setShowChat(true)}
+          rightAction={
             <button
               onClick={() => setScreen('account')}
-              className="w-12 h-12 bg-white/20 rounded-full flex items-center justify-center"
+              className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center"
             >
-              <User className="w-6 h-6 text-white" />
+              <User className="w-5 h-5 text-white" />
             </button>
-          </div>
+          }
+        />
 
-          {/* Member Card with Tabs */}
+        {/* Greeting Section */}
+        <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-4 pb-6 rounded-b-3xl -mt-2">
+          <p className="text-white/80 text-sm mb-1">Halo, {memberData?.user?.name || user?.name || 'Guest'} 👋</p>
+        </div>
+
+        {/* Member Card with Tabs */}
+        <div className="px-4 -mt-4">
           <Tabs defaultValue="card" value={memberCardTab} onValueChange={(v) => setMemberCardTab(v as 'card' | 'barcode')} className="w-full">
             <div className={`${getCardGradient(getMemberTier(points))} rounded-t-2xl px-4 pt-4 pb-2`}>
               <TabsList className="bg-white/20 backdrop-blur-sm border-none h-9 p-1">
@@ -857,6 +940,125 @@ export default function RestaurantApp() {
             </button>
           </div>
         </div>
+
+        {/* Notification Dialog */}
+        <Dialog open={showNotifications} onOpenChange={setShowNotifications}>
+          <DialogContent className="max-w-md">
+            <div className="flex items-center gap-3 mb-4">
+              <Bell className="w-6 h-6 text-orange-500" />
+              <h2 className="text-xl font-bold">Notifikasi</h2>
+            </div>
+            <ScrollArea className="max-h-96">
+              <div className="space-y-3">
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <CheckCircle className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">Pesanan Selesai</p>
+                        <p className="text-xs text-muted-foreground">Pesanan Anda #ORD001 telah selesai. Silakan ambil di kasir.</p>
+                        <p className="text-xs text-muted-foreground mt-1">5 menit yang lalu</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex gap-3">
+                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <Gift className="w-5 h-5 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">Poin Rewards</p>
+                        <p className="text-xs text-muted-foreground">Anda mendapatkan 150 poin dari pesanan terakhir!</p>
+                        <p className="text-xs text-muted-foreground mt-1">1 jam yang lalu</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                        <BadgePercent className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">Promo Spesial</p>
+                        <p className="text-xs text-muted-foreground">Dapatkan diskon 20% untuk pesanan pertama Anda!</p>
+                        <p className="text-xs text-muted-foreground mt-1">2 jam yang lalu</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
+
+        {/* Chat Dialog */}
+        <Dialog open={showChat} onOpenChange={setShowChat}>
+          <DialogContent className="max-w-md h-[600px] flex flex-col p-0">
+            <div className="p-4 border-b bg-gradient-to-r from-orange-500 to-orange-400">
+              <div className="flex items-center gap-3">
+                <MessageCircle className="w-6 h-6 text-white" />
+                <h2 className="text-xl font-bold text-white">Customer Service</h2>
+              </div>
+              <p className="text-white/80 text-sm mt-1">Online • Biasanya membalas dalam 5 menit</p>
+            </div>
+            <ScrollArea className="flex-1 p-4">
+              <div className="space-y-4">
+                {/* Message from CS */}
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm">👨‍💼</span>
+                  </div>
+                  <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%]">
+                    <p className="text-sm">Halo! Selamat datang di Ayam Geprek Sambal Ijo. Ada yang bisa saya bantu?</p>
+                    <p className="text-xs text-muted-foreground mt-1">10:30</p>
+                  </div>
+                </div>
+                {/* Message from user */}
+                <div className="flex gap-3 justify-end">
+                  <div className="bg-orange-500 text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-[80%]">
+                    <p className="text-sm">Halo, saya ingin bertanya tentang menu ayam geprek</p>
+                    <p className="text-xs text-white/80 mt-1">10:31</p>
+                  </div>
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm">👤</span>
+                  </div>
+                </div>
+                {/* Message from CS */}
+                <div className="flex gap-3">
+                  <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-sm">👨‍💼</span>
+                  </div>
+                  <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%]">
+                    <p className="text-sm">Tentu saja! Kami memiliki variasi ayam geprek: Original, Keju, dan Telur. Semua dilengkapi sambal ijo pedas yang khas. Ada yang ingin Anda tanyakan lebih lanjut?</p>
+                    <p className="text-xs text-muted-foreground mt-1">10:32</p>
+                  </div>
+                </div>
+              </div>
+            </ScrollArea>
+            <div className="p-4 border-t">
+              <div className="flex gap-2">
+                <Input
+                  placeholder="Tulis pesan..."
+                  className="flex-1"
+                />
+                <Button
+                  size="icon"
+                  className="bg-orange-500 hover:bg-orange-600"
+                >
+                  <svg className="w-5 h-5 rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19V5m0 0l-7 7m7-7l7 7" />
+                  </svg>
+                </Button>
+              </div>
+            </div>
+          </DialogContent>
+        </Dialog>
       </div>
     )
   }
@@ -866,27 +1068,24 @@ export default function RestaurantApp() {
     return (
       <div className="min-h-screen bg-gray-50 pb-24">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-orange-400 p-4 pt-8">
-          <div className="flex items-center gap-3 mb-4">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setScreen('home')}
-              className="text-white hover:bg-white/20"
-            >
-              <X className="w-6 h-6" />
-            </Button>
-            <h1 className="text-white text-xl font-bold">Menu</h1>
-          </div>
+        <Header
+          title="Menu"
+          showBackButton={true}
+          onBackClick={() => setScreen('home')}
+          notificationCount={notificationCount}
+          onNotificationClick={() => setShowNotifications(true)}
+          onChatClick={() => setShowChat(true)}
+        />
 
-          {/* Search Bar */}
+        {/* Search Bar */}
+        <div className="px-4 -mt-2">
           <div className="relative">
-            <Search className="absolute left-3 top-3 h-5 w-5 text-white/70" />
+            <Search className="absolute left-3 top-3 h-5 w-5 text-gray-400" />
             <Input
               placeholder="Cari menu..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-white/20 border-white/30 text-white placeholder:text-white/70"
+              className="pl-10 bg-white border-gray-200"
             />
           </div>
         </div>
@@ -997,19 +1196,14 @@ export default function RestaurantApp() {
     return (
       <div className="min-h-screen bg-gray-50 pb-24">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-orange-400 p-4 pt-8">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setScreen('home')}
-              className="text-white hover:bg-white/20"
-            >
-              <X className="w-6 h-6" />
-            </Button>
-            <h1 className="text-white text-xl font-bold">Keranjang</h1>
-          </div>
-        </div>
+        <Header
+          title="Keranjang"
+          showBackButton={true}
+          onBackClick={() => setScreen('home')}
+          notificationCount={notificationCount}
+          onNotificationClick={() => setShowNotifications(true)}
+          onChatClick={() => setShowChat(true)}
+        />
 
         {/* Cart Items */}
         <div className="p-4">
@@ -1288,19 +1482,14 @@ export default function RestaurantApp() {
     return (
       <div className="min-h-screen bg-gray-50 pb-24">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-600 to-orange-500 p-4 pt-8">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setScreen('home')}
-              className="text-white hover:bg-white/20"
-            >
-              <X className="w-6 h-6" />
-            </Button>
-            <h1 className="text-white text-xl font-bold">Status Pesanan</h1>
-          </div>
-        </div>
+        <Header
+          title="Status Pesanan"
+          showBackButton={true}
+          onBackClick={() => setScreen('home')}
+          notificationCount={notificationCount}
+          onNotificationClick={() => setShowNotifications(true)}
+          onChatClick={() => setShowChat(true)}
+        />
 
         <div className="p-4">
           {/* Order Info */}
@@ -1410,22 +1599,17 @@ export default function RestaurantApp() {
     return (
       <div className="min-h-screen bg-gray-50 pb-24">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-orange-400 p-4 pt-8 pb-20">
-          <div className="flex items-center gap-3">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setScreen('home')}
-              className="text-white hover:bg-white/20"
-            >
-              <X className="w-6 h-6" />
-            </Button>
-            <h1 className="text-white text-xl font-bold">Akun</h1>
-          </div>
-        </div>
+        <Header
+          title="Akun"
+          showBackButton={true}
+          onBackClick={() => setScreen('home')}
+          notificationCount={notificationCount}
+          onNotificationClick={() => setShowNotifications(true)}
+          onChatClick={() => setShowChat(true)}
+        />
 
         {/* Profile Card */}
-        <div className="px-4 -mt-16">
+        <div className="px-4 mt-4">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-4 mb-4">
