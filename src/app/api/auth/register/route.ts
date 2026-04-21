@@ -49,10 +49,14 @@ export async function POST(req: NextRequest) {
       },
     })
 
+    // Generate 6 digit member ID
+    const memberId = String(Math.floor(100000 + Math.random() * 900000))
+
     // Create member record
     await db.member.create({
       data: {
         userId: user.id,
+        memberId,
         points: 0,
         tier: 'regular',
         totalSpent: 0,

@@ -222,6 +222,7 @@ model VoidLog {
 model Member {
   id          String   @id @default(cuid())
   userId      String   @unique
+  memberId    String   @unique // 6 digit random member ID
   points      Int      @default(0)
   tier        String   @default("regular") // regular, silver, gold, platinum
   totalSpent  Float    @default(0)

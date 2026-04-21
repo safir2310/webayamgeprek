@@ -223,6 +223,7 @@ export default function RestaurantApp() {
   const [screen, setScreen] = useState<ScreenType>('splash')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [user, setUser] = useState<any>(null)
+  const [memberData, setMemberData] = useState<any>(null)
   const [cart, setCart] = useState<CartItem[]>([])
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -263,20 +264,62 @@ export default function RestaurantApp() {
     return () => clearTimeout(timer)
   }, [isLoggedIn])
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (email && password) {
-      setIsLoggedIn(true)
-      setUser({
-        name: 'John Doe',
-        email: email,
-        phone: '08123456789',
-        points: points
-      })
-      setScreen('home')
-      toast({
-        title: 'Login Berhasil',
-        description: 'Selamat datang kembali!',
-      })
+      try {
+        // Call login API
+        const response = await fetch('/api/auth/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email, password }),
+        })
+
+        const data = await response.json()
+
+        if (!response.ok) {
+          toast({
+            title: 'Login Gagal',
+            description: data.error || 'Email atau password salah',
+            variant: 'destructive'
+          })
+          return
+        }
+
+        // Set user data
+        setIsLoggedIn(true)
+        setUser(data.user)
+        setScreen('home')
+
+        // Fetch member data
+        if (data.user.id) {
+          try {
+            const memberResponse = await fetch(`/api/member/me?userId=${data.user.id}`)
+            const memberData = await memberResponse.json()
+
+            if (memberResponse.ok && memberData.member) {
+              setMemberData(memberData.member)
+              setPoints(memberData.member.points || 0)
+              // Generate member ID from database member
+              const digits = memberData.member.memberId || Math.floor(100000 + Math.random() * 900000)
+              setMemberId(String(digits))
+            }
+          } catch (error) {
+            console.error('Failed to fetch member data:', error)
+          }
+        }
+
+        toast({
+          title: 'Login Berhasil',
+          description: 'Selamat datang kembali!',
+        })
+      } catch (error) {
+        console.error('Login error:', error)
+        toast({
+          title: 'Login Gagal',
+          description: 'Terjadi kesalahan koneksi',
+          variant: 'destructive'
+        })
+      }
     } else {
       toast({
         title: 'Login Gagal',
@@ -305,6 +348,7 @@ export default function RestaurantApp() {
   const handleLogout = () => {
     setIsLoggedIn(false)
     setUser(null)
+    setMemberData(null)
     setCart([])
     setScreen('login')
     toast({
@@ -537,7 +581,7 @@ export default function RestaurantApp() {
         <div className="bg-gradient-to-r from-orange-500 to-orange-400 p-4 pt-8 rounded-b-3xl">
           <div className="flex justify-between items-center mb-4">
             <div>
-              <p className="text-white/80 text-sm">Halo, {user?.name || 'Guest'} 👋</p>
+              <p className="text-white/80 text-sm">Halo, {memberData?.user?.name || user?.name || 'Guest'} 👋</p>
               <h1 className="text-white text-2xl font-bold">Ayam Geprek Sambal Ijo</h1>
             </div>
             <button
@@ -569,11 +613,11 @@ export default function RestaurantApp() {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <p className="text-white/80 text-xs uppercase tracking-wider mb-1">Member Card</p>
-                    <h3 className="font-bold text-xl">{user?.phone || '081234567890'}</h3>
+                    <h3 className="font-bold text-xl">{memberData?.user?.phone || user?.phone || '081234567890'}</h3>
                   </div>
                   <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
                     <span className="font-semibold text-sm">
-                      {getMemberTier(points)}
+                      {memberData?.tier || getMemberTier(points)}
                     </span>
                   </div>
                 </div>
@@ -613,7 +657,7 @@ export default function RestaurantApp() {
                         />
                       ))}
                     </div>
-                    <p className="text-black text-xs font-mono mt-2">{user?.phone || '081234567890'}</p>
+                    <p className="text-black text-xs font-mono mt-2">{memberData?.user?.phone || user?.phone || '081234567890'}</p>
                   </div>
                 </div>
 
@@ -622,11 +666,11 @@ export default function RestaurantApp() {
                   <div className="grid grid-cols-2 gap-4 text-left">
                     <div>
                       <p className="text-white/60 text-xs uppercase tracking-wider mb-1">No. HP</p>
-                      <p className="font-mono font-semibold">{user?.phone || '081234567890'}</p>
+                      <p className="font-mono font-semibold">{memberData?.user?.phone || user?.phone || '081234567890'}</p>
                     </div>
                     <div>
                       <p className="text-white/60 text-xs uppercase tracking-wider mb-1">Tier</p>
-                      <p className="font-semibold">{getMemberTier(points)}</p>
+                      <p className="font-semibold">{memberData?.tier || getMemberTier(points)}</p>
                     </div>
                   </div>
                 </div>
@@ -1389,8 +1433,8 @@ export default function RestaurantApp() {
                   👤
                 </div>
                 <div>
-                  <h2 className="text-xl font-bold">{user?.name || 'John Doe'}</h2>
-                  <p className="text-sm text-muted-foreground">{user?.email || 'john@example.com'}</p>
+                  <h2 className="text-xl font-bold">{memberData?.user?.name || user?.name || 'John Doe'}</h2>
+                  <p className="text-sm text-muted-foreground">{memberData?.user?.email || user?.email || 'john@example.com'}</p>
                 </div>
               </div>
 
@@ -1399,10 +1443,10 @@ export default function RestaurantApp() {
                 <div className="flex justify-between items-center mb-3">
                   <div>
                     <p className="text-sm opacity-80">No. HP</p>
-                    <p className="font-bold text-lg">{user?.phone || '081234567890'}</p>
+                    <p className="font-bold text-lg">{memberData?.user?.phone || user?.phone || '081234567890'}</p>
                   </div>
                   <Badge className="bg-white/20 border-none text-white">
-                    {getMemberTier(points)}
+                    {memberData?.tier || getMemberTier(points)}
                   </Badge>
                 </div>
 
