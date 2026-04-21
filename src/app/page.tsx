@@ -212,6 +212,16 @@ const getCardGradient = (tier: string) => {
   }
 }
 
+// Helper function to get member ID
+const getMemberId = (userId: string | undefined) => {
+  if (!userId) return 'AG-GUEST-0000'
+  // Generate member ID: AG-XXXX-XXXX
+  const prefix = 'AG'
+  const firstPart = userId.slice(0, 4).toUpperCase()
+  const secondPart = userId.slice(-4).toUpperCase()
+  return `${prefix}-${firstPart}-${secondPart}`
+}
+
 export default function RestaurantApp() {
   const [screen, setScreen] = useState<ScreenType>('splash')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -565,16 +575,26 @@ export default function RestaurantApp() {
                     </span>
                   </div>
                 </div>
+
+                {/* Member ID */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 mb-3">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-white/60 text-xs uppercase tracking-wider mb-1">ID Member</p>
+                      <p className="font-mono text-lg font-bold tracking-wider">
+                        {getMemberId(user?.id)}
+                      </p>
+                    </div>
+                    <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
+                      <CreditCard className="w-6 h-6" />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex items-end justify-between">
                   <div>
                     <p className="text-white/80 text-xs mb-1">Poin Rewards</p>
                     <p className="text-3xl font-bold">{points.toLocaleString()}</p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-white/60 text-xs">ID Member</p>
-                    <p className="font-mono text-sm tracking-wider">
-                      {user?.id ? user.id.slice(0, 4).toUpperCase() + ' •••• •••• ' + user.id.slice(-4).toUpperCase() : 'GUEST'}
-                    </p>
                   </div>
                 </div>
               </div>
@@ -585,6 +605,7 @@ export default function RestaurantApp() {
               <div className={`${getCardGradient(getMemberTier(points))} rounded-b-2xl p-6 shadow-lg text-white`}>
                 <div className="text-center">
                   <p className="text-white/80 text-xs uppercase tracking-wider mb-3">Barcode Member</p>
+
                   {/* Simulated Barcode */}
                   <div className="bg-white rounded-lg p-4 mb-4 mx-auto max-w-xs">
                     <div className="flex items-end justify-center gap-0.5 h-16">
@@ -599,12 +620,27 @@ export default function RestaurantApp() {
                         />
                       ))}
                     </div>
-                    <p className="text-black text-xs font-mono mt-2">{user?.phone || '081234567890'}</p>
+                    <p className="text-black text-xs font-mono mt-2">{getMemberId(user?.id)}</p>
                   </div>
-                  <p className="text-white/70 text-sm">Scan barcode ini untuk redeem poin</p>
-                  <div className="mt-3 bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2 inline-block">
-                    <p className="text-sm font-semibold">{getMemberTier(points)} Member</p>
-                    <p className="text-2xl font-bold">{points.toLocaleString()} Poin</p>
+
+                  {/* Member Info */}
+                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-3 inline-block">
+                    <div className="grid grid-cols-2 gap-4 text-left">
+                      <div>
+                        <p className="text-white/60 text-xs uppercase tracking-wider mb-1">No. HP</p>
+                        <p className="font-mono font-semibold">{user?.phone || '081234567890'}</p>
+                      </div>
+                      <div>
+                        <p className="text-white/60 text-xs uppercase tracking-wider mb-1">Tier</p>
+                        <p className="font-semibold">{getMemberTier(points)}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-white/70 text-sm mb-3">Scan barcode ini untuk redeem poin</p>
+
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2 inline-block">
+                    <p className="text-sm font-semibold mb-1">{points.toLocaleString()} Poin Rewards</p>
                   </div>
                 </div>
               </div>
@@ -1360,15 +1396,31 @@ export default function RestaurantApp() {
 
               {/* Points & Member Card */}
               <div className={`${getCardGradient(getMemberTier(points))} rounded-xl p-4 text-white`}>
+                {/* Member ID */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 mb-3">
+                  <div className="flex justify-between items-center">
+                    <div>
+                      <p className="text-white/60 text-xs uppercase tracking-wider mb-1">ID Member</p>
+                      <p className="font-mono text-lg font-bold tracking-wider">
+                        {getMemberId(user?.id)}
+                      </p>
+                    </div>
+                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+                      <CreditCard className="w-5 h-5" />
+                    </div>
+                  </div>
+                </div>
+
                 <div className="flex justify-between items-center mb-3">
                   <div>
-                    <p className="text-sm opacity-80">Member</p>
+                    <p className="text-sm opacity-80">No. HP</p>
                     <p className="font-bold text-lg">{user?.phone || '081234567890'}</p>
                   </div>
                   <Badge className="bg-white/20 border-none text-white">
                     {getMemberTier(points)}
                   </Badge>
                 </div>
+
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-sm opacity-80">Poin Rewards</p>
