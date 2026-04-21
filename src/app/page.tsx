@@ -513,15 +513,30 @@ export default function RestaurantApp() {
             </button>
           </div>
 
-          {/* Promo Banner */}
-          <div className="bg-white rounded-2xl p-4 shadow-lg">
-            <div className="flex items-center justify-between">
+          {/* Member Card */}
+          <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-orange-600 rounded-2xl p-4 shadow-lg text-white">
+            <div className="flex justify-between items-start mb-4">
               <div>
-                <Badge className="bg-red-500 mb-2">Promo</Badge>
-                <h3 className="font-bold text-lg">Diskon 20%</h3>
-                <p className="text-sm text-muted-foreground">Untuk pesanan pertama Anda</p>
+                <p className="text-white/80 text-xs uppercase tracking-wider mb-1">Member Card</p>
+                <h3 className="font-bold text-xl">{user?.name || 'Guest Member'}</h3>
               </div>
-              <div className="text-4xl">🎉</div>
+              <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
+                <span className="font-semibold text-sm">
+                  {points >= 500000 ? 'Platinum' : points >= 200000 ? 'Gold' : points >= 50000 ? 'Silver' : 'Regular'}
+                </span>
+              </div>
+            </div>
+            <div className="flex items-end justify-between">
+              <div>
+                <p className="text-white/80 text-xs mb-1">Poin Rewards</p>
+                <p className="text-3xl font-bold">{points.toLocaleString()}</p>
+              </div>
+              <div className="text-right">
+                <p className="text-white/60 text-xs">ID Member</p>
+                <p className="font-mono text-sm tracking-wider">
+                  {user?.id ? user.id.slice(0, 4).toUpperCase() + ' •••• •••• ' + user.id.slice(-4).toUpperCase() : 'Guest'}
+                </p>
+              </div>
             </div>
           </div>
         </div>
