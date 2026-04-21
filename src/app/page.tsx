@@ -1119,8 +1119,9 @@ export default function RestaurantApp() {
           </DialogContent>
         </Dialog>
       </div>
+    </div>
     )
-  }
+}
 
   // ========== MENU SCREEN ==========
   if (screen === 'menu') {
