@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Dialog, DialogContent, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
@@ -927,6 +927,7 @@ export default function RestaurantApp() {
         {/* Notification Dialog */}
         <Dialog open={showNotifications} onOpenChange={setShowNotifications}>
           <DialogContent className="max-w-md">
+            <DialogTitle className="sr-only">Notifikasi</DialogTitle>
             <div className="flex items-center gap-3 mb-4">
               <Bell className="w-6 h-6 text-orange-500" />
               <h2 className="text-xl font-bold">Notifikasi</h2>
@@ -983,6 +984,7 @@ export default function RestaurantApp() {
         {/* Chat Dialog */}
         <Dialog open={showChat} onOpenChange={setShowChat}>
           <DialogContent className="max-w-md h-[600px] flex flex-col p-0">
+            <DialogTitle className="sr-only">Customer Service</DialogTitle>
             <div className="p-4 border-b bg-gradient-to-r from-orange-500 to-orange-400">
               <div className="flex items-center gap-3">
                 <MessageCircle className="w-6 h-6 text-white" />
