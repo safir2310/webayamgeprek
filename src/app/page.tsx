@@ -190,6 +190,28 @@ const mockOrders: Order[] = [
   }
 ]
 
+// Helper function to get member tier
+const getMemberTier = (points: number) => {
+  if (points >= 500000) return 'Platinum'
+  if (points >= 200000) return 'Gold'
+  if (points >= 50000) return 'Silver'
+  return 'Regular'
+}
+
+// Helper function to get card gradient based on tier
+const getCardGradient = (tier: string) => {
+  switch (tier) {
+    case 'Platinum':
+      return 'bg-gradient-to-br from-purple-600 via-violet-500 to-fuchsia-500'
+    case 'Gold':
+      return 'bg-gradient-to-br from-amber-500 via-yellow-400 to-orange-400'
+    case 'Silver':
+      return 'bg-gradient-to-br from-slate-400 via-gray-400 to-zinc-400'
+    default:
+      return 'bg-gradient-to-br from-gray-600 via-gray-500 to-slate-500'
+  }
+}
+
 export default function RestaurantApp() {
   const [screen, setScreen] = useState<ScreenType>('splash')
   const [isLoggedIn, setIsLoggedIn] = useState(false)
@@ -200,6 +222,7 @@ export default function RestaurantApp() {
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [orders, setOrders] = useState<Order[]>(mockOrders)
   const [points, setPoints] = useState(150)
+  const [memberCardTab, setMemberCardTab] = useState<'card' | 'barcode'>('card')
 
   // Login form state
   const [email, setEmail] = useState('')
@@ -513,30 +536,117 @@ export default function RestaurantApp() {
             </button>
           </div>
 
-          {/* Member Card */}
-          <div className="bg-gradient-to-br from-amber-500 via-orange-500 to-orange-600 rounded-2xl p-4 shadow-lg text-white">
-            <div className="flex justify-between items-start mb-4">
-              <div>
-                <p className="text-white/80 text-xs uppercase tracking-wider mb-1">Member Card</p>
-                <h3 className="font-bold text-xl">{user?.name || 'Guest Member'}</h3>
-              </div>
-              <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
-                <span className="font-semibold text-sm">
-                  {points >= 500000 ? 'Platinum' : points >= 200000 ? 'Gold' : points >= 50000 ? 'Silver' : 'Regular'}
-                </span>
-              </div>
+          {/* Member Card with Tabs */}
+          <Tabs defaultValue="card" value={memberCardTab} onValueChange={(v) => setMemberCardTab(v as 'card' | 'barcode')} className="w-full">
+            <div className={`${getCardGradient(getMemberTier(points))} rounded-t-2xl px-4 pt-4 pb-2`}>
+              <TabsList className="bg-white/20 backdrop-blur-sm border-none h-9 p-1">
+                <TabsTrigger value="card" className="data-[state=active]:bg-white/30 data-[state=active]:text-white text-white/80 text-xs px-4 rounded-lg">
+                  <CreditCard className="w-4 h-4 mr-1" />
+                  Kartu
+                </TabsTrigger>
+                <TabsTrigger value="barcode" className="data-[state=active]:bg-white/30 data-[state=active]:text-white text-white/80 text-xs px-4 rounded-lg">
+                  <QrCode className="w-4 h-4 mr-1" />
+                  Barcode
+                </TabsTrigger>
+              </TabsList>
             </div>
-            <div className="flex items-end justify-between">
-              <div>
-                <p className="text-white/80 text-xs mb-1">Poin Rewards</p>
-                <p className="text-3xl font-bold">{points.toLocaleString()}</p>
+
+            {/* Card Tab */}
+            <TabsContent value="card" className="mt-0">
+              <div className={`${getCardGradient(getMemberTier(points))} rounded-b-2xl p-4 shadow-lg text-white`}>
+                <div className="flex justify-between items-start mb-4">
+                  <div>
+                    <p className="text-white/80 text-xs uppercase tracking-wider mb-1">Member Card</p>
+                    <h3 className="font-bold text-xl">{user?.phone || '081234567890'}</h3>
+                  </div>
+                  <div className="bg-white/20 backdrop-blur-sm rounded-lg px-3 py-1">
+                    <span className="font-semibold text-sm">
+                      {getMemberTier(points)}
+                    </span>
+                  </div>
+                </div>
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="text-white/80 text-xs mb-1">Poin Rewards</p>
+                    <p className="text-3xl font-bold">{points.toLocaleString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white/60 text-xs">ID Member</p>
+                    <p className="font-mono text-sm tracking-wider">
+                      {user?.id ? user.id.slice(0, 4).toUpperCase() + ' •••• •••• ' + user.id.slice(-4).toUpperCase() : 'GUEST'}
+                    </p>
+                  </div>
+                </div>
               </div>
-              <div className="text-right">
-                <p className="text-white/60 text-xs">ID Member</p>
-                <p className="font-mono text-sm tracking-wider">
-                  {user?.id ? user.id.slice(0, 4).toUpperCase() + ' •••• •••• ' + user.id.slice(-4).toUpperCase() : 'Guest'}
-                </p>
+            </TabsContent>
+
+            {/* Barcode Tab */}
+            <TabsContent value="barcode" className="mt-0">
+              <div className={`${getCardGradient(getMemberTier(points))} rounded-b-2xl p-6 shadow-lg text-white`}>
+                <div className="text-center">
+                  <p className="text-white/80 text-xs uppercase tracking-wider mb-3">Barcode Member</p>
+                  {/* Simulated Barcode */}
+                  <div className="bg-white rounded-lg p-4 mb-4 mx-auto max-w-xs">
+                    <div className="flex items-end justify-center gap-0.5 h-16">
+                      {[...Array(40)].map((_, i) => (
+                        <div
+                          key={i}
+                          className="bg-black"
+                          style={{
+                            width: Math.random() > 0.5 ? '3px' : '1px',
+                            height: `${40 + Math.random() * 40}%`
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <p className="text-black text-xs font-mono mt-2">{user?.phone || '081234567890'}</p>
+                  </div>
+                  <p className="text-white/70 text-sm">Scan barcode ini untuk redeem poin</p>
+                  <div className="mt-3 bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2 inline-block">
+                    <p className="text-sm font-semibold">{getMemberTier(points)} Member</p>
+                    <p className="text-2xl font-bold">{points.toLocaleString()} Poin</p>
+                  </div>
+                </div>
               </div>
+            </TabsContent>
+          </Tabs>
+
+          {/* Demo: Change Points to Test Card Colors */}
+          <div className="mt-4 px-4">
+            <p className="text-xs text-muted-foreground mb-2">Demo: Ganti Level Member</p>
+            <div className="flex gap-2 overflow-x-auto pb-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setPoints(100)}
+                className="shrink-0 text-xs"
+              >
+                Regular
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setPoints(50000)}
+                className="shrink-0 text-xs"
+              >
+                Silver
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setPoints(200000)}
+                className="shrink-0 text-xs"
+              >
+                Gold
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={() => setPoints(500000)}
+                className="shrink-0 text-xs"
+              >
+                Platinum
+              </Button>
             </div>
           </div>
         </div>
@@ -1248,21 +1358,66 @@ export default function RestaurantApp() {
                 </div>
               </div>
 
-              {/* Points */}
-              <div className="bg-gradient-to-r from-orange-500 to-orange-400 rounded-xl p-4 text-white">
+              {/* Points & Member Card */}
+              <div className={`${getCardGradient(getMemberTier(points))} rounded-xl p-4 text-white`}>
+                <div className="flex justify-between items-center mb-3">
+                  <div>
+                    <p className="text-sm opacity-80">Member</p>
+                    <p className="font-bold text-lg">{user?.phone || '081234567890'}</p>
+                  </div>
+                  <Badge className="bg-white/20 border-none text-white">
+                    {getMemberTier(points)}
+                  </Badge>
+                </div>
                 <div className="flex justify-between items-center">
                   <div>
                     <p className="text-sm opacity-80">Poin Rewards</p>
-                    <p className="text-3xl font-bold">{points}</p>
+                    <p className="text-3xl font-bold">{points.toLocaleString()}</p>
                   </div>
-                  <Star className="w-12 h-12 opacity-80" />
-                </div>
-                <div className="mt-2 flex gap-2 text-sm">
-                  <Badge className="bg-white/20">Silver Member</Badge>
+                  <Star className="w-10 h-10 opacity-80" />
                 </div>
               </div>
             </CardContent>
           </Card>
+        </div>
+
+        {/* Demo: Change Points to Test Card Colors */}
+        <div className="px-4 mb-4">
+          <p className="text-xs text-muted-foreground mb-2">Demo: Ganti Level Member</p>
+          <div className="flex gap-2 overflow-x-auto pb-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPoints(100)}
+              className="shrink-0 text-xs"
+            >
+              Regular
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPoints(50000)}
+              className="shrink-0 text-xs"
+            >
+              Silver
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPoints(200000)}
+              className="shrink-0 text-xs"
+            >
+              Gold
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => setPoints(500000)}
+              className="shrink-0 text-xs"
+            >
+              Platinum
+            </Button>
+          </div>
         </div>
 
         {/* Menu Items */}
