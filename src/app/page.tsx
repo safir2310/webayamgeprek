@@ -212,13 +212,11 @@ const getCardGradient = (tier: string) => {
   }
 }
 
-// Helper function to get member ID
-const getMemberId = (userId: string | undefined) => {
-  if (!userId) return 'GUEST'
-  // Format: XXXX ••• •••• XXXX
-  const firstPart = userId.slice(0, 4).toUpperCase()
-  const secondPart = userId.slice(-4).toUpperCase()
-  return `${firstPart} ••• •••• ${secondPart}`
+// Helper function to get member ID with 6 random digits
+const getMemberId = () => {
+  // Generate 6 random digits
+  const digits = Math.floor(100000 + Math.random() * 900000)
+  return String(digits)
 }
 
 export default function RestaurantApp() {
@@ -232,6 +230,11 @@ export default function RestaurantApp() {
   const [orders, setOrders] = useState<Order[]>(mockOrders)
   const [points, setPoints] = useState(150)
   const [memberCardTab, setMemberCardTab] = useState<'card' | 'barcode'>('card')
+  const [memberId, setMemberId] = useState(() => {
+    // Generate member ID on initial load
+    const digits = Math.floor(100000 + Math.random() * 900000)
+    return String(digits)
+  })
 
   // Login form state
   const [email, setEmail] = useState('')
@@ -575,25 +578,16 @@ export default function RestaurantApp() {
                   </div>
                 </div>
 
-                {/* Member ID */}
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 mb-3">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-white/60 text-xs uppercase tracking-wider mb-1">ID Member</p>
-                      <p className="font-mono text-lg font-bold tracking-wider">
-                        {getMemberId(user?.id)}
-                      </p>
-                    </div>
-                    <div className="w-12 h-12 bg-white/20 rounded-lg flex items-center justify-center">
-                      <CreditCard className="w-6 h-6" />
-                    </div>
-                  </div>
-                </div>
-
                 <div className="flex items-end justify-between">
                   <div>
                     <p className="text-white/80 text-xs mb-1">Poin Rewards</p>
                     <p className="text-3xl font-bold">{points.toLocaleString()}</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white/60 text-xs mb-1">ID Member</p>
+                    <p className="font-mono text-2xl font-bold tracking-wider">
+                      {memberId}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -602,7 +596,7 @@ export default function RestaurantApp() {
             {/* Barcode Tab */}
             <TabsContent value="barcode" className="mt-0">
               <div className={`${getCardGradient(getMemberTier(points))} rounded-b-2xl p-6 shadow-lg text-white`}>
-                <div className="text-center">
+                <div className="text-center mb-4">
                   <p className="text-white/80 text-xs uppercase tracking-wider mb-3">Barcode Member</p>
 
                   {/* Simulated Barcode */}
@@ -619,27 +613,34 @@ export default function RestaurantApp() {
                         />
                       ))}
                     </div>
-                    <p className="text-black text-xs font-mono mt-2">{getMemberId(user?.id)}</p>
+                    <p className="text-black text-xs font-mono mt-2">{user?.phone || '081234567890'}</p>
                   </div>
+                </div>
 
-                  {/* Member Info */}
-                  <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-3 inline-block">
-                    <div className="grid grid-cols-2 gap-4 text-left">
-                      <div>
-                        <p className="text-white/60 text-xs uppercase tracking-wider mb-1">No. HP</p>
-                        <p className="font-mono font-semibold">{user?.phone || '081234567890'}</p>
-                      </div>
-                      <div>
-                        <p className="text-white/60 text-xs uppercase tracking-wider mb-1">Tier</p>
-                        <p className="font-semibold">{getMemberTier(points)}</p>
-                      </div>
+                {/* Member Info */}
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-3">
+                  <div className="grid grid-cols-2 gap-4 text-left">
+                    <div>
+                      <p className="text-white/60 text-xs uppercase tracking-wider mb-1">No. HP</p>
+                      <p className="font-mono font-semibold">{user?.phone || '081234567890'}</p>
+                    </div>
+                    <div>
+                      <p className="text-white/60 text-xs uppercase tracking-wider mb-1">Tier</p>
+                      <p className="font-semibold">{getMemberTier(points)}</p>
                     </div>
                   </div>
+                </div>
 
-                  <p className="text-white/70 text-sm mb-3">Scan barcode ini untuk redeem poin</p>
-
-                  <div className="bg-white/20 backdrop-blur-sm rounded-lg px-4 py-2 inline-block">
-                    <p className="text-sm font-semibold mb-1">{points.toLocaleString()} Poin Rewards</p>
+                <div className="flex items-end justify-between">
+                  <div>
+                    <p className="text-white/70 text-sm mb-1">Scan barcode untuk redeem poin</p>
+                    <p className="text-2xl font-bold">{points.toLocaleString()} Poin</p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white/60 text-xs mb-1">ID Member</p>
+                    <p className="font-mono text-2xl font-bold tracking-wider">
+                      {memberId}
+                    </p>
                   </div>
                 </div>
               </div>
@@ -1395,21 +1396,6 @@ export default function RestaurantApp() {
 
               {/* Points & Member Card */}
               <div className={`${getCardGradient(getMemberTier(points))} rounded-xl p-4 text-white`}>
-                {/* Member ID */}
-                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 mb-3">
-                  <div className="flex justify-between items-center">
-                    <div>
-                      <p className="text-white/60 text-xs uppercase tracking-wider mb-1">ID Member</p>
-                      <p className="font-mono text-lg font-bold tracking-wider">
-                        {getMemberId(user?.id)}
-                      </p>
-                    </div>
-                    <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
-                      <CreditCard className="w-5 h-5" />
-                    </div>
-                  </div>
-                </div>
-
                 <div className="flex justify-between items-center mb-3">
                   <div>
                     <p className="text-sm opacity-80">No. HP</p>
@@ -1425,7 +1411,12 @@ export default function RestaurantApp() {
                     <p className="text-sm opacity-80">Poin Rewards</p>
                     <p className="text-3xl font-bold">{points.toLocaleString()}</p>
                   </div>
-                  <Star className="w-10 h-10 opacity-80" />
+                  <div className="text-right">
+                    <p className="text-white/60 text-xs mb-1">ID Member</p>
+                    <p className="font-mono text-2xl font-bold tracking-wider">
+                      {memberId}
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardContent>
