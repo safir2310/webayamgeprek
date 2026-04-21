@@ -214,12 +214,11 @@ const getCardGradient = (tier: string) => {
 
 // Helper function to get member ID
 const getMemberId = (userId: string | undefined) => {
-  if (!userId) return 'AG-GUEST-0000'
-  // Generate member ID: AG-XXXX-XXXX
-  const prefix = 'AG'
+  if (!userId) return 'GUEST'
+  // Format: XXXX ••• •••• XXXX
   const firstPart = userId.slice(0, 4).toUpperCase()
   const secondPart = userId.slice(-4).toUpperCase()
-  return `${prefix}-${firstPart}-${secondPart}`
+  return `${firstPart} ••• •••• ${secondPart}`
 }
 
 export default function RestaurantApp() {
