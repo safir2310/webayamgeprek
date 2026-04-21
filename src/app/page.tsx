@@ -867,47 +867,7 @@ export default function RestaurantApp() {
                   </div>
                 </div>
               </div>
-            </TabsContent>
-          </Tabs>
-
-          {/* Demo: Change Points to Test Card Colors */}
-          <div className="mt-4 px-4">
-            <p className="text-xs text-muted-foreground mb-2">Demo: Ganti Level Member</p>
-            <div className="flex gap-2 overflow-x-auto pb-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setPoints(100)}
-                className="shrink-0 text-xs"
-              >
-                Regular
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setPoints(50000)}
-                className="shrink-0 text-xs"
-              >
-                Silver
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setPoints(200000)}
-                className="shrink-0 text-xs"
-              >
-                Gold
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() => setPoints(500000)}
-                className="shrink-0 text-xs"
-              >
-                Platinum
-              </Button>
-            </div>
-          </div>
+            </Tabs>
         </div>
 
         {/* Quick Actions */}
@@ -2170,45 +2130,6 @@ export default function RestaurantApp() {
               </div>
             </CardContent>
           </Card>
-        </div>
-
-        {/* Demo: Change Points to Test Card Colors */}
-        <div className="px-4 mb-4">
-          <p className="text-xs text-muted-foreground mb-2">Demo: Ganti Level Member</p>
-          <div className="flex gap-2 overflow-x-auto pb-2">
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setPoints(100)}
-              className="shrink-0 text-xs"
-            >
-              Regular
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setPoints(50000)}
-              className="shrink-0 text-xs"
-            >
-              Silver
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setPoints(200000)}
-              className="shrink-0 text-xs"
-            >
-              Gold
-            </Button>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => setPoints(500000)}
-              className="shrink-0 text-xs"
-            >
-              Platinum
-            </Button>
-          </div>
         </div>
 
         {/* Menu Items */}
