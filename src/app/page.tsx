@@ -1056,9 +1056,9 @@ export default function RestaurantApp() {
                   </div>
                 ) : (
                   notifications.map((notif) => {
-                    const icon = notif.type === 'order' ? CheckCircle :
-                                 notif.type === 'promo' ? BadgePercent :
-                                 notif.type === 'success' ? Gift : Bell
+                    const Icon = notif.type === 'order' ? CheckCircle :
+                                  notif.type === 'promo' ? BadgePercent :
+                                  notif.type === 'success' ? Gift : Bell
                     const iconColor = notif.type === 'order' ? 'text-green-600' :
                                      notif.type === 'promo' ? 'text-blue-600' :
                                      notif.type === 'success' ? 'text-orange-600' : 'text-gray-600'
@@ -1072,11 +1072,7 @@ export default function RestaurantApp() {
                         <CardContent className="p-4">
                           <div className="flex gap-3">
                             <div className={`w-10 h-10 ${bgClass} rounded-full flex items-center justify-center flex-shrink-0`}>
-                              {typeof icon === 'function' ? (
-                                <icon className={`w-5 h-5 ${iconColor}`} />
-                              ) : (
-                                <Bell className={`w-5 h-5 ${iconColor}`} />
-                              )}
+                              <Icon className={`w-5 h-5 ${iconColor}`} />
                             </div>
                             <div>
                               <p className="font-medium text-sm">{notif.title}</p>
@@ -1324,9 +1320,9 @@ export default function RestaurantApp() {
                   </div>
                 ) : (
                   notifications.map((notif) => {
-                    const icon = notif.type === 'order' ? CheckCircle :
-                                 notif.type === 'promo' ? BadgePercent :
-                                 notif.type === 'success' ? Gift : Bell
+                    const Icon = notif.type === 'order' ? CheckCircle :
+                                  notif.type === 'promo' ? BadgePercent :
+                                  notif.type === 'success' ? Gift : Bell
                     const iconColor = notif.type === 'order' ? 'text-green-600' :
                                      notif.type === 'promo' ? 'text-blue-600' :
                                      notif.type === 'success' ? 'text-orange-600' : 'text-gray-600'
@@ -1340,11 +1336,7 @@ export default function RestaurantApp() {
                         <CardContent className="p-4">
                           <div className="flex gap-3">
                             <div className={`w-10 h-10 ${bgClass} rounded-full flex items-center justify-center flex-shrink-0`}>
-                              {typeof icon === 'function' ? (
-                                <icon className={`w-5 h-5 ${iconColor}`} />
-                              ) : (
-                                <Bell className={`w-5 h-5 ${iconColor}`} />
-                              )}
+                              <Icon className={`w-5 h-5 ${iconColor}`} />
                             </div>
                             <div>
                               <p className="font-medium text-sm">{notif.title}</p>
@@ -1634,9 +1626,9 @@ export default function RestaurantApp() {
                   </div>
                 ) : (
                   notifications.map((notif) => {
-                    const icon = notif.type === 'order' ? CheckCircle :
-                                 notif.type === 'promo' ? BadgePercent :
-                                 notif.type === 'success' ? Gift : Bell
+                    const Icon = notif.type === 'order' ? CheckCircle :
+                                  notif.type === 'promo' ? BadgePercent :
+                                  notif.type === 'success' ? Gift : Bell
                     const iconColor = notif.type === 'order' ? 'text-green-600' :
                                      notif.type === 'promo' ? 'text-blue-600' :
                                      notif.type === 'success' ? 'text-orange-600' : 'text-gray-600'
@@ -1650,11 +1642,7 @@ export default function RestaurantApp() {
                         <CardContent className="p-4">
                           <div className="flex gap-3">
                             <div className={`w-10 h-10 ${bgClass} rounded-full flex items-center justify-center flex-shrink-0`}>
-                              {typeof icon === 'function' ? (
-                                <icon className={`w-5 h-5 ${iconColor}`} />
-                              ) : (
-                                <Bell className={`w-5 h-5 ${iconColor}`} />
-                              )}
+                              <Icon className={`w-5 h-5 ${iconColor}`} />
                             </div>
                             <div>
                               <p className="font-medium text-sm">{notif.title}</p>
@@ -2007,9 +1995,9 @@ export default function RestaurantApp() {
                   </div>
                 ) : (
                   notifications.map((notif) => {
-                    const icon = notif.type === 'order' ? CheckCircle :
-                                 notif.type === 'promo' ? BadgePercent :
-                                 notif.type === 'success' ? Gift : Bell
+                    const Icon = notif.type === 'order' ? CheckCircle :
+                                  notif.type === 'promo' ? BadgePercent :
+                                  notif.type === 'success' ? Gift : Bell
                     const iconColor = notif.type === 'order' ? 'text-green-600' :
                                      notif.type === 'promo' ? 'text-blue-600' :
                                      notif.type === 'success' ? 'text-orange-600' : 'text-gray-600'
@@ -2023,11 +2011,7 @@ export default function RestaurantApp() {
                         <CardContent className="p-4">
                           <div className="flex gap-3">
                             <div className={`w-10 h-10 ${bgClass} rounded-full flex items-center justify-center flex-shrink-0`}>
-                              {typeof icon === 'function' ? (
-                                <icon className={`w-5 h-5 ${iconColor}`} />
-                              ) : (
-                                <Bell className={`w-5 h-5 ${iconColor}`} />
-                              )}
+                              <Icon className={`w-5 h-5 ${iconColor}`} />
                             </div>
                             <div>
                               <p className="font-medium text-sm">{notif.title}</p>
@@ -2340,9 +2324,9 @@ export default function RestaurantApp() {
                   </div>
                 ) : (
                   notifications.map((notif) => {
-                    const icon = notif.type === 'order' ? CheckCircle :
-                                 notif.type === 'promo' ? BadgePercent :
-                                 notif.type === 'success' ? Gift : Bell
+                    const Icon = notif.type === 'order' ? CheckCircle :
+                                  notif.type === 'promo' ? BadgePercent :
+                                  notif.type === 'success' ? Gift : Bell
                     const iconColor = notif.type === 'order' ? 'text-green-600' :
                                      notif.type === 'promo' ? 'text-blue-600' :
                                      notif.type === 'success' ? 'text-orange-600' : 'text-gray-600'
@@ -2356,11 +2340,7 @@ export default function RestaurantApp() {
                         <CardContent className="p-4">
                           <div className="flex gap-3">
                             <div className={`w-10 h-10 ${bgClass} rounded-full flex items-center justify-center flex-shrink-0`}>
-                              {typeof icon === 'function' ? (
-                                <icon className={`w-5 h-5 ${iconColor}`} />
-                              ) : (
-                                <Bell className={`w-5 h-5 ${iconColor}`} />
-                              )}
+                              <Icon className={`w-5 h-5 ${iconColor}`} />
                             </div>
                             <div>
                               <p className="font-medium text-sm">{notif.title}</p>
