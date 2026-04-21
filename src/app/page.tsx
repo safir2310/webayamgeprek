@@ -226,13 +226,15 @@ interface HeaderProps {
   onNotificationClick?: () => void
   onChatClick?: () => void
   memberName?: string
+  memberAvatar?: string | null
 }
 
 function Header({
   notificationCount = 0,
   onNotificationClick,
   onChatClick,
-  memberName
+  memberName,
+  memberAvatar
 }: HeaderProps) {
   return (
     <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-2 pt-8 rounded-b-3xl shadow-lg">
@@ -243,7 +245,7 @@ function Header({
             {memberName || 'Guest'}
           </span>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3">
           <Button
             variant="ghost"
             size="icon"
@@ -265,6 +267,17 @@ function Header({
           >
             <MessageCircle className="w-5 h-5" />
           </Button>
+          <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-white/30 shadow-md">
+            {memberAvatar ? (
+              <img
+                src={memberAvatar}
+                alt={memberName || 'User'}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <span className="text-lg">👤</span>
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -637,6 +650,7 @@ export default function RestaurantApp() {
         {/* Header with Notification and Chat */}
         <Header
           memberName={memberData?.user?.name || user?.name || 'Guest'}
+          memberAvatar={memberData?.user?.avatar || user?.avatar || null}
           notificationCount={notificationCount}
           onNotificationClick={() => setShowNotifications(true)}
           onChatClick={() => setShowChat(true)}
@@ -1039,6 +1053,7 @@ export default function RestaurantApp() {
         {/* Header */}
         <Header
           memberName={memberData?.user?.name || user?.name || 'Guest'}
+          memberAvatar={memberData?.user?.avatar || user?.avatar || null}
           notificationCount={notificationCount}
           onNotificationClick={() => setShowNotifications(true)}
           onChatClick={() => setShowChat(true)}
@@ -1165,6 +1180,7 @@ export default function RestaurantApp() {
         {/* Header */}
         <Header
           memberName={memberData?.user?.name || user?.name || 'Guest'}
+          memberAvatar={memberData?.user?.avatar || user?.avatar || null}
           notificationCount={notificationCount}
           onNotificationClick={() => setShowNotifications(true)}
           onChatClick={() => setShowChat(true)}
@@ -1449,6 +1465,7 @@ export default function RestaurantApp() {
         {/* Header */}
         <Header
           memberName={memberData?.user?.name || user?.name || 'Guest'}
+          memberAvatar={memberData?.user?.avatar || user?.avatar || null}
           notificationCount={notificationCount}
           onNotificationClick={() => setShowNotifications(true)}
           onChatClick={() => setShowChat(true)}
@@ -1564,6 +1581,7 @@ export default function RestaurantApp() {
         {/* Header */}
         <Header
           memberName={memberData?.user?.name || user?.name || 'Guest'}
+          memberAvatar={memberData?.user?.avatar || user?.avatar || null}
           notificationCount={notificationCount}
           onNotificationClick={() => setShowNotifications(true)}
           onChatClick={() => setShowChat(true)}
