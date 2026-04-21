@@ -868,94 +868,69 @@ export default function RestaurantApp() {
                 </div>
               </div>
             </Tabs>
-        </div>
 
-        {/* Quick Actions */}
-        <div className="p-4">
-          <div className="grid grid-cols-2 gap-3 mb-6">
-            <Button
-              onClick={() => setScreen('menu')}
-              className="h-20 bg-white hover:bg-orange-50 text-orange-600 border-2 border-orange-200"
-            >
-              <div className="text-center">
-                <Package className="w-6 h-6 mx-auto mb-1" />
-                <span className="text-sm font-medium">Menu</span>
-              </div>
-            </Button>
-            <Button
-              onClick={() => setScreen('cart')}
-              className="h-20 bg-orange-500 hover:bg-orange-600"
-            >
-              <div className="text-center text-white relative">
-                <ShoppingCart className="w-6 h-6 mx-auto mb-1" />
-                <span className="text-sm font-medium">Keranjang</span>
-                {cart.length > 0 && (
-                  <Badge className="absolute -top-2 -right-2 bg-red-500 text-xs">
-                    {cart.reduce((sum, item) => sum + item.qty, 0)}
-                  </Badge>
-                )}
-              </div>
-            </Button>
-          </div>
-
-          {/* Categories */}
-          <div className="mb-6">
-            <h2 className="font-bold text-lg mb-3">Kategori</h2>
-            <div className="flex gap-3 overflow-x-auto pb-2">
-              {categories.slice(1).map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => {
-                    setSelectedCategory(cat)
-                    setScreen('menu')
-                  }}
-                  className="px-4 py-2 bg-white rounded-xl shadow-sm border border-gray-100 whitespace-nowrap"
-                >
-                  {cat}
-                </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Popular Products */}
-          <div>
-            <div className="flex justify-between items-center mb-3">
-              <h2 className="font-bold text-lg">Produk Populer</h2>
-              <button
-                onClick={() => setScreen('menu')}
-                className="text-orange-500 text-sm font-medium"
-              >
-                Lihat Semua
+        {/* Menu Items */}
+        <div className="p-4 space-y-2">
+          <Card>
+            <CardContent className="p-0">
+              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Package className="w-5 h-5 text-orange-500" />
+                  <span>Riwayat Pesanan</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </button>
-            </div>
-            <div className="space-y-3">
-              {mockProducts.slice(0, 4).map(product => (
-                <Card key={product.id} className="overflow-hidden">
-                  <div className="flex">
-                    <div className="w-24 h-24 bg-orange-50 flex items-center justify-center text-4xl">
-                      {product.image}
-                    </div>
-                    <div className="flex-1 p-3">
-                      <h3 className="font-semibold mb-1">{product.name}</h3>
-                      <p className="text-sm text-muted-foreground line-clamp-1">{product.description}</p>
-                      <div className="flex justify-between items-center mt-2">
-                        <span className="font-bold text-orange-600">
-                          Rp {product.price.toLocaleString()}
-                        </span>
-                        <Button
-                          size="sm"
-                          onClick={() => addToCart(product)}
-                          className="bg-orange-500 hover:bg-orange-600 h-8"
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                </Card>
-              ))}
-            </div>
-          </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-0">
+              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <MapPin className="w-5 h-5 text-orange-500" />
+                  <span>Alamat</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+              <Separator />
+              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Gift className="w-5 h-5 text-orange-500" />
+                  <span>Poin Rewards</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-0">
+              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <Settings className="w-5 h-5 text-gray-500" />
+                  <span>Pengaturan</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+              <Separator />
+              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
+                <div className="flex items-center gap-3">
+                  <HelpCircle className="w-5 h-5 text-gray-500" />
+                  <span>Bantuan</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </CardContent>
+          </Card>
+
+          <Button
+            onClick={handleLogout}
+            variant="outline"
+            className="w-full h-12 text-red-500 border-red-200 hover:bg-red-50"
+          >
+            <LogOut className="w-5 h-5 mr-2" />
+            Keluar
+          </Button>
         </div>
 
         {/* Bottom Navigation */}
