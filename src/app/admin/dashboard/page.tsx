@@ -570,9 +570,9 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gradient-to-b from-orange-600 to-orange-500 text-white flex flex-col transition-all duration-300 fixed lg:relative z-50 h-full`}>
+      <aside className={`${sidebarOpen ? 'w-64' : 'w-20'} bg-gradient-to-b from-orange-600 to-orange-500 text-white flex flex-col transition-all duration-300 fixed lg:relative z-50 h-full overflow-hidden`}>
         {/* Logo & Toggle */}
-        <div className="p-4 border-b border-orange-400">
+        <div className="p-4 border-b border-orange-400 flex-shrink-0">
           <div className="flex items-center justify-between">
             <div className={`flex items-center gap-3 ${!sidebarOpen && 'lg:hidden'}`}>
               <span className="text-2xl">🍗</span>
@@ -590,7 +590,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Navigation */}
-        <ScrollArea className="flex-1 p-2">
+        <ScrollArea className="flex-1 p-2 overflow-y-auto">
           <nav className="space-y-1">
             {navItems.map((item) => {
               const Icon = item.icon
@@ -613,7 +613,7 @@ export default function AdminDashboard() {
         </ScrollArea>
 
         {/* User Info & Logout */}
-        <div className="p-4 border-t border-orange-400">
+        <div className="p-4 border-t border-orange-400 flex-shrink-0">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
               <span className="text-lg">👨‍💼</span>

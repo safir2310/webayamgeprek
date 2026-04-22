@@ -81,3 +81,16 @@ Work Log:
 - Ensures main content is not covered by fixed sidebar on mobile
 - All text and content now clearly visible without overlap
 - Successfully compiled and tested
+
+---
+Task ID: 7
+Agent: Z.ai Code
+Task: Make sidebar scrollable
+
+Work Log:
+- Added overflow-hidden to sidebar container (line 573)
+- Added flex-shrink-0 to Logo & Toggle section (line 575) to keep it fixed at top
+- Added overflow-y-auto to ScrollArea (line 593) to enable scrolling on navigation
+- Added flex-shrink-0 to User Info & Logout section (line 616) to keep it fixed at bottom
+- Only navigation area is now scrollable, header and footer remain fixed
+- Successfully compiled and tested
