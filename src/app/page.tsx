@@ -25,7 +25,6 @@ import {
   LogOut,
   CreditCard,
   QrCode,
-  Clock,
   CheckCircle,
   XCircle,
   Star,
@@ -45,7 +44,10 @@ import {
   Settings,
   HelpCircle,
   MessageCircle,
-  ShieldCheck
+  ShieldCheck,
+  TrendingUp,
+  Flame,
+  ClockIcon
 } from 'lucide-react'
 
 type ScreenType = 'splash' | 'login' | 'register' | 'home' | 'menu' | 'cart' | 'checkout' | 'orderStatus' | 'account' | 'pos' | 'shift'
@@ -306,6 +308,7 @@ export default function RestaurantApp() {
   const [orders, setOrders] = useState<Order[]>(mockOrders)
   const [points, setPoints] = useState(150)
   const [memberCardTab, setMemberCardTab] = useState<'card' | 'barcode'>('card')
+  const [productTab, setProductTab] = useState<'populer' | 'terlaris' | 'terbaru'>('populer')
   const [memberId, setMemberId] = useState(() => {
     // Generate member ID on initial load
     const digits = Math.floor(100000 + Math.random() * 900000)
@@ -576,6 +579,36 @@ export default function RestaurantApp() {
   })
 
   const categories = ['all', 'Main', 'Drink', 'Snack']
+
+  // Helper functions to get products by tab
+  const getPopulerProducts = () => {
+    // Simulate popular products (higher price or specific products)
+    return mockProducts.slice(0, 4)
+  }
+
+  const getTerlarisProducts = () => {
+    // Simulate best-selling products (lower stock indicates more sales)
+    return [...mockProducts].sort((a, b) => a.stock - b.stock).slice(0, 4)
+  }
+
+  const getTerbaruProducts = () => {
+    // Simulate newest products (last 4 products in array)
+    return mockProducts.slice(-4)
+  }
+
+  // Get products based on active tab
+  const getTabProducts = () => {
+    switch (productTab) {
+      case 'populer':
+        return getPopulerProducts()
+      case 'terlaris':
+        return getTerlarisProducts()
+      case 'terbaru':
+        return getTerbaruProducts()
+      default:
+        return getPopulerProducts()
+    }
+  }
 
   // ========== SPLASH SCREEN ==========
   if (screen === 'splash') {
@@ -868,37 +901,88 @@ export default function RestaurantApp() {
             </TabsContent>
           </Tabs>
 
-        {/* Menu Items */}
-        <div className="p-4 space-y-2">
-          <Card>
-            <CardContent className="p-0">
-              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Settings className="w-5 h-5 text-gray-500" />
-                  <span>Pengaturan</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
-              <Separator />
-              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <HelpCircle className="w-5 h-5 text-gray-500" />
-                  <span>Bantuan</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
-            </CardContent>
-          </Card>
+          {/* Product Tabs Section */}
+          <div className="p-4">
+            <Tabs defaultValue="populer" value={productTab} onValueChange={(v) => setProductTab(v as 'populer' | 'terlaris' | 'terbaru')}>
+              <TabsList className="grid w-full grid-cols-3 h-10 bg-gray-100">
+                <TabsTrigger value="populer" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                  <Flame className="w-4 h-4 mr-1" />
+                  Populer
+                </TabsTrigger>
+                <TabsTrigger value="terlaris" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                  <TrendingUp className="w-4 h-4 mr-1" />
+                  Terlaris
+                </TabsTrigger>
+                <TabsTrigger value="terbaru" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                  <ClockIcon className="w-4 h-4 mr-1" />
+                  Terbaru
+                </TabsTrigger>
+              </TabsList>
 
-          <Button
-            onClick={handleLogout}
-            variant="outline"
-            className="w-full h-12 text-red-500 border-red-200 hover:bg-red-50"
-          >
-            <LogOut className="w-5 h-5 mr-2" />
-            Keluar
-          </Button>
-        </div>
+              {/* Populer Products */}
+              <TabsContent value="populer" className="mt-4">
+                <div className="grid grid-cols-2 gap-3">
+                  {getPopulerProducts().map(product => (
+                    <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
+                      <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl">
+                        {product.image}
+                      </div>
+                      <CardContent className="p-3">
+                        <h3 className="font-semibold text-sm mb-1 line-clamp-1">{product.name}</h3>
+                        <p className="text-xs text-muted-foreground line-clamp-1 mb-2">{product.description}</p>
+                        <div className="flex items-center justify-between">
+                          <p className="font-bold text-orange-600 text-sm">Rp {product.price.toLocaleString('id-ID')}</p>
+                          <Badge className="bg-orange-100 text-orange-600 text-xs">Populer</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
+              {/* Terlaris Products */}
+              <TabsContent value="terlaris" className="mt-4">
+                <div className="grid grid-cols-2 gap-3">
+                  {getTerlarisProducts().map(product => (
+                    <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
+                      <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl">
+                        {product.image}
+                      </div>
+                      <CardContent className="p-3">
+                        <h3 className="font-semibold text-sm mb-1 line-clamp-1">{product.name}</h3>
+                        <p className="text-xs text-muted-foreground line-clamp-1 mb-2">{product.description}</p>
+                        <div className="flex items-center justify-between">
+                          <p className="font-bold text-orange-600 text-sm">Rp {product.price.toLocaleString('id-ID')}</p>
+                          <Badge className="bg-green-100 text-green-600 text-xs">Terlaris</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+
+              {/* Terbaru Products */}
+              <TabsContent value="terbaru" className="mt-4">
+                <div className="grid grid-cols-2 gap-3">
+                  {getTerbaruProducts().map(product => (
+                    <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
+                      <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl">
+                        {product.image}
+                      </div>
+                      <CardContent className="p-3">
+                        <h3 className="font-semibold text-sm mb-1 line-clamp-1">{product.name}</h3>
+                        <p className="text-xs text-muted-foreground line-clamp-1 mb-2">{product.description}</p>
+                        <div className="flex items-center justify-between">
+                          <p className="font-bold text-orange-600 text-sm">Rp {product.price.toLocaleString('id-ID')}</p>
+                          <Badge className="bg-blue-100 text-blue-600 text-xs">Baru</Badge>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                </div>
+              </TabsContent>
+            </Tabs>
+          </div>
 
         {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-2">
@@ -1788,7 +1872,7 @@ export default function RestaurantApp() {
                   </div>
                 </div>
                 <div className="flex items-center gap-3">
-                  <Clock className="w-6 h-6 text-orange-500" />
+                  <ClockIcon className="w-6 h-6 text-orange-500" />
                   <div className="flex-1">
                     <p className="font-medium">Sedang Diproses</p>
                     <p className="text-sm text-muted-foreground">Pesanan sedang disiapkan</p>
@@ -1807,7 +1891,7 @@ export default function RestaurantApp() {
 
           {/* Estimated Time */}
           <Alert className="mb-4 bg-orange-50 border-orange-200">
-            <Clock className="h-4 w-4 text-orange-600" />
+            <ClockIcon className="h-4 w-4 text-orange-600" />
             <AlertDescription className="text-orange-800">
               Estimasi waktu penyelesaian: 15-20 menit
             </AlertDescription>
@@ -2308,7 +2392,7 @@ export default function RestaurantApp() {
                 onClick={() => setScreen('shift')}
                 className="text-white hover:bg-white/20"
               >
-                <Clock className="w-6 h-6" />
+                <ClockIcon className="w-6 h-6" />
               </Button>
             </div>
           </div>
