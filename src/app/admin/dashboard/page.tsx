@@ -1091,7 +1091,19 @@ export default function AdminDashboard() {
                   <Card key={product.id}>
                     <CardContent className="p-4">
                       <div className="flex items-start justify-between mb-3">
-                        <div className="text-5xl">{product.image || '🍗'}</div>
+                        <div className="w-20 h-20 bg-gray-100 rounded-lg flex items-center justify-center overflow-hidden">
+                          {product.image && product.image.startsWith('data:') ? (
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : product.image ? (
+                            <div className="text-5xl">{product.image}</div>
+                          ) : (
+                            <div className="text-5xl">🍗</div>
+                          )}
+                        </div>
                         <Badge variant={product.isActive ? 'default' : 'secondary'}>
                           {product.isActive ? 'Aktif' : 'Nonaktif'}
                         </Badge>
