@@ -649,7 +649,7 @@ export default function AdminDashboard() {
           </Button>
         </header>
 
-        <div className="p-6">
+        <div className="p-4">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
