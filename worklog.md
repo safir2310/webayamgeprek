@@ -69,3 +69,15 @@ Work Log:
 - Provides balanced spacing - not too close, not too far
 - Creates a neat and professional appearance
 - Successfully compiled and tested
+
+---
+Task ID: 6
+Agent: Z.ai Code
+Task: Ensure all text is clearly visible without being covered
+
+Work Log:
+- Increased padding from p-3 (12px) back to p-6 (24px) for better visibility
+- Fixed mobile margin issue: changed from ml-0 to ml-20 when sidebar is open
+- Ensures main content is not covered by fixed sidebar on mobile
+- All text and content now clearly visible without overlap
+- Successfully compiled and tested

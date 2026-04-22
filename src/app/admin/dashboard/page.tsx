@@ -637,7 +637,7 @@ export default function AdminDashboard() {
       </aside>
 
       {/* Main Content */}
-      <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'} ${isMobile ? 'ml-0' : ''}`}>
+      <main className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'lg:ml-64' : 'lg:ml-20'} ${isMobile ? 'ml-20' : 'ml-0'}`}>
         {/* Mobile Header */}
         <header className="bg-white border-b px-4 py-3 sticky top-0 z-40 lg:hidden">
           <Button
@@ -649,7 +649,7 @@ export default function AdminDashboard() {
           </Button>
         </header>
 
-        <div className="p-3">
+        <div className="p-6">
           {/* Overview Tab */}
           {activeTab === 'overview' && (
             <div className="space-y-6">
