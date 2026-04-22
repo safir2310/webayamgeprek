@@ -932,21 +932,23 @@ export default function AdminDashboard() {
             <div className="space-y-6">
               <div className="flex items-center justify-between">
                 <h1 className="text-2xl font-bold text-gray-900">Manajemen Produk</h1>
-                <Dialog open={isAddProductOpen} onOpenChange={setIsAddProductOpen}>
+                <Dialog
+                  open={isAddProductOpen}
+                  onOpenChange={(open) => {
+                    setIsAddProductOpen(open)
+                    if (!open) {
+                      setProductTab('info')
+                      setEditProduct(null)
+                    }
+                  }}
+                >
                   <DialogTrigger asChild>
                     <Button className="bg-orange-500 hover:bg-orange-600">
                       <Plus className="w-4 h-4 mr-2" />
                       Tambah Produk
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto"
-                    onOpenChange={(open) => {
-                      if (!open) {
-                        setProductTab('info')
-                        setEditProduct(null)
-                      }
-                    }}
-                  >
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>{editProduct ? 'Edit Produk' : 'Tambah Produk Baru'}</DialogTitle>
                     </DialogHeader>
