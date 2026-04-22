@@ -970,15 +970,15 @@ export default function AdminDashboard() {
                   <Input placeholder="Cari produk..." className="pl-10" />
                 </div>
                 <Select
-                  value={productForm.categoryId}
-                  onValueChange={(value) => setProductForm({ ...productForm, categoryId: value })}
+                  value={productForm.categoryId || "all"}
+                  onValueChange={(value) => setProductForm({ ...productForm, categoryId: value === "all" ? "" : value })}
                   className="w-[200px]"
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Semua Kategori" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Semua Kategori</SelectItem>
+                    <SelectItem value="all">Semua Kategori</SelectItem>
                     {categories.map((cat) => (
                       <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
                     ))}
