@@ -1264,8 +1264,12 @@ export default function RestaurantApp() {
           <div className="grid grid-cols-2 gap-3">
             {filteredProducts.map(product => (
               <Card key={product.id} className="overflow-hidden">
-                <div className="bg-orange-50 h-32 flex items-center justify-center text-6xl">
-                  {product.image}
+                <div className="bg-orange-50 h-32 flex items-center justify-center text-6xl overflow-hidden">
+                  {product.image?.startsWith('data:') ? (
+                    <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span>{product.image || '🍗'}</span>
+                  )}
                 </div>
                 <CardContent className="p-3">
                   <h3 className="font-semibold text-sm mb-1 line-clamp-1">{product.name}</h3>
@@ -1514,8 +1518,12 @@ export default function RestaurantApp() {
                   <Card key={item.product.id}>
                     <CardContent className="p-3">
                       <div className="flex gap-3">
-                        <div className="w-20 h-20 bg-orange-50 rounded-lg flex items-center justify-center text-4xl">
-                          {item.product.image}
+                        <div className="w-20 h-20 bg-orange-50 rounded-lg flex items-center justify-center text-4xl overflow-hidden">
+                          {item.product.image?.startsWith('data:') ? (
+                            <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span>{item.product.image || '🍗'}</span>
+                          )}
                         </div>
                         <div className="flex-1">
                           <h3 className="font-semibold mb-1">{item.product.name}</h3>
@@ -2496,8 +2504,12 @@ export default function RestaurantApp() {
                   }}
                 >
                   <CardContent className="p-2">
-                    <div className="bg-orange-50 h-16 rounded-lg flex items-center justify-center text-2xl mb-2">
-                      {product.image}
+                    <div className="bg-orange-50 h-16 rounded-lg flex items-center justify-center text-2xl mb-2 overflow-hidden">
+                      {product.image?.startsWith('data:') ? (
+                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                      ) : (
+                        <span>{product.image || '🍗'}</span>
+                      )}
                     </div>
                     <p className="text-xs font-medium line-clamp-1">{product.name}</p>
                     <p className="text-xs text-orange-600 font-bold">
