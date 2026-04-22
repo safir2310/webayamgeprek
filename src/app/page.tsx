@@ -959,14 +959,14 @@ export default function RestaurantApp() {
                 ) : (
                   notifications.map((notif) => {
                     const Icon = notif.type === 'order' ? CheckCircle :
-                                  notif.type === 'promo' ? BadgePercent :
+                                  notif.type === 'promo' ? Star :
                                   notif.type === 'success' ? Gift : Bell
                     const iconColor = notif.type === 'order' ? 'text-green-600' :
-                                     notif.type === 'promo' ? 'text-blue-600' :
+                                     notif.type === 'promo' ? 'text-orange-600' :
                                      notif.type === 'success' ? 'text-orange-600' : 'text-gray-600'
                     const bgClass = notif.type === 'order' ? 'bg-green-100' :
-                                    notif.type === 'promo' ? 'bg-blue-100' :
-                                    notif.type === 'success' ? 'bg-orange-100' : 'bg-gray-100'
+                                     notif.type === 'promo' ? 'bg-orange-100' :
+                                     notif.type === 'success' ? 'bg-orange-100' : 'bg-gray-100'
                     const timeAgo = formatTimeAgo(notif.createdAt)
 
                     return (
@@ -1022,7 +1022,7 @@ export default function RestaurantApp() {
                       <div key={msg.id} className={`flex gap-3 ${isAdmin ? '' : 'justify-end'}`}>
                         {isAdmin ? (
                           <>
-                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                               <span className="text-sm">👨‍💼</span>
                             </div>
                             <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%]">
@@ -1224,14 +1224,14 @@ export default function RestaurantApp() {
                 ) : (
                   notifications.map((notif) => {
                     const Icon = notif.type === 'order' ? CheckCircle :
-                                  notif.type === 'promo' ? BadgePercent :
+                                  notif.type === 'promo' ? Star :
                                   notif.type === 'success' ? Gift : Bell
                     const iconColor = notif.type === 'order' ? 'text-green-600' :
-                                     notif.type === 'promo' ? 'text-blue-600' :
+                                     notif.type === 'promo' ? 'text-orange-600' :
                                      notif.type === 'success' ? 'text-orange-600' : 'text-gray-600'
                     const bgClass = notif.type === 'order' ? 'bg-green-100' :
-                                    notif.type === 'promo' ? 'bg-blue-100' :
-                                    notif.type === 'success' ? 'bg-orange-100' : 'bg-gray-100'
+                                     notif.type === 'promo' ? 'bg-orange-100' :
+                                     notif.type === 'success' ? 'bg-orange-100' : 'bg-gray-100'
                     const timeAgo = formatTimeAgo(notif.createdAt)
 
                     return (
@@ -1287,7 +1287,7 @@ export default function RestaurantApp() {
                       <div key={msg.id} className={`flex gap-3 ${isAdmin ? '' : 'justify-end'}`}>
                         {isAdmin ? (
                           <>
-                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                               <span className="text-sm">👨‍💼</span>
                             </div>
                             <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%]">
@@ -1417,7 +1417,7 @@ export default function RestaurantApp() {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <BadgePercent className="w-5 h-5 text-orange-500" />
+                        <CheckCircle className="w-5 h-5 text-orange-500" />
                         <span className="font-medium">Voucher</span>
                       </div>
                       <Button variant="ghost" size="sm">
@@ -1430,7 +1430,7 @@ export default function RestaurantApp() {
                   <CardContent className="p-4">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Gift className="w-5 h-5 text-orange-500" />
+                        <Star className="w-5 h-5 text-orange-500" />
                         <span className="font-medium">Gunakan Poin</span>
                       </div>
                       <Badge variant="outline">{points} Poin</Badge>
@@ -1530,14 +1530,14 @@ export default function RestaurantApp() {
                 ) : (
                   notifications.map((notif) => {
                     const Icon = notif.type === 'order' ? CheckCircle :
-                                  notif.type === 'promo' ? BadgePercent :
+                                  notif.type === 'promo' ? Star :
                                   notif.type === 'success' ? Gift : Bell
                     const iconColor = notif.type === 'order' ? 'text-green-600' :
-                                     notif.type === 'promo' ? 'text-blue-600' :
+                                     notif.type === 'promo' ? 'text-orange-600' :
                                      notif.type === 'success' ? 'text-orange-600' : 'text-gray-600'
                     const bgClass = notif.type === 'order' ? 'bg-green-100' :
-                                    notif.type === 'promo' ? 'bg-blue-100' :
-                                    notif.type === 'success' ? 'bg-orange-100' : 'bg-gray-100'
+                                     notif.type === 'promo' ? 'bg-orange-100' :
+                                     notif.type === 'success' ? 'bg-orange-100' : 'bg-gray-100'
                     const timeAgo = formatTimeAgo(notif.createdAt)
 
                     return (
@@ -1593,7 +1593,7 @@ export default function RestaurantApp() {
                       <div key={msg.id} className={`flex gap-3 ${isAdmin ? '' : 'justify-end'}`}>
                         {isAdmin ? (
                           <>
-                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                               <span className="text-sm">👨‍💼</span>
                             </div>
                             <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%]">
@@ -1670,17 +1670,6 @@ export default function RestaurantApp() {
         </div>
 
         <div className="p-4 space-y-4">
-          {/* Address */}
-          <Card>
-            <CardContent className="p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <MapPin className="w-5 h-5 text-orange-500" />
-                <span className="font-semibold">Alamat Pengiriman</span>
-              </div>
-              <Input placeholder="Masukkan alamat pengiriman" />
-            </CardContent>
-          </Card>
-
           {/* Payment Method */}
           <Card>
             <CardContent className="p-4">
@@ -1899,14 +1888,14 @@ export default function RestaurantApp() {
                 ) : (
                   notifications.map((notif) => {
                     const Icon = notif.type === 'order' ? CheckCircle :
-                                  notif.type === 'promo' ? BadgePercent :
+                                  notif.type === 'promo' ? Star :
                                   notif.type === 'success' ? Gift : Bell
                     const iconColor = notif.type === 'order' ? 'text-green-600' :
-                                     notif.type === 'promo' ? 'text-blue-600' :
+                                     notif.type === 'promo' ? 'text-orange-600' :
                                      notif.type === 'success' ? 'text-orange-600' : 'text-gray-600'
                     const bgClass = notif.type === 'order' ? 'bg-green-100' :
-                                    notif.type === 'promo' ? 'bg-blue-100' :
-                                    notif.type === 'success' ? 'bg-orange-100' : 'bg-gray-100'
+                                     notif.type === 'promo' ? 'bg-orange-100' :
+                                     notif.type === 'success' ? 'bg-orange-100' : 'bg-gray-100'
                     const timeAgo = formatTimeAgo(notif.createdAt)
 
                     return (
@@ -1962,7 +1951,7 @@ export default function RestaurantApp() {
                       <div key={msg.id} className={`flex gap-3 ${isAdmin ? '' : 'justify-end'}`}>
                         {isAdmin ? (
                           <>
-                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                               <span className="text-sm">👨‍💼</span>
                             </div>
                             <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%]">
@@ -2037,7 +2026,7 @@ export default function RestaurantApp() {
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-orange-100 rounded-full flex items-center justify-center text-3xl">
+                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-3xl">
                   👤
                 </div>
                 <div>
@@ -2087,21 +2076,6 @@ export default function RestaurantApp() {
                 <ChevronRight className="w-5 h-5 text-muted-foreground" />
               </button>
               <Separator />
-              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-orange-500" />
-                  <span>Alamat</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
-              <Separator />
-              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Gift className="w-5 h-5 text-orange-500" />
-                  <span>Poin Rewards</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
             </CardContent>
           </Card>
 
@@ -2189,14 +2163,14 @@ export default function RestaurantApp() {
                 ) : (
                   notifications.map((notif) => {
                     const Icon = notif.type === 'order' ? CheckCircle :
-                                  notif.type === 'promo' ? BadgePercent :
+                                  notif.type === 'promo' ? Star :
                                   notif.type === 'success' ? Gift : Bell
                     const iconColor = notif.type === 'order' ? 'text-green-600' :
-                                     notif.type === 'promo' ? 'text-blue-600' :
+                                     notif.type === 'promo' ? 'text-orange-600' :
                                      notif.type === 'success' ? 'text-orange-600' : 'text-gray-600'
                     const bgClass = notif.type === 'order' ? 'bg-green-100' :
-                                    notif.type === 'promo' ? 'bg-blue-100' :
-                                    notif.type === 'success' ? 'bg-orange-100' : 'bg-gray-100'
+                                     notif.type === 'promo' ? 'bg-orange-100' :
+                                     notif.type === 'success' ? 'bg-orange-100' : 'bg-gray-100'
                     const timeAgo = formatTimeAgo(notif.createdAt)
 
                     return (
@@ -2252,7 +2226,7 @@ export default function RestaurantApp() {
                       <div key={msg.id} className={`flex gap-3 ${isAdmin ? '' : 'justify-end'}`}>
                         {isAdmin ? (
                           <>
-                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
                               <span className="text-sm">👨‍💼</span>
                             </div>
                             <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%]">
@@ -2504,7 +2478,7 @@ export default function RestaurantApp() {
             <Card className="max-w-md mx-auto">
               <CardContent className="p-6">
                 <div className="text-center mb-6">
-                  <div className="w-20 h-20 bg-orange-100 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
+                  <div className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-4xl mx-auto mb-4">
                     💰
                   </div>
                   <h2 className="text-2xl font-bold mb-2">Buka Shift</h2>
