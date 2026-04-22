@@ -945,7 +945,7 @@ export default function RestaurantApp() {
                     {populerProducts.map(product => (
                       <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
                         <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl">
-                          {product.image?.startsWith('data:') || (product.image && !product.image.startsWith('http')) ? (
+                          {product.image?.startsWith('data:') ? (
                             <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                           ) : (
                             <span>{product.image || '🍗'}</span>
@@ -980,7 +980,7 @@ export default function RestaurantApp() {
                     {terlarisProducts.map(product => (
                       <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
                         <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl">
-                          {product.image?.startsWith('data:') || (product.image && !product.image.startsWith('http')) ? (
+                          {product.image?.startsWith('data:') ? (
                             <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                           ) : (
                             <span>{product.image || '🍗'}</span>
@@ -1015,7 +1015,7 @@ export default function RestaurantApp() {
                     {terbaruProducts.map(product => (
                       <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
                         <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl">
-                          {product.image?.startsWith('data:') || (product.image && !product.image.startsWith('http')) ? (
+                          {product.image?.startsWith('data:') ? (
                             <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                           ) : (
                             <span>{product.image || '🍗'}</span>
