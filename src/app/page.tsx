@@ -309,6 +309,13 @@ export default function RestaurantApp() {
   const [points, setPoints] = useState(150)
   const [memberCardTab, setMemberCardTab] = useState<'card' | 'barcode'>('card')
   const [productTab, setProductTab] = useState<'populer' | 'terlaris' | 'terbaru'>('populer')
+
+  // Featured products from database
+  const [populerProducts, setPopulerProducts] = useState<Product[]>([])
+  const [terlarisProducts, setTerlarisProducts] = useState<Product[]>([])
+  const [terbaruProducts, setTerbaruProducts] = useState<Product[]>([])
+  const [loadingProducts, setLoadingProducts] = useState(true)
+
   const [memberId, setMemberId] = useState(() => {
     // Generate member ID on initial load
     const digits = Math.floor(100000 + Math.random() * 900000)
@@ -349,6 +356,40 @@ export default function RestaurantApp() {
     }, 2000)
     return () => clearTimeout(timer)
   }, [isLoggedIn])
+
+  // Fetch featured products from database
+  useEffect(() => {
+    const fetchFeaturedProducts = async () => {
+      try {
+        setLoadingProducts(true)
+        const [populer, terlaris, terbaru] = await Promise.all([
+          fetch('/api/products/featured?type=populer&limit=4'),
+          fetch('/api/products/featured?type=terlaris&limit=4'),
+          fetch('/api/products/featured?type=terbaru&limit=4')
+        ])
+
+        const [populerData, terlarisData, terbaruData] = await Promise.all([
+          populer.json(),
+          terlaris.json(),
+          terbaru.json()
+        ])
+
+        if (populerData.products) setPopulerProducts(populerData.products)
+        if (terlarisData.products) setTerlarisProducts(terlarisData.products)
+        if (terbaruData.products) setTerbaruProducts(terbaruData.products)
+      } catch (error) {
+        console.error('Failed to fetch featured products:', error)
+        // Fallback to mock data if API fails
+        setPopulerProducts(mockProducts.slice(0, 4))
+        setTerlarisProducts([...mockProducts].sort((a, b) => a.stock - b.stock).slice(0, 4))
+        setTerbaruProducts(mockProducts.slice(-4))
+      } finally {
+        setLoadingProducts(false)
+      }
+    }
+
+    fetchFeaturedProducts()
+  }, [])
 
   const handleLogin = async () => {
     if (email && password) {
@@ -579,36 +620,6 @@ export default function RestaurantApp() {
   })
 
   const categories = ['all', 'Main', 'Drink', 'Snack']
-
-  // Helper functions to get products by tab
-  const getPopulerProducts = () => {
-    // Simulate popular products (higher price or specific products)
-    return mockProducts.slice(0, 4)
-  }
-
-  const getTerlarisProducts = () => {
-    // Simulate best-selling products (lower stock indicates more sales)
-    return [...mockProducts].sort((a, b) => a.stock - b.stock).slice(0, 4)
-  }
-
-  const getTerbaruProducts = () => {
-    // Simulate newest products (last 4 products in array)
-    return mockProducts.slice(-4)
-  }
-
-  // Get products based on active tab
-  const getTabProducts = () => {
-    switch (productTab) {
-      case 'populer':
-        return getPopulerProducts()
-      case 'terlaris':
-        return getTerlarisProducts()
-      case 'terbaru':
-        return getTerbaruProducts()
-      default:
-        return getPopulerProducts()
-    }
-  }
 
   // ========== SPLASH SCREEN ==========
   if (screen === 'splash') {
@@ -921,65 +932,107 @@ export default function RestaurantApp() {
 
               {/* Populer Products */}
               <TabsContent value="populer" className="mt-4">
-                <div className="grid grid-cols-2 gap-3">
-                  {getPopulerProducts().map(product => (
-                    <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
-                      <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl">
-                        {product.image}
-                      </div>
-                      <CardContent className="p-3">
-                        <h3 className="font-semibold text-sm mb-1 line-clamp-1">{product.name}</h3>
-                        <p className="text-xs text-muted-foreground line-clamp-1 mb-2">{product.description}</p>
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-orange-600 text-sm">Rp {product.price.toLocaleString('id-ID')}</p>
-                          <Badge className="bg-orange-100 text-orange-600 text-xs">Populer</Badge>
+                {loadingProducts ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                  </div>
+                ) : populerProducts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Tidak ada produk populer</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {populerProducts.map(product => (
+                      <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
+                        <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl">
+                          {product.image?.startsWith('data:') || (product.image && !product.image.startsWith('http')) ? (
+                            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span>{product.image || '🍗'}</span>
+                          )}
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                        <CardContent className="p-3">
+                          <h3 className="font-semibold text-sm mb-1 line-clamp-1">{product.name}</h3>
+                          <p className="text-xs text-muted-foreground line-clamp-1 mb-2">{product.description}</p>
+                          <div className="flex items-center justify-between">
+                            <p className="font-bold text-orange-600 text-sm">Rp {product.price.toLocaleString('id-ID')}</p>
+                            <Badge className="bg-orange-100 text-orange-600 text-xs">Populer</Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </TabsContent>
 
               {/* Terlaris Products */}
               <TabsContent value="terlaris" className="mt-4">
-                <div className="grid grid-cols-2 gap-3">
-                  {getTerlarisProducts().map(product => (
-                    <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
-                      <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl">
-                        {product.image}
-                      </div>
-                      <CardContent className="p-3">
-                        <h3 className="font-semibold text-sm mb-1 line-clamp-1">{product.name}</h3>
-                        <p className="text-xs text-muted-foreground line-clamp-1 mb-2">{product.description}</p>
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-orange-600 text-sm">Rp {product.price.toLocaleString('id-ID')}</p>
-                          <Badge className="bg-green-100 text-green-600 text-xs">Terlaris</Badge>
+                {loadingProducts ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                  </div>
+                ) : terlarisProducts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Tidak ada produk terlaris</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {terlarisProducts.map(product => (
+                      <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
+                        <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl">
+                          {product.image?.startsWith('data:') || (product.image && !product.image.startsWith('http')) ? (
+                            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span>{product.image || '🍗'}</span>
+                          )}
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                        <CardContent className="p-3">
+                          <h3 className="font-semibold text-sm mb-1 line-clamp-1">{product.name}</h3>
+                          <p className="text-xs text-muted-foreground line-clamp-1 mb-2">{product.description}</p>
+                          <div className="flex items-center justify-between">
+                            <p className="font-bold text-orange-600 text-sm">Rp {product.price.toLocaleString('id-ID')}</p>
+                            <Badge className="bg-green-100 text-green-600 text-xs">Terlaris</Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </TabsContent>
 
               {/* Terbaru Products */}
               <TabsContent value="terbaru" className="mt-4">
-                <div className="grid grid-cols-2 gap-3">
-                  {getTerbaruProducts().map(product => (
-                    <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
-                      <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl">
-                        {product.image}
-                      </div>
-                      <CardContent className="p-3">
-                        <h3 className="font-semibold text-sm mb-1 line-clamp-1">{product.name}</h3>
-                        <p className="text-xs text-muted-foreground line-clamp-1 mb-2">{product.description}</p>
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-orange-600 text-sm">Rp {product.price.toLocaleString('id-ID')}</p>
-                          <Badge className="bg-blue-100 text-blue-600 text-xs">Baru</Badge>
+                {loadingProducts ? (
+                  <div className="flex justify-center py-8">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-orange-500"></div>
+                  </div>
+                ) : terbaruProducts.length === 0 ? (
+                  <div className="text-center py-8 text-muted-foreground">
+                    <p>Tidak ada produk terbaru</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 gap-3">
+                    {terbaruProducts.map(product => (
+                      <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
+                        <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl">
+                          {product.image?.startsWith('data:') || (product.image && !product.image.startsWith('http')) ? (
+                            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                          ) : (
+                            <span>{product.image || '🍗'}</span>
+                          )}
                         </div>
-                      </CardContent>
-                    </Card>
-                  ))}
-                </div>
+                        <CardContent className="p-3">
+                          <h3 className="font-semibold text-sm mb-1 line-clamp-1">{product.name}</h3>
+                          <p className="text-xs text-muted-foreground line-clamp-1 mb-2">{product.description}</p>
+                          <div className="flex items-center justify-between">
+                            <p className="font-bold text-orange-600 text-sm">Rp {product.price.toLocaleString('id-ID')}</p>
+                            <Badge className="bg-blue-100 text-blue-600 text-xs">Baru</Badge>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </TabsContent>
             </Tabs>
           </div>
