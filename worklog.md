@@ -144,3 +144,17 @@ Work Log:
 - Added proper image container with w-20 h-20 and overflow-hidden
 - Images now display correctly without showing raw base64 strings
 - Successfully compiled and tested
+
+---
+Task ID: 11
+Agent: Z.ai Code
+Task: Hide order history, address, and point rewards from home screen
+
+Work Log:
+- Removed "Riwayat Pesanan" menu card from home screen
+- Removed "Alamat" and "Poin Rewards" menu cards from home screen
+- Removed "Poin Rewards" display from Member Card (showed phone number instead)
+- Removed "Poin" display from Barcode tab (simplified to just show ID Member)
+- Removed unused icon imports: MapPin, Gift, BadgePercent, CreditCardIcon, TrendingUp, DollarSign
+- Successfully compiled and tested
+- Home screen now shows only: Member Card (phone, tier, member ID), Pengaturan, Bantuan

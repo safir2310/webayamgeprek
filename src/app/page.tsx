@@ -23,7 +23,6 @@ import {
   Mail,
   Lock,
   LogOut,
-  MapPin,
   CreditCard,
   QrCode,
   Clock,
@@ -31,8 +30,6 @@ import {
   XCircle,
   Star,
   Package,
-  TrendingUp,
-  DollarSign,
   Bell,
   Menu,
   X,
@@ -47,9 +44,6 @@ import {
   Home,
   Settings,
   HelpCircle,
-  CreditCardIcon,
-  BadgePercent,
-  Gift,
   MessageCircle,
   ShieldCheck
 } from 'lucide-react'
@@ -812,8 +806,7 @@ export default function RestaurantApp() {
 
                 <div className="flex items-end justify-between">
                   <div>
-                    <p className="text-white/80 text-xs mb-1">Poin Rewards</p>
-                    <p className="text-3xl font-bold">{points.toLocaleString()}</p>
+                    <h3 className="font-bold text-xl">{memberData?.user?.phone || user?.phone || '081234567890'}</h3>
                   </div>
                   <div className="text-right">
                     <p className="text-white/60 text-xs mb-1">ID Member</p>
@@ -863,11 +856,7 @@ export default function RestaurantApp() {
                   </div>
                 </div>
 
-                <div className="flex items-end justify-between">
-                  <div>
-                    <p className="text-white/70 text-sm mb-1">Scan barcode untuk redeem poin</p>
-                    <p className="text-2xl font-bold">{points.toLocaleString()} Poin</p>
-                  </div>
+                <div className="flex items-end justify-center">
                   <div className="text-right">
                     <p className="text-white/60 text-xs mb-1">ID Member</p>
                     <p className="font-mono text-2xl font-bold tracking-wider">
@@ -881,38 +870,6 @@ export default function RestaurantApp() {
 
         {/* Menu Items */}
         <div className="p-4 space-y-2">
-          <Card>
-            <CardContent className="p-0">
-              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Package className="w-5 h-5 text-orange-500" />
-                  <span>Riwayat Pesanan</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-0">
-              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <MapPin className="w-5 h-5 text-orange-500" />
-                  <span>Alamat</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
-              <Separator />
-              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Gift className="w-5 h-5 text-orange-500" />
-                  <span>Poin Rewards</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
-            </CardContent>
-          </Card>
-
           <Card>
             <CardContent className="p-0">
               <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
