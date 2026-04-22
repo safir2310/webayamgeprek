@@ -47,6 +47,11 @@ export async function GET() {
       where: { status: 'pending' }
     })
 
+    // Get total cashiers
+    const totalCashiers = await db.user.count({
+      where: { role: 'cashier' }
+    })
+
     return NextResponse.json({
       stats: {
         totalOrders,
@@ -55,7 +60,8 @@ export async function GET() {
         todayRevenue,
         totalProducts,
         totalCustomers,
-        pendingOrders
+        pendingOrders,
+        totalCashiers
       }
     })
   } catch (error) {
