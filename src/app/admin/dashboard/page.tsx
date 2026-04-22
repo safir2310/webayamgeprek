@@ -12,6 +12,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Separator } from '@/components/ui/separator'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from '@/hooks/use-toast'
 import {
   LayoutDashboard,
@@ -51,6 +52,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState<ActiveTab>('overview')
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [isMobile, setIsMobile] = useState(false)
+  const [productTab, setProductTab] = useState<'info' | 'image'>('info')
 
   // Stats
   const [stats, setStats] = useState({
@@ -334,50 +336,115 @@ export default function AdminDashboard() {
     }
   }
 
-  const handleAddProduct = async () => {
-    try {
-      const response = await fetch('/api/admin/products', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(productForm)
+  const handleSaveProduct = async () => {
+    // Validasi
+    if (!productForm.name.trim()) {
+      toast({
+        title: 'Error',
+        description: 'Nama produk harus diisi',
+        variant: 'destructive',
       })
-
-      if (response.ok) {
-        fetchProducts()
-        fetchDashboardData()
-        setIsAddProductOpen(false)
-        setProductForm({ name: '', description: '', price: '', stock: '', categoryId: '', image: '' })
-        toast({
-          title: 'Berhasil',
-          description: 'Produk ditambahkan',
-        })
-      }
-    } catch (error) {
-      console.error('Failed to add product:', error)
+      return
     }
-  }
-
-  const handleUpdateProduct = async () => {
-    if (!editProduct) return
+    if (!productForm.price || parseFloat(productForm.price) <= 0) {
+      toast({
+        title: 'Error',
+        description: 'Harga harus lebih dari 0',
+        variant: 'destructive',
+      })
+      return
+    }
+    if (!productForm.stock || parseInt(productForm.stock) < 0) {
+      toast({
+        title: 'Error',
+        description: 'Stok tidak boleh negatif',
+        variant: 'destructive',
+      })
+      return
+    }
+    if (!productForm.categoryId) {
+      toast({
+        title: 'Error',
+        description: 'Kategori harus dipilih',
+        variant: 'destructive',
+      })
+      return
+    }
 
     try {
-      const response = await fetch(`/api/admin/products/${editProduct.id}`, {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(productForm)
-      })
-
-      if (response.ok) {
-        fetchProducts()
-        setEditProduct(null)
-        setProductForm({ name: '', description: '', price: '', stock: '', categoryId: '', image: '' })
-        toast({
-          title: 'Berhasil',
-          description: 'Produk diperbarui',
+      if (editProduct) {
+        // Update produk yang ada
+        const response = await fetch(`/api/admin/products/${editProduct.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: productForm.name,
+            description: productForm.description,
+            price: parseFloat(productForm.price),
+            stock: parseInt(productForm.stock),
+            categoryId: productForm.categoryId,
+            image: productForm.image
+          })
         })
+
+        if (response.ok) {
+          fetchProducts()
+          fetchDashboardData()
+          setEditProduct(null)
+          setIsAddProductOpen(false)
+          setProductForm({ name: '', description: '', price: '', stock: '', categoryId: '', image: '' })
+          toast({
+            title: 'Berhasil',
+            description: 'Produk berhasil diperbarui ke database',
+          })
+        } else {
+          const error = await response.json()
+          toast({
+            title: 'Error',
+            description: error.error || 'Gagal memperbarui produk',
+            variant: 'destructive',
+          })
+        }
+      } else {
+        // Tambah produk baru
+        const response = await fetch('/api/admin/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: productForm.name,
+            description: productForm.description,
+            price: parseFloat(productForm.price),
+            stock: parseInt(productForm.stock),
+            categoryId: productForm.categoryId,
+            image: productForm.image
+          })
+        })
+
+        if (response.ok) {
+          fetchProducts()
+          fetchDashboardData()
+          setIsAddProductOpen(false)
+          setProductForm({ name: '', description: '', price: '', stock: '', categoryId: '', image: '' })
+          toast({
+            title: 'Berhasil',
+            description: 'Produk berhasil disimpan ke database',
+          })
+        } else {
+          const error = await response.json()
+          toast({
+            title: 'Error',
+            description: error.error || 'Gagal menambahkan produk',
+            variant: 'destructive',
+          })
+        }
       }
     } catch (error) {
-      console.error('Failed to update product:', error)
+      console.error('Failed to save product:', error)
+      toast({
+        title: 'Error',
+        description: 'Terjadi kesalahan saat menyimpan produk',
+        variant: 'destructive',
+      })
     }
   }
 
@@ -872,92 +939,123 @@ export default function AdminDashboard() {
                       Tambah Produk
                     </Button>
                   </DialogTrigger>
-                  <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
+                  <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto"
+                    onOpenChange={(open) => {
+                      if (!open) {
+                        setProductTab('info')
+                        setEditProduct(null)
+                      }
+                    }}
+                  >
                     <DialogHeader>
                       <DialogTitle>{editProduct ? 'Edit Produk' : 'Tambah Produk Baru'}</DialogTitle>
                     </DialogHeader>
-                    <div className="space-y-4">
-                      <div className="space-y-2">
-                        <Label>Nama Produk</Label>
-                        <Input
-                          value={productForm.name}
-                          onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
-                          placeholder="Ayam Geprek Original"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Deskripsi</Label>
-                        <Textarea
-                          value={productForm.description}
-                          onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
-                          placeholder="Ayam goreng crispy dengan sambal ijo pedas"
-                          rows={3}
-                        />
-                      </div>
-                      <div className="grid grid-cols-2 gap-4">
+                    <Tabs defaultValue="info" value={productTab} onValueChange={(v) => setProductTab(v as any)}>
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="info">Informasi Produk</TabsTrigger>
+                        <TabsTrigger value="image">Gambar Produk</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="info" className="space-y-4 mt-4">
                         <div className="space-y-2">
-                          <Label>Harga</Label>
+                          <Label>Nama Produk *</Label>
                           <Input
-                            type="number"
-                            value={productForm.price}
-                            onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
-                            placeholder="25000"
+                            value={productForm.name}
+                            onChange={(e) => setProductForm({ ...productForm, name: e.target.value })}
+                            placeholder="Ayam Geprek Original"
+                            required
                           />
                         </div>
                         <div className="space-y-2">
-                          <Label>Stok</Label>
-                          <Input
-                            type="number"
-                            value={productForm.stock}
-                            onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
-                            placeholder="50"
+                          <Label>Deskripsi</Label>
+                          <Textarea
+                            value={productForm.description}
+                            onChange={(e) => setProductForm({ ...productForm, description: e.target.value })}
+                            placeholder="Ayam goreng crispy dengan sambal ijo pedas"
+                            rows={3}
                           />
                         </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Kategori</Label>
-                        <Select value={productForm.categoryId} onValueChange={(value) => setProductForm({ ...productForm, categoryId: value })}>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Pilih kategori" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {categories.map((cat) => (
-                              <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Upload Gambar</Label>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-2">
+                            <Label>Harga (Rp) *</Label>
+                            <Input
+                              type="number"
+                              value={productForm.price}
+                              onChange={(e) => setProductForm({ ...productForm, price: e.target.value })}
+                              placeholder="25000"
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <Label>Stok *</Label>
+                            <Input
+                              type="number"
+                              value={productForm.stock}
+                              onChange={(e) => setProductForm({ ...productForm, stock: e.target.value })}
+                              placeholder="50"
+                              required
+                            />
+                          </div>
+                        </div>
                         <div className="space-y-2">
-                          <Input
-                            type="file"
-                            accept="image/*"
-                            onChange={handleImageUpload}
-                            className="cursor-pointer"
-                          />
-                          {productForm.image && (
-                            <div className="relative">
-                              <img
-                                src={productForm.image}
-                                alt="Preview"
-                                className="w-full h-48 object-cover rounded-lg"
-                              />
-                              <Button
-                                type="button"
-                                variant="destructive"
-                                size="icon"
-                                className="absolute top-2 right-2"
-                                onClick={() => setProductForm({ ...productForm, image: '' })}
-                              >
-                                <X className="w-4 h-4" />
-                              </Button>
-                            </div>
-                          )}
+                          <Label>Kategori *</Label>
+                          <Select value={productForm.categoryId} onValueChange={(value) => setProductForm({ ...productForm, categoryId: value })}>
+                            <SelectTrigger>
+                              <SelectValue placeholder="Pilih kategori" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              {categories.map((cat) => (
+                                <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
                         </div>
-                      </div>
-                      <Button onClick={handleAddProduct} className="w-full bg-orange-500 hover:bg-orange-600">
-                        {editProduct ? 'Simpan Perubahan' : 'Tambah Produk'}
+                      </TabsContent>
+                      <TabsContent value="image" className="space-y-4 mt-4">
+                        <div className="space-y-2">
+                          <Label>Upload Gambar Produk</Label>
+                          <div className="space-y-2">
+                            <Input
+                              type="file"
+                              accept="image/*"
+                              onChange={handleImageUpload}
+                              className="cursor-pointer"
+                            />
+                            {productForm.image ? (
+                              <div className="relative">
+                                <img
+                                  src={productForm.image}
+                                  alt="Preview"
+                                  className="w-full h-48 object-cover rounded-lg border"
+                                />
+                                <Button
+                                  type="button"
+                                  variant="destructive"
+                                  size="icon"
+                                  className="absolute top-2 right-2"
+                                  onClick={() => setProductForm({ ...productForm, image: '' })}
+                                >
+                                  <X className="w-4 h-4" />
+                                </Button>
+                              </div>
+                            ) : (
+                              <div className="w-full h-48 bg-gray-100 rounded-lg flex items-center justify-center border-2 border-dashed border-gray-300">
+                                <div className="text-center">
+                                  <Package className="w-16 h-16 text-gray-400 mx-auto mb-2" />
+                                  <p className="text-sm text-gray-500">Belum ada gambar</p>
+                                  <p className="text-xs text-gray-400">Klik tombol di atas untuk upload</p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </TabsContent>
+                    </Tabs>
+                    <div className="flex gap-2 pt-4 border-t">
+                      <Button onClick={() => setIsAddProductOpen(false)} variant="outline" className="flex-1">
+                        Batal
+                      </Button>
+                      <Button onClick={handleSaveProduct} className="flex-1 bg-orange-500 hover:bg-orange-600">
+                        {editProduct ? 'Simpan Perubahan' : 'Simpan ke Database'}
                       </Button>
                     </div>
                   </DialogContent>

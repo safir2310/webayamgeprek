@@ -29,7 +29,7 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, description, price, stock, category, image } = await request.json()
+    const { name, description, price, stock, categoryId, image } = await request.json()
 
     if (!name || !price) {
       return NextResponse.json(
@@ -38,15 +38,11 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Find or create category
-    let categoryRecord = await db.category.findUnique({
-      where: { name: category }
-    })
-
-    if (!categoryRecord) {
-      categoryRecord = await db.category.create({
-        data: { name: category }
-      })
+    if (!categoryId) {
+      return NextResponse.json(
+        { error: 'Kategori harus dipilih' },
+        { status: 400 }
+      )
     }
 
     const product = await db.product.create({
@@ -55,7 +51,7 @@ export async function POST(request: NextRequest) {
         description: description || '',
         price: parseFloat(price),
         stock: parseInt(stock) || 0,
-        categoryId: categoryRecord.id,
+        categoryId: categoryId,
         image: image || '🍗',
         isActive: true
       }
