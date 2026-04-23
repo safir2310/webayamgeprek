@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Dialog, DialogContent, DialogTrigger, DialogTitle } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogTrigger, DialogTitle, DialogDescription, DialogHeader, DialogFooter } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Separator } from '@/components/ui/separator'
 import { Textarea } from '@/components/ui/textarea'
@@ -47,7 +47,25 @@ import {
   ShieldCheck,
   TrendingUp,
   Flame,
-  ClockIcon
+  ClockIcon,
+  Gift,
+  Heart,
+  MapPin,
+  Edit3,
+  Share2,
+  Trophy,
+  Award,
+  Crown,
+  ChevronDown,
+  WalletCards,
+  History,
+  Tag,
+  Map,
+  BellRing,
+  Globe,
+  Eye,
+  EyeOff,
+  Copy
 } from 'lucide-react'
 
 type ScreenType = 'splash' | 'login' | 'register' | 'home' | 'menu' | 'cart' | 'checkout' | 'orderStatus' | 'account' | 'pos' | 'shift'
@@ -415,7 +433,19 @@ export default function RestaurantApp() {
         // Set user data
         setIsLoggedIn(true)
         setUser(data.user)
-        setScreen('home')
+
+        // Handle role-based routing
+        if (data.user.role === 'admin') {
+          // Redirect to admin panel
+          window.location.href = '/admin/dashboard'
+          return
+        } else if (data.user.role === 'cashier') {
+          // Go to POS screen
+          setScreen('pos')
+        } else {
+          // Regular user - go to home screen
+          setScreen('home')
+        }
 
         // Fetch member data
         if (data.user.id) {
@@ -441,7 +471,9 @@ export default function RestaurantApp() {
 
         toast({
           title: 'Login Berhasil',
-          description: 'Selamat datang kembali!',
+          description: data.user.role === 'admin' ? 'Selamat datang, Admin!' :
+                        data.user.role === 'cashier' ? 'Selamat datang, Kasir!' :
+                        'Selamat datang kembali!',
         })
       } catch (error) {
         console.error('Login error:', error)
@@ -477,11 +509,16 @@ export default function RestaurantApp() {
   }
 
   const handleLogout = () => {
+    setShowLogoutDialog(true)
+  }
+
+  const confirmLogout = () => {
     setIsLoggedIn(false)
     setUser(null)
     setMemberData(null)
     setCart([])
     setScreen('login')
+    setShowLogoutDialog(false)
     toast({
       title: 'Logout Berhasil',
       description: 'Sampai jumpa lagi!',
@@ -2162,30 +2199,107 @@ export default function RestaurantApp() {
           memberName={memberData?.user?.name || user?.name || 'Guest'}
           memberAvatar={memberData?.user?.avatar || user?.avatar || null}
           notificationCount={notificationCount}
+          unreadChatCount={unreadChatCount}
           onNotificationClick={() => setShowNotifications(true)}
           onChatClick={() => setShowChat(true)}
         />
 
-        {/* Profile Card */}
+        {/* Profile Card with Upload */}
         <div className="px-4 mt-2">
           <Card>
             <CardContent className="p-6">
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 bg-blue-100 rounded-full flex items-center justify-center text-3xl">
-                  👤
+                <div className="relative">
+                  <div
+                    className="w-20 h-20 bg-blue-100 rounded-full flex items-center justify-center text-4xl overflow-hidden cursor-pointer border-2 border-orange-500"
+                    onClick={() => document.getElementById('avatar-upload')?.click()}
+                  >
+                    {(memberData?.user?.avatar || user?.avatar) ? (
+                      <img
+                        src={memberData?.user?.avatar || user?.avatar}
+                        alt="Avatar"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span>👤</span>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    id="avatar-upload"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={async (e) => {
+                      const file = e.target.files?.[0]
+                      if (file && user?.id) {
+                        const reader = new FileReader()
+                        reader.onloadend = async () => {
+                          const base64 = reader.result as string
+                          try {
+                            const response = await fetch('/api/profile', {
+                              method: 'PATCH',
+                              headers: { 'Content-Type': 'application/json' },
+                              body: JSON.stringify({
+                                userId: user.id,
+                                name: user.name,
+                                email: user.email,
+                                phone: user.phone,
+                                avatar: base64,
+                              }),
+                            })
+
+                            if (response.ok) {
+                              setUser({ ...user, avatar: base64 })
+                              if (memberData) {
+                                setMemberData({
+                                  ...memberData,
+                                  user: { ...memberData.user, avatar: base64 }
+                                })
+                              }
+                              toast({
+                                title: 'Foto Profil Berhasil Diubah',
+                                description: 'Foto profil Anda telah diperbarui',
+                              })
+                            }
+                          } catch (error) {
+                            toast({
+                              title: 'Gagal Mengubah Foto Profil',
+                              description: 'Terjadi kesalahan',
+                              variant: 'destructive',
+                            })
+                          }
+                        }
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                  />
+                  <div className="absolute bottom-0 right-0 bg-orange-500 text-white rounded-full p-1.5 cursor-pointer hover:bg-orange-600">
+                    <Edit3 className="w-3 h-3" />
+                  </div>
                 </div>
-                <div>
+                <div className="flex-1">
                   <h2 className="text-xl font-bold">{memberData?.user?.name || user?.name || 'John Doe'}</h2>
                   <p className="text-sm text-muted-foreground">{memberData?.user?.email || user?.email || 'john@example.com'}</p>
+                  <button
+                    onClick={() => {
+                      setEditName(user?.name || '')
+                      setEditEmail(user?.email || '')
+                      setEditPhone(user?.phone || '')
+                      setShowEditProfile(true)
+                    }}
+                    className="mt-2 text-sm text-orange-500 hover:underline"
+                  >
+                    Edit Profil
+                  </button>
                 </div>
               </div>
 
-              {/* Points & Member Card */}
+              {/* Points & Member Card - Changed: Phone replaced with Points */}
               <div className={`${getCardGradient(getMemberTier(points))} rounded-xl p-4 text-white`}>
                 <div className="flex justify-between items-center mb-3">
                   <div>
-                    <p className="text-sm opacity-80">No. HP</p>
-                    <p className="font-bold text-lg">{memberData?.user?.phone || user?.phone || '081234567890'}</p>
+                    <p className="text-sm opacity-80">Poin Rewards</p>
+                    <p className="font-bold text-2xl">{points.toLocaleString()}</p>
                   </div>
                   <Badge className="bg-white/20 border-none text-white">
                     {memberData?.tier || getMemberTier(points)}
@@ -2194,14 +2308,14 @@ export default function RestaurantApp() {
 
                 <div className="flex justify-between items-center">
                   <div>
-                    <p className="text-sm opacity-80">Poin Rewards</p>
-                    <p className="text-3xl font-bold">{points.toLocaleString()}</p>
-                  </div>
-                  <div className="text-right">
                     <p className="text-white/60 text-xs mb-1">ID Member</p>
-                    <p className="font-mono text-2xl font-bold tracking-wider">
+                    <p className="font-mono text-lg font-bold tracking-wider">
                       {memberId}
                     </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-white/60 text-xs mb-1">No. HP</p>
+                    <p className="font-semibold">{memberData?.user?.phone || user?.phone || '081234567890'}</p>
                   </div>
                 </div>
               </div>
@@ -2209,41 +2323,232 @@ export default function RestaurantApp() {
           </Card>
         </div>
 
-        {/* Menu Items */}
-        <div className="p-4 space-y-2">
-          <Card>
-            <CardContent className="p-0">
-              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Package className="w-5 h-5 text-orange-500" />
-                  <span>Riwayat Pesanan</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
-              <Separator />
-            </CardContent>
-          </Card>
+        {/* Tabs */}
+        <div className="px-4 mt-4">
+          <Tabs value={accountTab} onValueChange={(v) => setAccountTab(v as any)} className="w-full">
+            <TabsList className="grid w-full grid-cols-4 h-12">
+              <TabsTrigger value="profile" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                <User className="w-5 h-5" />
+              </TabsTrigger>
+              <TabsTrigger value="orders" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                <Package className="w-5 h-5" />
+              </TabsTrigger>
+              <TabsTrigger value="vouchers" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                <Tag className="w-5 h-5" />
+              </TabsTrigger>
+              <TabsTrigger value="favorites" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                <Heart className="w-5 h-5" />
+              </TabsTrigger>
+            </TabsList>
 
-          <Card>
-            <CardContent className="p-0">
-              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <Settings className="w-5 h-5 text-gray-500" />
-                  <span>Pengaturan</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
-              <Separator />
-              <button className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors">
-                <div className="flex items-center gap-3">
-                  <HelpCircle className="w-5 h-5 text-gray-500" />
-                  <span>Bantuan</span>
-                </div>
-                <ChevronRight className="w-5 h-5 text-muted-foreground" />
-              </button>
-            </CardContent>
-          </Card>
+            {/* Profile Tab */}
+            <TabsContent value="profile" className="mt-4">
+              <Card>
+                <CardContent className="p-4 space-y-3">
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                      <User className="w-5 h-5 text-blue-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Nama Lengkap</p>
+                      <p className="text-sm text-muted-foreground">{memberData?.user?.name || user?.name || '-'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                      <Mail className="w-5 h-5 text-green-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Email</p>
+                      <p className="text-sm text-muted-foreground">{memberData?.user?.email || user?.email || '-'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                      <Phone className="w-5 h-5 text-orange-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">No. HP</p>
+                      <p className="text-sm text-muted-foreground">{memberData?.user?.phone || user?.phone || '-'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                      <MapPin className="w-5 h-5 text-purple-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Alamat</p>
+                      <p className="text-sm text-muted-foreground">{memberData?.user?.address || user?.address || 'Belum diatur'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3 p-3 bg-gray-50 rounded-lg">
+                    <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                      <Award className="w-5 h-5 text-yellow-600" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium">Member Tier</p>
+                      <p className="text-sm text-muted-foreground">{memberData?.tier || getMemberTier(points)}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </TabsContent>
 
+            {/* Orders Tab */}
+            <TabsContent value="orders" className="mt-4">
+              <div className="space-y-3">
+                {orders.length === 0 ? (
+                  <Card>
+                    <CardContent className="p-8 text-center">
+                      <Package className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground">Belum ada pesanan</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  orders.map((order) => (
+                    <Card key={order.id}>
+                      <CardContent className="p-4">
+                        <div className="flex justify-between items-start mb-3">
+                          <div>
+                            <p className="font-semibold">{order.orderNumber}</p>
+                            <p className="text-xs text-muted-foreground">
+                              {new Date(order.createdAt).toLocaleDateString('id-ID', {
+                                day: 'numeric',
+                                month: 'short',
+                                year: 'numeric',
+                                hour: '2-digit',
+                                minute: '2-digit'
+                              })}
+                            </p>
+                          </div>
+                          <Badge className={
+                            order.status === 'completed' ? 'bg-green-100 text-green-700' :
+                            order.status === 'processing' ? 'bg-blue-100 text-blue-700' :
+                            order.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
+                            'bg-gray-100 text-gray-700'
+                          }>
+                            {order.status === 'completed' ? 'Selesai' :
+                             order.status === 'processing' ? 'Diproses' :
+                             order.status === 'pending' ? 'Menunggu' : order.status}
+                          </Badge>
+                        </div>
+                        <div className="space-y-2 mb-3">
+                          {order.items.map((item, idx) => (
+                            <div key={idx} className="flex justify-between text-sm">
+                              <span>{item.product.name} x{item.qty}</span>
+                              <span>{(item.product.price * item.qty).toLocaleString()}</span>
+                            </div>
+                          ))}
+                        </div>
+                        <Separator className="my-3" />
+                        <div className="flex justify-between items-center">
+                          <p className="font-semibold">Total</p>
+                          <p className="font-bold text-orange-600">Rp {order.total.toLocaleString()}</p>
+                        </div>
+                        <Button
+                          onClick={() => {
+                            toast({
+                              title: 'Mencetak Struk...',
+                              description: `Struk untuk pesanan ${order.orderNumber} sedang dicetak`,
+                            })
+                          }}
+                          className="w-full mt-3 bg-orange-500 hover:bg-orange-600"
+                        >
+                          <Printer className="w-4 h-4 mr-2" />
+                          Cetak Struk
+                        </Button>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Vouchers Tab */}
+            <TabsContent value="vouchers" className="mt-4">
+              <div className="space-y-3">
+                {vouchers.filter(v => !v.isUsed).length === 0 ? (
+                  <Card>
+                    <CardContent className="p-8 text-center">
+                      <Tag className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground">Tidak ada voucher aktif</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  vouchers.filter(v => !v.isUsed).map((voucher) => (
+                    <Card key={voucher.id} className="border-2 border-dashed border-orange-300">
+                      <CardContent className="p-4">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="font-bold text-lg text-orange-600">{voucher.code}</p>
+                            <p className="text-sm text-muted-foreground">
+                              Diskon {voucher.discount}
+                            </p>
+                            <p className="text-xs text-muted-foreground mt-1">
+                              Min. pembelian Rp {voucher.minOrder.toLocaleString()}
+                            </p>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-xs text-muted-foreground">Berlaku sampai</p>
+                            <p className="text-sm font-medium">{new Date(voucher.expiry).toLocaleDateString('id-ID')}</p>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))
+                )}
+              </div>
+            </TabsContent>
+
+            {/* Favorites Tab */}
+            <TabsContent value="favorites" className="mt-4">
+              <div className="space-y-3">
+                {favorites.length === 0 ? (
+                  <Card>
+                    <CardContent className="p-8 text-center">
+                      <Heart className="w-12 h-12 text-muted-foreground mx-auto mb-3" />
+                      <p className="text-muted-foreground">Belum ada favorite</p>
+                      <p className="text-sm text-muted-foreground mt-2">Klik ikon ❤️ di menu untuk menambahkan favorite</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  mockProducts
+                    .filter(p => favorites.includes(p.id))
+                    .map((product) => (
+                      <Card key={product.id}>
+                        <CardContent className="p-4">
+                          <div className="flex items-center gap-3">
+                            <div className="text-3xl">{product.image}</div>
+                            <div className="flex-1">
+                              <p className="font-semibold">{product.name}</p>
+                              <p className="text-sm text-muted-foreground">{product.description}</p>
+                              <p className="text-orange-600 font-bold mt-1">Rp {product.price.toLocaleString()}</p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => {
+                                setFavorites(favorites.filter(f => f !== product.id))
+                                toast({
+                                  title: 'Dihapus dari Favorite',
+                                  description: `${product.name} dihapus dari favorite`,
+                                })
+                              }}
+                            >
+                              <XCircle className="w-5 h-5 text-red-500" />
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))
+                )}
+              </div>
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Logout Button */}
+        <div className="p-4">
           <Button
             onClick={handleLogout}
             variant="outline"
@@ -2287,6 +2592,75 @@ export default function RestaurantApp() {
             </button>
           </div>
         </div>
+
+        {/* Edit Profile Dialog */}
+        <Dialog open={showEditProfile} onOpenChange={setShowEditProfile}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Edit Profil</DialogTitle>
+              <DialogDescription>Ubah informasi profil Anda</DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Nama Lengkap</Label>
+                <Input
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  placeholder="Nama lengkap"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  placeholder="email@example.com"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Nomor Telepon</Label>
+                <Input
+                  type="tel"
+                  value={editPhone}
+                  onChange={(e) => setEditPhone(e.target.value)}
+                  placeholder="081234567890"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowEditProfile(false)}>
+                Batal
+              </Button>
+              <Button onClick={handleEditProfile} className="bg-orange-500 hover:bg-orange-600">
+                Simpan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Logout Confirmation Dialog */}
+        <Dialog open={showLogoutDialog} onOpenChange={setShowLogoutDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Konfirmasi Keluar</DialogTitle>
+              <DialogDescription>
+                Apakah Anda yakin ingin keluar dari akun?
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowLogoutDialog(false)}>
+                Batal
+              </Button>
+              <Button
+                onClick={confirmLogout}
+                variant="destructive"
+              >
+                Ya, Keluar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Notification Dialog */}
         <Dialog open={showNotifications} onOpenChange={(open) => {
