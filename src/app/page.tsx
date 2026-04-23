@@ -253,6 +253,7 @@ const formatTimeAgo = (dateString: string) => {
 // Header Component with Notification and Chat
 interface HeaderProps {
   notificationCount?: number
+  unreadChatCount?: number
   onNotificationClick?: () => void
   onChatClick?: () => void
   memberName?: string
@@ -261,6 +262,7 @@ interface HeaderProps {
 
 function Header({
   notificationCount = 0,
+  unreadChatCount = 0,
   onNotificationClick,
   onChatClick,
   memberName,
@@ -293,9 +295,14 @@ function Header({
             variant="ghost"
             size="icon"
             onClick={onChatClick}
-            className="text-white hover:bg-white/20"
+            className="text-white hover:bg-white/20 relative"
           >
             <MessageCircle className="w-5 h-5" />
+            {unreadChatCount > 0 && (
+              <Badge className="absolute -top-1 -right-1 bg-red-500 text-xs h-5 w-5 flex items-center justify-center p-0">
+                {unreadChatCount}
+              </Badge>
+            )}
           </Button>
           <div className="w-9 h-9 bg-white rounded-full flex items-center justify-center overflow-hidden border-2 border-white/30 shadow-md">
             {memberAvatar ? (
@@ -359,6 +366,7 @@ export default function RestaurantApp() {
   const [showNotifications, setShowNotifications] = useState(false)
   const [showChat, setShowChat] = useState(false)
   const [notificationCount, setNotificationCount] = useState(0)
+  const [unreadChatCount, setUnreadChatCount] = useState(0)
   const [notifications, setNotifications] = useState<any[]>([])
   const [chatMessages, setChatMessages] = useState<any[]>([])
   const [chatInput, setChatInput] = useState('')
@@ -548,6 +556,9 @@ export default function RestaurantApp() {
 
       if (response.ok) {
         setChatMessages(data.messages || [])
+        // Calculate unread chat count (messages from admin that are not read)
+        const unreadCount = data.messages?.filter((msg: any) => !msg.isRead && msg.senderRole === 'admin').length || 0
+        setUnreadChatCount(unreadCount)
       }
     } catch (error) {
       console.error('Failed to fetch chat messages:', error)
@@ -611,6 +622,7 @@ export default function RestaurantApp() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id })
       })
+      setUnreadChatCount(0)
     } catch (error) {
       console.error('Failed to mark chat as read:', error)
     }
