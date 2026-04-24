@@ -2602,7 +2602,13 @@ export default function RestaurantApp() {
                     userId: user.id,
                     paymentMethod: selectedPaymentMethod,
                     address: addresses.find(a => a.isDefault)?.address || addresses[0]?.address,
-                    note: ''
+                    note: '',
+                    items: cart.map(item => ({
+                      productId: item.product.id,
+                      productName: item.product.name,
+                      qty: item.qty,
+                      price: item.product.price
+                    }))
                   })
                 })
 
