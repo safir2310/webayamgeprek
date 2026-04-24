@@ -374,6 +374,14 @@ export default function RestaurantApp() {
   const [showHelpCenter, setShowHelpCenter] = useState(false)
   const [selectedLanguage, setSelectedLanguage] = useState('id')
   const [selectedReward, setSelectedReward] = useState<string | null>(null)
+  const [showVoucherSuccess, setShowVoucherSuccess] = useState(false)
+  const [generatedVoucher, setGeneratedVoucher] = useState<any>(null)
+  const [isExchanging, setIsExchanging] = useState(false)
+  const [voucherCode, setVoucherCode] = useState('')
+  const [appliedVoucher, setAppliedVoucher] = useState<any>(null)
+  const [isVoucherValid, setIsVoucherValid] = useState<boolean | null>(null)
+  const [voucherError, setVoucherError] = useState('')
+  const [isValidatingVoucher, setIsValidatingVoucher] = useState(false)
 
   // Notification settings state
   const [notificationSettings, setNotificationSettings] = useState({
@@ -1871,16 +1879,115 @@ export default function RestaurantApp() {
 
               {/* Voucher & Points */}
               <div className="space-y-3 mb-4">
+                {/* Voucher Input */}
                 <Card>
                   <CardContent className="p-4">
-                    <div className="flex items-center justify-between">
+                    <div className="space-y-3">
                       <div className="flex items-center gap-2">
-                        <CheckCircle className="w-5 h-5 text-orange-500" />
-                        <span className="font-medium">Voucher</span>
+                        <Gift className="w-5 h-5 text-orange-500" />
+                        <span className="font-medium">Kode Voucher</span>
                       </div>
-                      <Button variant="ghost" size="sm">
-                        Pilih Voucher
-                      </Button>
+                      <div className="flex gap-2">
+                        <Input
+                          placeholder="Masukkan kode voucher"
+                          value={voucherCode}
+                          onChange={(e) => {
+                            setVoucherCode(e.target.value.toUpperCase())
+                            if (appliedVoucher) {
+                              setAppliedVoucher(null)
+                              setIsVoucherValid(null)
+                              setVoucherError('')
+                            }
+                          }}
+                          disabled={appliedVoucher !== null || isValidatingVoucher}
+                          className="flex-1 uppercase"
+                        />
+                        {appliedVoucher ? (
+                          <Button
+                            variant="destructive"
+                            size="sm"
+                            onClick={() => {
+                              setAppliedVoucher(null)
+                              setVoucherCode('')
+                              setIsVoucherValid(null)
+                              setVoucherError('')
+                            }}
+                          >
+                            <X className="w-4 h-4" />
+                          </Button>
+                        ) : (
+                          <Button
+                            size="sm"
+                            onClick={async () => {
+                              if (!voucherCode.trim()) {
+                                setVoucherError('Masukkan kode voucher')
+                                return
+                              }
+
+                              setIsValidatingVoucher(true)
+                              setVoucherError('')
+
+                              try {
+                                const cartTotal = getCartTotal()
+                                const response = await fetch('/api/voucher/validate', {
+                                  method: 'POST',
+                                  headers: { 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({
+                                    code: voucherCode.trim().toUpperCase(),
+                                    userId: user?.id,
+                                    cartTotal
+                                  })
+                                })
+
+                                const data = await response.json()
+
+                                if (data.valid) {
+                                  setAppliedVoucher(data.voucher)
+                                  setIsVoucherValid(true)
+                                  toast({
+                                    title: 'Voucher Berhasil!',
+                                    description: `Diskon ${data.voucher.discount > 0 ? 'Rp ' + data.voucher.discount.toLocaleString() : data.voucher.discountPercent + '%'} telah diterapkan`,
+                                  })
+                                } else {
+                                  setIsVoucherValid(false)
+                                  setVoucherError(data.error || 'Voucher tidak valid')
+                                }
+                              } catch (error) {
+                                console.error('Error validating voucher:', error)
+                                setVoucherError('Gagal memvalidasi voucher')
+                                setIsVoucherValid(false)
+                              } finally {
+                                setIsValidatingVoucher(false)
+                              }
+                            }}
+                            disabled={isValidatingVoucher}
+                          >
+                            {isValidatingVoucher ? '...' : 'Terapkan'}
+                          </Button>
+                        )}
+                      </div>
+                      {voucherError && (
+                        <Alert className="bg-red-50 border-red-200 p-2">
+                          <XCircle className="w-4 h-4 text-red-600" />
+                          <AlertDescription className="text-sm text-red-800">{voucherError}</AlertDescription>
+                        </Alert>
+                      )}
+                      {appliedVoucher && (
+                        <div className="bg-green-50 border border-green-200 rounded-lg p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <CheckCircle className="w-4 h-4 text-green-600" />
+                              <span className="font-medium text-green-800">{appliedVoucher.name}</span>
+                            </div>
+                            <Badge className="bg-green-100 text-green-700">
+                              {appliedVoucher.discount > 0
+                                ? `-Rp ${appliedVoucher.discount.toLocaleString()}`
+                                : `-${appliedVoucher.discountPercent}%`
+                              }
+                            </Badge>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -1904,6 +2011,12 @@ export default function RestaurantApp() {
                     <span className="text-muted-foreground">Subtotal</span>
                     <span>Rp {getCartTotal().toLocaleString()}</span>
                   </div>
+                  {appliedVoucher && appliedVoucher.discount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Diskon Voucher</span>
+                      <span>-Rp {appliedVoucher.discount.toLocaleString()}</span>
+                    </div>
+                  )}
                   <div className="flex justify-between text-sm">
                     <span className="text-muted-foreground">Pajak (10%)</span>
                     <span>Rp {(getCartTotal() * 0.1).toLocaleString()}</span>
@@ -1912,7 +2025,7 @@ export default function RestaurantApp() {
                   <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>
                     <span className="text-orange-600">
-                      Rp {(getCartTotal() * 1.1).toLocaleString()}
+                      Rp {(getCartTotal() * 1.1 - (appliedVoucher?.discount || 0)).toLocaleString()}
                     </span>
                   </div>
                 </CardContent>
@@ -3091,52 +3204,74 @@ export default function RestaurantApp() {
           </DialogContent>
         </Dialog>
 
-        {/* Exchange Points Dialog */}
+        {/* Exchange Points Dialog - New Design */}
         <Dialog open={showExchangePoints} onOpenChange={setShowExchangePoints}>
-          <DialogContent className="max-w-md max-h-[90vh] flex flex-col">
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-bold">Tukar Poin</DialogTitle>
-              <DialogDescription>
-                Tukarkan poin rewards Anda untuk mendapatkan hadiah menarik!
-              </DialogDescription>
-            </DialogHeader>
-
-            {/* Points Available */}
-            <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-xl p-5 mb-4 shadow-lg">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm text-orange-100">Poin Tersedia</p>
-                  <p className="text-3xl font-bold text-white mt-1">{points.toLocaleString()}</p>
+          <DialogContent className="max-w-lg max-h-[90vh] flex flex-col p-0 overflow-hidden">
+            {/* Header with gradient background */}
+            <div className="bg-gradient-to-br from-orange-600 via-amber-500 to-yellow-400 p-6 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+              <div className="relative z-10">
+                <div className="flex items-center justify-between mb-4">
+                  <div>
+                    <DialogTitle className="text-white text-2xl font-bold">Tukar Poin</DialogTitle>
+                    <DialogDescription className="text-orange-100">
+                      Dapatkan voucher eksklusif dengan poin Anda
+                    </DialogDescription>
+                  </div>
+                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center">
+                    <Trophy className="w-10 h-10 text-white" />
+                  </div>
                 </div>
-                <div className="w-14 h-14 bg-white/20 rounded-full flex items-center justify-center">
-                  <Star className="w-8 h-8 text-white" />
+
+                {/* Points display */}
+                <div className="bg-white/20 backdrop-blur-sm rounded-xl p-4 border border-white/30">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-orange-100 text-sm font-medium">Poin Tersedia</p>
+                      <p className="text-white text-3xl font-bold">{points.toLocaleString()}</p>
+                    </div>
+                    <div className="text-right">
+                      <Star className="w-8 h-8 text-yellow-300 fill-yellow-300" />
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>
 
             {/* Scrollable Rewards Section */}
-            <ScrollArea className="flex-1 pr-2">
-              <div className="space-y-3 pb-4">
+            <ScrollArea className="flex-1 px-4 py-4">
+              <div className="grid gap-3">
                 {/* Voucher Rp 100.000 */}
                 <Card
-                  className={`cursor-pointer border-2 transition-all hover:shadow-md ${selectedReward === 'voucher100k' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}
+                  className={`cursor-pointer border-2 transition-all hover:shadow-lg ${selectedReward === 'voucher100k' ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-amber-50' : 'border-gray-200 hover:border-orange-300'}`}
                   onClick={() => setSelectedReward('voucher100k')}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-14 h-14 bg-gradient-to-br from-orange-400 to-amber-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Gift className="w-7 h-7 text-white" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                        <Gift className="w-8 h-8 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-base">Voucher Rp 100.000</p>
-                          <Badge variant="secondary" className="bg-orange-100 text-orange-700">500 Poin</Badge>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-bold text-lg text-gray-900">Voucher Rp 100.000</p>
+                            <Badge className="mt-2 bg-orange-500 text-white">500 Poin</Badge>
+                          </div>
+                          <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            {selectedReward === 'voucher100k' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">Belanja minimum Rp 300.000</p>
-                        <p className="text-xs text-muted-foreground mt-1">Berlaku 30 hari sekarang</p>
-                      </div>
-                      <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0">
-                        {selectedReward === 'voucher100k' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                        <div className="mt-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <Tag className="w-3 h-3" />
+                            <span>Min. pembelian Rp 300.000</span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <ClockIcon className="w-3 h-3" />
+                            <span>Berlaku 30 hari</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -3144,24 +3279,34 @@ export default function RestaurantApp() {
 
                 {/* Diskon 20% */}
                 <Card
-                  className={`cursor-pointer border-2 transition-all hover:shadow-md ${selectedReward === 'diskon20' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}
+                  className={`cursor-pointer border-2 transition-all hover:shadow-lg ${selectedReward === 'diskon20' ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-amber-50' : 'border-gray-200 hover:border-orange-300'}`}
                   onClick={() => setSelectedReward('diskon20')}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-14 h-14 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Tag className="w-7 h-7 text-white" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                        <Tag className="w-8 h-8 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-base">Diskon 20%</p>
-                          <Badge variant="secondary" className="bg-blue-100 text-blue-700">300 Poin</Badge>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-bold text-lg text-gray-900">Diskon 20%</p>
+                            <Badge className="mt-2 bg-blue-500 text-white">300 Poin</Badge>
+                          </div>
+                          <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            {selectedReward === 'diskon20' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">Maksimal diskon Rp 50.000</p>
-                        <p className="text-xs text-muted-foreground mt-1">Berlaku semua menu</p>
-                      </div>
-                      <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0">
-                        {selectedReward === 'diskon20' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                        <div className="mt-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <Tag className="w-3 h-3" />
+                            <span>Maks. diskon Rp 50.000</span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <CheckCircle className="w-3 h-3" />
+                            <span>Berlaku semua menu</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -3169,24 +3314,34 @@ export default function RestaurantApp() {
 
                 {/* Gratis Ongkir */}
                 <Card
-                  className={`cursor-pointer border-2 transition-all hover:shadow-md ${selectedReward === 'gratisongkir' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}
+                  className={`cursor-pointer border-2 transition-all hover:shadow-lg ${selectedReward === 'gratisongkir' ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-amber-50' : 'border-gray-200 hover:border-orange-300'}`}
                   onClick={() => setSelectedReward('gratisongkir')}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-14 h-14 bg-gradient-to-br from-green-400 to-emerald-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Package className="w-7 h-7 text-white" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                        <Package className="w-8 h-8 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-base">Gratis Ongkir</p>
-                          <Badge variant="secondary" className="bg-green-100 text-green-700">200 Poin</Badge>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-bold text-lg text-gray-900">Gratis Ongkir</p>
+                            <Badge className="mt-2 bg-green-500 text-white">200 Poin</Badge>
+                          </div>
+                          <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            {selectedReward === 'gratisongkir' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">Radius maksimal 10 km</p>
-                        <p className="text-xs text-muted-foreground mt-1">Berlaku 14 hari</p>
-                      </div>
-                      <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0">
-                        {selectedReward === 'gratisongkir' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                        <div className="mt-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <MapPin className="w-3 h-3" />
+                            <span>Radius maks. 10 km</span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <ClockIcon className="w-3 h-3" />
+                            <span>Berlaku 14 hari</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -3194,24 +3349,34 @@ export default function RestaurantApp() {
 
                 {/* Buy 1 Get 1 */}
                 <Card
-                  className={`cursor-pointer border-2 transition-all hover:shadow-md ${selectedReward === 'bogo' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}
+                  className={`cursor-pointer border-2 transition-all hover:shadow-lg ${selectedReward === 'bogo' ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-amber-50' : 'border-gray-200 hover:border-orange-300'}`}
                   onClick={() => setSelectedReward('bogo')}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-14 h-14 bg-gradient-to-br from-purple-400 to-pink-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Heart className="w-7 h-7 text-white" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                        <Heart className="w-8 h-8 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-base">Buy 1 Get 1 Free</p>
-                          <Badge variant="secondary" className="bg-purple-100 text-purple-700">400 Poin</Badge>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-bold text-lg text-gray-900">Buy 1 Get 1 Free</p>
+                            <Badge className="mt-2 bg-purple-500 text-white">400 Poin</Badge>
+                          </div>
+                          <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            {selectedReward === 'bogo' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">Untuk menu Ayam Geprek</p>
-                        <p className="text-xs text-muted-foreground mt-1">Berlaku 7 hari</p>
-                      </div>
-                      <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0">
-                        {selectedReward === 'bogo' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                        <div className="mt-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <Gift className="w-3 h-3" />
+                            <span>Untuk menu Ayam Geprek</span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <ClockIcon className="w-3 h-3" />
+                            <span>Berlaku 7 hari</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -3219,24 +3384,34 @@ export default function RestaurantApp() {
 
                 {/* Free Drink */}
                 <Card
-                  className={`cursor-pointer border-2 transition-all hover:shadow-md ${selectedReward === 'freedrink' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}
+                  className={`cursor-pointer border-2 transition-all hover:shadow-lg ${selectedReward === 'freedrink' ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-amber-50' : 'border-gray-200 hover:border-orange-300'}`}
                   onClick={() => setSelectedReward('freedrink')}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-14 h-14 bg-gradient-to-br from-rose-400 to-red-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Flame className="w-7 h-7 text-white" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-red-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                        <Flame className="w-8 h-8 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-base">Minuman Gratis</p>
-                          <Badge variant="secondary" className="bg-red-100 text-red-700">100 Poin</Badge>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-bold text-lg text-gray-900">Minuman Gratis</p>
+                            <Badge className="mt-2 bg-red-500 text-white">100 Poin</Badge>
+                          </div>
+                          <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            {selectedReward === 'freedrink' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">Es Teh / Es Jeruk</p>
-                        <p className="text-xs text-muted-foreground mt-1">Berlaku 7 hari</p>
-                      </div>
-                      <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0">
-                        {selectedReward === 'freedrink' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                        <div className="mt-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <Star className="w-3 h-3" />
+                            <span>Es Teh / Es Jeruk</span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <ClockIcon className="w-3 h-3" />
+                            <span>Berlaku 7 hari</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -3244,24 +3419,34 @@ export default function RestaurantApp() {
 
                 {/* Special Menu */}
                 <Card
-                  className={`cursor-pointer border-2 transition-all hover:shadow-md ${selectedReward === 'specialmenu' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}
+                  className={`cursor-pointer border-2 transition-all hover:shadow-lg ${selectedReward === 'specialmenu' ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-amber-50' : 'border-gray-200 hover:border-orange-300'}`}
                   onClick={() => setSelectedReward('specialmenu')}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-14 h-14 bg-gradient-to-br from-amber-400 to-yellow-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Crown className="w-7 h-7 text-white" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                        <Crown className="w-8 h-8 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-base">Menu Spesial</p>
-                          <Badge variant="secondary" className="bg-amber-100 text-amber-700">600 Poin</Badge>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-bold text-lg text-gray-900">Menu Spesial</p>
+                            <Badge className="mt-2 bg-amber-500 text-white">600 Poin</Badge>
+                          </div>
+                          <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            {selectedReward === 'specialmenu' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">Ayam Geprek Spesial Level 5</p>
-                        <p className="text-xs text-muted-foreground mt-1">Berlaku 30 hari</p>
-                      </div>
-                      <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0">
-                        {selectedReward === 'specialmenu' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                        <div className="mt-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <Flame className="w-3 h-3" />
+                            <span>Ayam Geprek Spesial Level 5</span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <ClockIcon className="w-3 h-3" />
+                            <span>Berlaku 30 hari</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -3269,24 +3454,34 @@ export default function RestaurantApp() {
 
                 {/* Birthday Special */}
                 <Card
-                  className={`cursor-pointer border-2 transition-all hover:shadow-md ${selectedReward === 'birthday' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}
+                  className={`cursor-pointer border-2 transition-all hover:shadow-lg ${selectedReward === 'birthday' ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-amber-50' : 'border-gray-200 hover:border-orange-300'}`}
                   onClick={() => setSelectedReward('birthday')}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-14 h-14 bg-gradient-to-br from-cyan-400 to-blue-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Award className="w-7 h-7 text-white" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                        <Award className="w-8 h-8 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-base">Birthday Special</p>
-                          <Badge variant="secondary" className="bg-cyan-100 text-cyan-700">800 Poin</Badge>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-bold text-lg text-gray-900">Birthday Special</p>
+                            <Badge className="mt-2 bg-cyan-500 text-white">800 Poin</Badge>
+                          </div>
+                          <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            {selectedReward === 'birthday' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">Paket lengkap untuk ulang tahun</p>
-                        <p className="text-xs text-muted-foreground mt-1">Berlaku 60 hari</p>
-                      </div>
-                      <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0">
-                        {selectedReward === 'birthday' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                        <div className="mt-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <Gift className="w-3 h-3" />
+                            <span>Paket lengkap ulang tahun</span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <ClockIcon className="w-3 h-3" />
+                            <span>Berlaku 60 hari</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -3294,24 +3489,34 @@ export default function RestaurantApp() {
 
                 {/* Cashback */}
                 <Card
-                  className={`cursor-pointer border-2 transition-all hover:shadow-md ${selectedReward === 'cashback' ? 'border-orange-500 bg-orange-50' : 'border-gray-200 hover:border-orange-300'}`}
+                  className={`cursor-pointer border-2 transition-all hover:shadow-lg ${selectedReward === 'cashback' ? 'border-orange-500 bg-gradient-to-r from-orange-50 to-amber-50' : 'border-gray-200 hover:border-orange-300'}`}
                   onClick={() => setSelectedReward('cashback')}
                 >
                   <CardContent className="p-4">
-                    <div className="flex items-start gap-3">
-                      <div className="w-14 h-14 bg-gradient-to-br from-teal-400 to-green-500 rounded-xl flex items-center justify-center flex-shrink-0">
-                        <Wallet className="w-7 h-7 text-white" />
+                    <div className="flex items-center gap-4">
+                      <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-green-600 rounded-xl flex items-center justify-center flex-shrink-0 shadow-md">
+                        <Wallet className="w-8 h-8 text-white" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between">
-                          <p className="font-bold text-base">Cashback 10%</p>
-                          <Badge variant="secondary" className="bg-teal-100 text-teal-700">350 Poin</Badge>
+                        <div className="flex items-start justify-between">
+                          <div>
+                            <p className="font-bold text-lg text-gray-900">Cashback 10%</p>
+                            <Badge className="mt-2 bg-teal-500 text-white">350 Poin</Badge>
+                          </div>
+                          <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0 ml-2">
+                            {selectedReward === 'cashback' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                          </div>
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">Maksimal Rp 30.000 cashback</p>
-                        <p className="text-xs text-muted-foreground mt-1">Berlaku 21 hari</p>
-                      </div>
-                      <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center flex-shrink-0">
-                        {selectedReward === 'cashback' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                        <div className="mt-2 text-sm text-gray-600">
+                          <div className="flex items-center gap-1">
+                            <TrendingUp className="w-3 h-3" />
+                            <span>Maks. cashback Rp 30.000</span>
+                          </div>
+                          <div className="flex items-center gap-1 mt-1">
+                            <ClockIcon className="w-3 h-3" />
+                            <span>Berlaku 21 hari</span>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   </CardContent>
@@ -3319,15 +3524,19 @@ export default function RestaurantApp() {
               </div>
             </ScrollArea>
 
-            <DialogFooter className="mt-4 pt-4 border-t">
-              <Button variant="outline" onClick={() => {
-                setShowExchangePoints(false)
-                setSelectedReward(null)
-              }}>
+            <DialogFooter className="p-4 border-t bg-gray-50">
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setShowExchangePoints(false)
+                  setSelectedReward(null)
+                }}
+                disabled={isExchanging}
+              >
                 Batal
               </Button>
               <Button
-                onClick={() => {
+                onClick={async () => {
                   if (!selectedReward) {
                     toast({
                       title: 'Pilih Hadiah',
@@ -3352,17 +3561,144 @@ export default function RestaurantApp() {
                     })
                     return
                   }
-                  setPoints(points - requiredPoints)
-                  setShowExchangePoints(false)
-                  setSelectedReward(null)
-                  toast({
-                    title: 'Poin Berhasil Ditukar!',
-                    description: 'Hadiah telah ditambahkan ke akun Anda',
-                  })
+
+                  setIsExchanging(true)
+                  try {
+                    const response = await fetch('/api/profile/voucher', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({
+                        userId: user?.id,
+                        rewardType: selectedReward,
+                        pointsUsed: requiredPoints
+                      })
+                    })
+
+                    const data = await response.json()
+
+                    if (data.success) {
+                      setPoints(points - requiredPoints)
+                      setGeneratedVoucher(data.voucher)
+                      setShowExchangePoints(false)
+                      setShowVoucherSuccess(true)
+                      setSelectedReward(null)
+                      toast({
+                        title: 'Voucher Berhasil Dibuat!',
+                        description: 'Kode voucher telah tersimpan di akun Anda',
+                      })
+                    } else {
+                      throw new Error(data.error || 'Gagal membuat voucher')
+                    }
+                  } catch (error) {
+                    console.error('Error creating voucher:', error)
+                    toast({
+                      title: 'Gagal Membuat Voucher',
+                      description: 'Terjadi kesalahan saat membuat voucher',
+                      variant: 'destructive'
+                    })
+                  } finally {
+                    setIsExchanging(false)
+                  }
                 }}
-                className="bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600"
+                disabled={isExchanging || !selectedReward}
+                className="bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-700 hover:to-amber-600 text-white min-w-[140px]"
               >
-                Tukar Poin
+                {isExchanging ? 'Memproses...' : 'Tukar Poin'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Voucher Success Dialog */}
+        <Dialog open={showVoucherSuccess} onOpenChange={setShowVoucherSuccess}>
+          <DialogContent className="max-w-md text-center p-0 overflow-hidden">
+            <div className="bg-gradient-to-br from-green-500 to-emerald-600 p-8 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
+              <div className="absolute bottom-0 left-0 w-24 h-24 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
+              <div className="relative z-10">
+                <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center mx-auto mb-4">
+                  <CheckCircle className="w-12 h-12 text-white" />
+                </div>
+                <DialogTitle className="text-white text-2xl font-bold mb-2">Voucher Berhasil!</DialogTitle>
+                <DialogDescription className="text-green-100">
+                  Kode voucher Anda siap digunakan
+                </DialogDescription>
+              </div>
+            </div>
+
+            <div className="p-6">
+              <div className="bg-gradient-to-br from-orange-50 to-amber-50 border-2 border-dashed border-orange-300 rounded-xl p-6 mb-4">
+                <p className="text-sm text-gray-600 mb-2 font-medium">Kode Voucher</p>
+                <div className="flex items-center justify-center gap-2">
+                  <p className="text-2xl font-bold text-gray-900 tracking-wider">{generatedVoucher?.code}</p>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => {
+                      navigator.clipboard.writeText(generatedVoucher?.code)
+                      toast({
+                        title: 'Kode Disalin!',
+                        description: 'Kode voucher telah disalin ke clipboard',
+                      })
+                    }}
+                  >
+                    <Copy className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+
+              <div className="bg-white border rounded-xl p-4 mb-4 text-left">
+                <div className="flex items-center gap-3 mb-3">
+                  <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                    <Gift className="w-5 h-5 text-orange-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-gray-900">{generatedVoucher?.name}</p>
+                    <p className="text-sm text-gray-600">Voucher sekali pakai</p>
+                  </div>
+                </div>
+                <div className="space-y-2 text-sm text-gray-600">
+                  {generatedVoucher?.discountAmount > 0 && (
+                    <div className="flex justify-between">
+                      <span>Nilai Diskon</span>
+                      <span className="font-semibold text-orange-600">Rp {generatedVoucher.discountAmount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  {generatedVoucher?.discountPercent > 0 && (
+                    <div className="flex justify-between">
+                      <span>Diskon Persentase</span>
+                      <span className="font-semibold text-orange-600">{generatedVoucher.discountPercent}%</span>
+                    </div>
+                  )}
+                  {generatedVoucher?.minPurchase > 0 && (
+                    <div className="flex justify-between">
+                      <span>Min. Pembelian</span>
+                      <span>Rp {generatedVoucher.minPurchase.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between">
+                    <span>Berlaku Hingga</span>
+                    <span className="font-medium">{new Date(generatedVoucher?.expiresAt).toLocaleDateString('id-ID', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+                  </div>
+                </div>
+              </div>
+
+              <Alert className="bg-blue-50 border-blue-200">
+                <Info className="w-4 h-4 text-blue-600" />
+                <AlertDescription className="text-sm text-blue-800">
+                  Gunakan kode voucher ini di halaman keranjang belanja saat checkout
+                </AlertDescription>
+              </Alert>
+            </div>
+
+            <DialogFooter className="p-4 border-t bg-gray-50">
+              <Button
+                onClick={() => {
+                  setShowVoucherSuccess(false)
+                }}
+                className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white w-full"
+              >
+                Mengerti
               </Button>
             </DialogFooter>
           </DialogContent>
