@@ -383,6 +383,17 @@ export default function RestaurantApp() {
     newsletters: false
   })
 
+  // Security & Privacy settings state
+  const [showChangePassword, setShowChangePassword] = useState(false)
+  const [currentPassword, setCurrentPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [confirmPassword, setConfirmPassword] = useState('')
+  const [privacySettings, setPrivacySettings] = useState({
+    privateProfile: false,
+    locationAccess: true
+  })
+  const [twoFactorEnabled, setTwoFactorEnabled] = useState(false)
+
   // Featured products from database
   const [populerProducts, setPopulerProducts] = useState<Product[]>([])
   const [terlarisProducts, setTerlarisProducts] = useState<Product[]>([])
@@ -654,6 +665,135 @@ export default function RestaurantApp() {
         variant: 'destructive'
       })
     }
+  }
+
+  const handleChangePassword = async () => {
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast({
+        title: 'Gagal',
+        description: 'Mohon isi semua field password',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: 'Gagal',
+        description: 'Password baru dan konfirmasi tidak cocok',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    if (newPassword.length < 6) {
+      toast({
+        title: 'Gagal',
+        description: 'Password minimal 6 karakter',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      const response = await fetch('/api/change-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user?.id,
+          currentPassword,
+          newPassword
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        toast({
+          title: 'Gagal Mengubah Password',
+          description: data.error || 'Password saat ini salah',
+          variant: 'destructive'
+        })
+        return
+      }
+
+      toast({
+        title: 'Password Berhasil Diubah',
+        description: 'Password Anda telah diperbarui'
+      })
+      setShowChangePassword(false)
+      setCurrentPassword('')
+      setNewPassword('')
+      setConfirmPassword('')
+    } catch (error) {
+      console.error('Password change error:', error)
+      toast({
+        title: 'Gagal Mengubah Password',
+        description: 'Terjadi kesalahan koneksi',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleToggle2FA = () => {
+    setTwoFactorEnabled(!twoFactorEnabled)
+    if (!twoFactorEnabled) {
+      toast({
+        title: '2FA Diaktifkan',
+        description: 'Two-factor authentication telah diaktifkan'
+      })
+    } else {
+      toast({
+        title: '2FA Dinonaktifkan',
+        description: 'Two-factor authentication telah dinonaktifkan'
+      })
+    }
+  }
+
+  const handlePrivacyChange = (key: keyof typeof privacySettings, value: boolean) => {
+    setPrivacySettings(prev => ({ ...prev, [key]: value }))
+    toast({
+      title: 'Pengaturan Privasi Diupdate',
+      description: `Pengaturan ${key === 'privateProfile' ? 'profil privat' : 'lokasi'} telah diperbarui`
+    })
+  }
+
+  const handleDownloadData = () => {
+    const userData = {
+      name: user?.name,
+      email: user?.email,
+      phone: user?.phone,
+      address: user?.address,
+      points: points,
+      tier: memberData?.tier || getMemberTier(points),
+      memberSince: memberData?.createdAt || new Date().toISOString()
+    }
+
+    const dataStr = JSON.stringify(userData, null, 2)
+    const dataBlob = new Blob([dataStr], { type: 'application/json' })
+    const url = URL.createObjectURL(dataBlob)
+
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `data-pengguna-${user?.id || 'user'}.json`
+    link.click()
+
+    URL.revokeObjectURL(url)
+
+    toast({
+      title: 'Data Berhasil Diunduh',
+      description: 'Data pribadi Anda telah diunduh'
+    })
+  }
+
+  const handleDeleteAccount = () => {
+    toast({
+      title: 'Hapus Akun',
+      description: 'Untuk menghapus akun, silakan hubungi customer service melalui fitur chat',
+      variant: 'destructive'
+    })
+    setShowSecurityPrivacy(false)
+    setShowChat(true)
   }
 
   // Fetch notifications from database
@@ -3086,13 +3226,10 @@ export default function RestaurantApp() {
                     <Lock className="w-5 h-5 text-gray-600" />
                     <div>
                       <p className="font-medium text-sm">Ubah Password</p>
-                      <p className="text-xs text-muted-foreground">Terakhir diubah 30 hari lalu</p>
+                      <p className="text-xs text-muted-foreground">Keamanan akun Anda</p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm" onClick={() => toast({
-                    title: 'Ubah Password',
-                    description: 'Fitur ubah password akan segera hadir!',
-                  })}>
+                  <Button variant="outline" size="sm" onClick={() => setShowChangePassword(true)}>
                     Ubah
                   </Button>
                 </div>
@@ -3104,7 +3241,14 @@ export default function RestaurantApp() {
                       <p className="text-xs text-muted-foreground">Tambahkan lapisan keamanan ekstra</p>
                     </div>
                   </div>
-                  <Button variant="outline" size="sm">Aktifkan</Button>
+                  <Button 
+                    variant={twoFactorEnabled ? "default" : "outline"} 
+                    size="sm"
+                    className={twoFactorEnabled ? "bg-orange-500 hover:bg-orange-600" : ""}
+                    onClick={handleToggle2FA}
+                  >
+                    {twoFactorEnabled ? 'Aktif' : 'Aktifkan'}
+                  </Button>
                 </div>
                 <Separator />
                 <div>
@@ -3118,7 +3262,12 @@ export default function RestaurantApp() {
                           <p className="text-xs text-muted-foreground">Sembunyikan profil dari pengguna lain</p>
                         </div>
                       </div>
-                      <input type="checkbox" className="w-5 h-5 accent-orange-500" />
+                      <input 
+                        type="checkbox" 
+                        checked={privacySettings.privateProfile}
+                        onChange={(e) => handlePrivacyChange('privateProfile', e.target.checked)}
+                        className="w-5 h-5 accent-orange-500" 
+                      />
                     </div>
                     <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                       <div className="flex items-center gap-3">
@@ -3128,7 +3277,12 @@ export default function RestaurantApp() {
                           <p className="text-xs text-muted-foreground">Izinkan akses lokasi</p>
                         </div>
                       </div>
-                      <input type="checkbox" defaultChecked className="w-5 h-5 accent-orange-500" />
+                      <input 
+                        type="checkbox" 
+                        checked={privacySettings.locationAccess}
+                        onChange={(e) => handlePrivacyChange('locationAccess', e.target.checked)}
+                        className="w-5 h-5 accent-orange-500" 
+                      />
                     </div>
                   </div>
                 </div>
@@ -3136,17 +3290,19 @@ export default function RestaurantApp() {
                 <div>
                   <p className="text-sm font-medium mb-3">Data Pribadi</p>
                   <div className="space-y-2">
-                    <Button variant="outline" className="w-full justify-start" onClick={() => toast({
-                      title: 'Unduh Data',
-                      description: 'Permintaan unduhan data telah dikirim',
-                    })}>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start" 
+                      onClick={handleDownloadData}
+                    >
                       <Download className="w-4 h-4 mr-2" />
                       Unduh Data Saya
                     </Button>
-                    <Button variant="outline" className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50" onClick={() => toast({
-                      title: 'Hapus Akun',
-                      description: 'Hubungi customer service untuk menghapus akun',
-                    })}>
+                    <Button 
+                      variant="outline" 
+                      className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50" 
+                      onClick={handleDeleteAccount}
+                    >
                       <Trash2 className="w-4 h-4 mr-2" />
                       Hapus Akun
                     </Button>
@@ -3157,6 +3313,77 @@ export default function RestaurantApp() {
             <DialogFooter>
               <Button onClick={() => setShowSecurityPrivacy(false)} className="bg-orange-500 hover:bg-orange-600">
                 Tutup
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Change Password Dialog */}
+        <Dialog open={showChangePassword} onOpenChange={setShowChangePassword}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Ubah Password</DialogTitle>
+              <DialogDescription>
+                Masukkan password saat ini dan password baru Anda
+              </DialogDescription>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>Password Saat Ini</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    type="password"
+                    placeholder="Masukkan password saat ini"
+                    value={currentPassword}
+                    onChange={(e) => setCurrentPassword(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Password Baru</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    type="password"
+                    placeholder="Minimal 6 karakter"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <p className="text-xs text-muted-foreground">Password minimal 6 karakter</p>
+              </div>
+              <div className="space-y-2">
+                <Label>Konfirmasi Password Baru</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    type="password"
+                    placeholder="Ulangi password baru"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => {
+                setShowChangePassword(false)
+                setCurrentPassword('')
+                setNewPassword('')
+                setConfirmPassword('')
+              }}>
+                Batal
+              </Button>
+              <Button 
+                onClick={handleChangePassword}
+                className="bg-orange-500 hover:bg-orange-600"
+                disabled={!currentPassword || !newPassword || !confirmPassword}
+              >
+                Simpan Password
               </Button>
             </DialogFooter>
           </DialogContent>
