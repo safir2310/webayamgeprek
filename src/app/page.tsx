@@ -334,6 +334,7 @@ export default function RestaurantApp() {
   const [points, setPoints] = useState(150)
   const [memberCardTab, setMemberCardTab] = useState<'card' | 'barcode'>('card')
   const [productTab, setProductTab] = useState<'populer' | 'terlaris' | 'terbaru'>('populer')
+  const [accountTab, setAccountTab] = useState<'profile' | 'orders' | 'vouchers' | 'favorites'>('profile')
 
   // Featured products from database
   const [populerProducts, setPopulerProducts] = useState<Product[]>([])
