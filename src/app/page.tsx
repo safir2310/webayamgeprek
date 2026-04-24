@@ -505,6 +505,11 @@ export default function RestaurantApp() {
           return
         }
 
+        // Save token to localStorage
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token)
+        }
+
         // Set user data
         setIsLoggedIn(true)
         setUser(data.user)
@@ -588,6 +593,7 @@ export default function RestaurantApp() {
   }
 
   const confirmLogout = () => {
+    localStorage.removeItem('auth_token')
     setIsLoggedIn(false)
     setUser(null)
     setMemberData(null)

@@ -1,26 +1,27 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Card, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
+import { Card, CardContent } from '@/components/ui/card'
+import { ShieldCheck, Utensils, ArrowRight } from 'lucide-react'
 import { toast } from '@/hooks/use-toast'
-import { Utensils, Mail, Lock, ShieldCheck } from 'lucide-react'
+import { login } from '@/lib/auth'
 
 export default function AdminLoginPage() {
-  const router = useRouter()
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [isLoading, setIsLoading] = useState(false)
 
-  const handleLogin = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault()
+
     if (!email || !password) {
       toast({
         title: 'Login Gagal',
         description: 'Mohon isi semua field',
-        variant: 'destructive'
+        variant: 'destructive',
       })
       return
     }
@@ -28,40 +29,34 @@ export default function AdminLoginPage() {
     setIsLoading(true)
 
     try {
-      const response = await fetch('/api/admin/login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
-      })
+      const result = await login(email, password)
 
-      const data = await response.json()
-
-      if (!response.ok) {
+      if (result.success) {
+        // Check user role and redirect accordingly
+        if (result.user?.role === 'admin') {
+          window.location.href = '/admin/dashboard'
+        } else if (result.user?.role === 'cashier') {
+          window.location.href = '/?screen=pos'
+        } else {
+          toast({
+            title: 'Akses Ditolak',
+            description: 'Halaman ini khusus untuk admin dan kasir',
+            variant: 'destructive',
+          })
+        }
+      } else {
         toast({
           title: 'Login Gagal',
-          description: data.error || 'Email atau password salah',
-          variant: 'destructive'
+          description: result.error || 'Email atau password salah',
+          variant: 'destructive',
         })
-        setIsLoading(false)
-        return
       }
-
-      // Store admin data in localStorage (in production, use httpOnly cookies)
-      localStorage.setItem('adminUser', JSON.stringify(data.user))
-
-      toast({
-        title: 'Login Berhasil',
-        description: `Selamat datang, ${data.user.name}!`,
-      })
-
-      // Redirect to admin dashboard
-      router.push('/admin/dashboard')
     } catch (error) {
       console.error('Login error:', error)
       toast({
         title: 'Login Gagal',
         description: 'Terjadi kesalahan koneksi',
-        variant: 'destructive'
+        variant: 'destructive',
       })
     } finally {
       setIsLoading(false)
@@ -69,80 +64,116 @@ export default function AdminLoginPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-orange-500 via-orange-400 to-yellow-400 flex items-center justify-center p-4">
-      <Card className="w-full max-w-md p-6 shadow-2xl">
-        <CardContent className="space-y-6 pt-6">
-          <div className="text-center">
-            <div className="text-6xl mb-4">🍗</div>
-            <h1 className="text-3xl font-bold mb-2">Ayam Geprek</h1>
-            <p className="text-muted-foreground">Admin & Kasir Panel</p>
-            <div className="flex items-center justify-center gap-2 mt-3 text-sm text-muted-foreground">
-              <ShieldCheck className="w-4 h-4" />
-              <span>Sistem Manajemen Restoran</span>
-            </div>
+    <div className="min-h-screen bg-gradient-to-br from-orange-50 via-amber-50 to-yellow-50 flex items-center justify-center p-4">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl shadow-lg mb-4">
+            <Utensils className="w-8 h-8 text-white" />
           </div>
+          <h1 className="text-2xl font-bold text-gray-900 mb-2">
+            Ayam Geprek Sambal Ijo
+          </h1>
+          <p className="text-gray-600">Portal Admin & Kasir</p>
+        </div>
 
-          <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <div className="relative">
-                <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+        {/* Login Card */}
+        <Card className="shadow-xl">
+          <CardContent className="pt-6">
+            <div className="flex items-center gap-3 mb-6">
+              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                <ShieldCheck className="w-6 h-6 text-orange-600" />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-gray-900">Login</h2>
+                <p className="text-sm text-gray-600">Masuk untuk mengelola sistem</p>
+              </div>
+            </div>
+
+            <form onSubmit={handleLogin} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="email">Email</Label>
                 <Input
+                  id="email"
                   type="email"
                   placeholder="admin@ayamgeprek.com"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
-                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                  className="h-11"
+                  disabled={isLoading}
                 />
               </div>
-            </div>
-            <div className="space-y-2">
-              <Label>Password</Label>
-              <div className="relative">
-                <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+
+              <div className="space-y-2">
+                <Label htmlFor="password">Password</Label>
                 <Input
+                  id="password"
                   type="password"
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
-                  onKeyDown={(e) => e.key === 'Enter' && handleLogin()}
+                  className="h-11"
+                  disabled={isLoading}
                 />
               </div>
-            </div>
-          </div>
 
-          <Button
-            onClick={handleLogin}
-            disabled={isLoading}
-            className="w-full bg-orange-500 hover:bg-orange-600 h-12"
-          >
-            {isLoading ? 'Memproses...' : 'Masuk'}
-          </Button>
+              <Button
+                type="submit"
+                className="w-full h-11 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 shadow-lg"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <span className="flex items-center gap-2">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                    Memproses...
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-2">
+                    Masuk
+                    <ArrowRight className="w-4 h-4" />
+                  </span>
+                )}
+              </Button>
+            </form>
 
-          <div className="text-center pt-4 border-t">
-            <p className="text-sm text-muted-foreground mb-3">Demo Credentials:</p>
-            <div className="space-y-2 text-xs bg-gray-50 p-3 rounded-lg text-left">
-              <div>
-                <span className="font-semibold">Admin:</span> admin@ayamgeprek.com / admin123
+            {/* Demo Accounts */}
+            <div className="mt-6 pt-6 border-t">
+              <p className="text-xs text-gray-500 font-medium mb-3 text-center uppercase tracking-wider">
+                Akun Demo
+              </p>
+              <div className="space-y-2">
+                <div className="bg-gray-50 rounded-lg p-3 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700">Admin</span>
+                    <code className="text-xs bg-white px-2 py-1 rounded border">
+                      admin@ayamgeprek.com / admin123
+                    </code>
+                  </div>
+                </div>
+                <div className="bg-gray-50 rounded-lg p-3 text-sm">
+                  <div className="flex justify-between items-center">
+                    <span className="text-gray-700">Kasir</span>
+                    <code className="text-xs bg-white px-2 py-1 rounded border">
+                      kasir@ayamgeprek.com / kasir123
+                    </code>
+                  </div>
+                </div>
               </div>
-              <div>
-                <span className="font-semibold">Kasir:</span> kasir@ayamgeprek.com / kasir123
-              </div>
             </div>
-          </div>
 
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => router.push('/')}
-          >
-            <Utensils className="mr-2 h-5 w-5" />
-            Kembali ke Aplikasi Pelanggan
-          </Button>
-        </CardContent>
-      </Card>
+            {/* Back to Home */}
+            <div className="mt-6 text-center">
+              <Button
+                variant="ghost"
+                onClick={() => (window.location.href = '/')}
+                className="text-sm text-gray-600 hover:text-gray-900"
+              >
+                Kembali ke Beranda
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
+      </div>
     </div>
   )
 }

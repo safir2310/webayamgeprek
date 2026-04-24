@@ -7,19 +7,20 @@ const registerSchema = z.object({
   email: z.string().email(),
   phone: z.string().min(10),
   password: z.string().min(6),
+  role: z.enum(['user', 'cashier', 'admin']).default('user'),
 })
 
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    const { name, email, phone, password } = registerSchema.parse(body)
+    const data = registerSchema.parse(body)
 
     // Check if email already exists
-    const existingUser = await db.user.findUnique({
-      where: { email },
+    const existingEmail = await db.user.findUnique({
+      where: { email: data.email },
     })
 
-    if (existingUser) {
+    if (existingEmail) {
       return NextResponse.json(
         { error: 'Email sudah terdaftar' },
         { status: 400 }
@@ -28,7 +29,7 @@ export async function POST(req: NextRequest) {
 
     // Check if phone already exists
     const existingPhone = await db.user.findUnique({
-      where: { phone },
+      where: { phone: data.phone },
     })
 
     if (existingPhone) {
@@ -38,38 +39,43 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Create user (In production, use bcrypt to hash password)
+    // In production, use bcrypt to hash password
+    const hashedPassword = data.password
+
     const user = await db.user.create({
       data: {
-        name,
-        email,
-        phone,
-        password,
-        role: 'user',
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        password: hashedPassword,
+        role: data.role,
       },
     })
 
-    // Generate 6 digit member ID
-    const memberId = String(Math.floor(100000 + Math.random() * 900000))
+    // Create member record if user is not admin or cashier
+    if (data.role === 'user') {
+      await db.member.create({
+        data: {
+          userId: user.id,
+          memberId: Math.floor(100000 + Math.random() * 900000).toString(),
+          points: 0,
+          tier: 'regular',
+        },
+      })
+    }
 
-    // Create member record
-    await db.member.create({
-      data: {
-        userId: user.id,
-        memberId,
-        points: 0,
-        tier: 'regular',
-        totalSpent: 0,
-      },
-    })
+    // In production, use JWT or NextAuth.js
+    const token = Buffer.from(JSON.stringify({ userId: user.id })).toString('base64')
 
     return NextResponse.json({
-      message: 'Registrasi berhasil',
+      token,
+      role: user.role,
       user: {
         id: user.id,
         name: user.name,
         email: user.email,
         phone: user.phone,
+        avatar: user.avatar,
       },
     })
   } catch (error) {
