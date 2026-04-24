@@ -992,7 +992,8 @@ export default function RestaurantApp() {
 
                 <div className="flex items-end justify-between">
                   <div>
-                    <h3 className="font-bold text-xl">{memberData?.user?.phone || user?.phone || '081234567890'}</h3>
+                    <p className="text-white/60 text-xs mb-1">Poin Rewards</p>
+                    <h3 className="font-bold text-xl">{points.toLocaleString()}</h3>
                   </div>
                   <div className="text-right">
                     <p className="text-white/60 text-xs mb-1">ID Member</p>
