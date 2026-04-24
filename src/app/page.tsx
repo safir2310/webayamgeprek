@@ -254,6 +254,28 @@ const formatTimeAgo = (dateString: string) => {
   return `${diffDays} hari yang lalu`
 }
 
+// Helper function to get payment method display name
+const getPaymentMethodDisplayName = (method: string): string => {
+  const methods: Record<string, string> = {
+    cash: 'Cash',
+    qris: 'QRIS',
+    transfer: 'Transfer Bank',
+  }
+  return methods[method] || method
+}
+
+// Helper function to get order status display
+const getOrderStatusDisplay = (status: string): string => {
+  const statuses: Record<string, string> = {
+    pending: 'Menunggu Pembayaran',
+    paid: 'Sudah Dibayar',
+    processing: 'Sedang Diproses',
+    completed: 'Selesai',
+    cancelled: 'Dibatalkan',
+  }
+  return statuses[status] || status
+}
+
 // Header Component with Notification and Chat
 interface HeaderProps {
   notificationCount?: number
@@ -437,6 +459,10 @@ export default function RestaurantApp() {
   const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null)
   const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false)
   const [loadingRedeemProducts, setLoadingRedeemProducts] = useState(false)
+
+  // Receipt preview state
+  const [showReceiptPreviewDialog, setShowReceiptPreviewDialog] = useState(false)
+  const [previewOrderData, setPreviewOrderData] = useState<any>(null)
 
   // Notification & Chat state
   const [showNotifications, setShowNotifications] = useState(false)
@@ -2753,41 +2779,195 @@ export default function RestaurantApp() {
             <Button
               onClick={async () => {
                 try {
-                  const response = await fetch(`/api/orders/${lastOrderId}/receipt`)
+                  const response = await fetch(`/api/orders/${lastOrderId}`)
                   if (response.ok) {
-                    const blob = await response.blob()
-                    const url = window.URL.createObjectURL(blob)
-                    const a = document.createElement('a')
-                    a.href = url
-                    a.download = `struk-${latestOrder?.orderNumber}.pdf`
-                    document.body.appendChild(a)
-                    a.click()
-                    window.URL.revokeObjectURL(url)
-                    document.body.removeChild(a)
-
-                    toast({
-                      title: 'Struk Berhasil Diunduh',
-                      description: 'File PDF struk telah diunduh',
-                    })
+                    const data = await response.json()
+                    setPreviewOrderData(data.order)
+                    setShowReceiptPreviewDialog(true)
                   } else {
-                    throw new Error('Gagal mengunduh struk')
+                    throw new Error('Gagal mengambil data pesanan')
                   }
                 } catch (error) {
-                  console.error('Error downloading receipt:', error)
+                  console.error('Error fetching order:', error)
                   toast({
-                    title: 'Gagal Mengunduh Struk',
-                    description: 'Terjadi kesalahan saat mengunduh struk',
+                    title: 'Gagal Mengambil Pesanan',
+                    description: 'Terjadi kesalahan saat mengambil data pesanan',
                     variant: 'destructive'
                   })
                 }
               }}
               className="w-full mt-4 gap-2 bg-green-600 hover:bg-green-700"
             >
-              <Download className="w-5 h-5" />
-              Download Struk PDF
+              <Receipt className="w-5 h-5" />
+              Lihat & Download Struk
             </Button>
           )}
         </div>
+
+        {/* Receipt Preview Dialog */}
+        <Dialog open={showReceiptPreviewDialog} onOpenChange={setShowReceiptPreviewDialog}>
+          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Preview Struk</DialogTitle>
+              <DialogDescription>
+                Cek struk sebelum download sebagai PDF
+              </DialogDescription>
+            </DialogHeader>
+
+            {previewOrderData && (
+              <div className="border-4 border-double border-gray-300 p-6 bg-white my-4">
+                {/* Header */}
+                <div className="text-center mb-4">
+                  <h2 className="text-2xl font-bold text-orange-600 mb-1">Ayam Geprek Sambal Ijo</h2>
+                  <p className="text-sm text-gray-600">Jl. Merdeka No. 123, Jakarta</p>
+                  <p className="text-sm text-gray-600">+62 812-3456-7890</p>
+                </div>
+
+                <Separator className="my-4" />
+
+                {/* Order Info */}
+                <div className="mb-4">
+                  <div className="flex justify-between mb-2">
+                    <span className="font-semibold">Order #{previewOrderData.orderNumber}</span>
+                    <span className="text-sm text-gray-600">
+                      {new Date(previewOrderData.createdAt).toLocaleString('id-ID')}
+                    </span>
+                  </div>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Customer:</span>
+                      <span className="font-medium">{previewOrderData.user?.name || '-'}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Metode Pembayaran:</span>
+                      <span className="font-medium">{getPaymentMethodDisplayName(previewOrderData.paymentMethod)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Status:</span>
+                      <span className="font-medium">{getOrderStatusDisplay(previewOrderData.status)}</span>
+                    </div>
+                  </div>
+                </div>
+
+                <Separator className="my-4" />
+
+                {/* Order Items */}
+                <div className="mb-4">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="border-b-2 border-gray-300">
+                        <th className="py-2 text-left">Item</th>
+                        <th className="py-2 text-center">Qty</th>
+                        <th className="py-2 text-right">Harga</th>
+                        <th className="py-2 text-right">Subtotal</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {latestOrder?.items.map((item, idx) => (
+                        <tr key={idx} className="border-b border-gray-200">
+                          <td className="py-2">{item.product.name}</td>
+                          <td className="py-2 text-center">{item.qty}</td>
+                          <td className="py-2 text-right">Rp {item.product.price.toLocaleString()}</td>
+                          <td className="py-2 text-right">Rp {(item.product.price * item.qty).toLocaleString()}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <Separator className="my-4" />
+
+                {/* Totals */}
+                <div className="space-y-2 text-sm">
+                  <div className="flex justify-between">
+                    <span>Subtotal:</span>
+                    <span>Rp {previewOrderData.subtotal.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span>Pajak (10%):</span>
+                    <span>Rp {previewOrderData.tax.toLocaleString()}</span>
+                  </div>
+                  {previewOrderData.discount > 0 && (
+                    <div className="flex justify-between text-green-600">
+                      <span>Diskon:</span>
+                      <span>-Rp {previewOrderData.discount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-lg font-bold border-t-2 border-gray-300 pt-2">
+                    <span>Total:</span>
+                    <span className="text-orange-600">Rp {previewOrderData.total.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {previewOrderData.note && (
+                  <>
+                    <Separator className="my-4" />
+                    <div className="text-sm">
+                      <span className="font-semibold">Catatan: </span>
+                      <span>{previewOrderData.note}</span>
+                    </div>
+                  </>
+                )}
+
+                <Separator className="my-4" />
+
+                {/* Thank you message */}
+                <div className="text-center">
+                  <p className="font-semibold text-orange-600 mb-1">Terima kasih atas pesanan Anda!</p>
+                  <p className="text-sm text-gray-600">Simpan struk ini sebagai bukti pembayaran</p>
+                  <p className="text-sm text-gray-600 mt-1">Ayam Geprek Sambal Ijo</p>
+                </div>
+              </div>
+            )}
+
+            <DialogFooter className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowReceiptPreviewDialog(false)}
+              >
+                Tutup
+              </Button>
+              <Button
+                onClick={async () => {
+                  try {
+                    const response = await fetch(`/api/orders/${previewOrderData?.id}/receipt`)
+                    if (response.ok) {
+                      const blob = await response.blob()
+                      const url = window.URL.createObjectURL(blob)
+                      const a = document.createElement('a')
+                      a.href = url
+                      a.download = `struk-${previewOrderData?.orderNumber}.pdf`
+                      document.body.appendChild(a)
+                      a.click()
+                      window.URL.revokeObjectURL(url)
+                      document.body.removeChild(a)
+
+                      toast({
+                        title: 'Struk Berhasil Diunduh',
+                        description: 'File PDF struk telah diunduh',
+                      })
+
+                      setShowReceiptPreviewDialog(false)
+                    } else {
+                      throw new Error('Gagal mengunduh struk')
+                    }
+                  } catch (error) {
+                    console.error('Error downloading receipt:', error)
+                    toast({
+                      title: 'Gagal Mengunduh Struk',
+                      description: 'Terjadi kesalahan saat mengunduh struk',
+                      variant: 'destructive'
+                    })
+                  }
+                }}
+                className="bg-green-600 hover:bg-green-700 gap-2"
+              >
+                <Download className="w-4 h-4" />
+                Download PDF
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
 
         {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-2">
@@ -3223,38 +3403,27 @@ export default function RestaurantApp() {
                         <Button
                           onClick={async () => {
                             try {
-                              const response = await fetch(`/api/orders/${order.id}/receipt`)
+                              const response = await fetch(`/api/orders/${order.id}`)
                               if (response.ok) {
-                                const blob = await response.blob()
-                                const url = window.URL.createObjectURL(blob)
-                                const a = document.createElement('a')
-                                a.href = url
-                                a.download = `struk-${order.orderNumber}.pdf`
-                                document.body.appendChild(a)
-                                a.click()
-                                window.URL.revokeObjectURL(url)
-                                document.body.removeChild(a)
-
-                                toast({
-                                  title: 'Struk Berhasil Diunduh',
-                                  description: `Struk untuk pesanan ${order.orderNumber} telah diunduh`,
-                                })
+                                const data = await response.json()
+                                setPreviewOrderData(data.order)
+                                setShowReceiptPreviewDialog(true)
                               } else {
-                                throw new Error('Gagal mengunduh struk')
+                                throw new Error('Gagal mengambil data pesanan')
                               }
                             } catch (error) {
-                              console.error('Error downloading receipt:', error)
+                              console.error('Error fetching order:', error)
                               toast({
-                                title: 'Gagal Mengunduh Struk',
-                                description: 'Terjadi kesalahan saat mengunduh struk',
+                                title: 'Gagal Mengambil Pesanan',
+                                description: 'Terjadi kesalahan saat mengambil data pesanan',
                                 variant: 'destructive'
                               })
                             }
                           }}
                           className="w-full mt-3 bg-orange-500 hover:bg-orange-600"
                         >
-                          <Download className="w-4 h-4 mr-2" />
-                          Download Struk
+                          <Receipt className="w-4 h-4 mr-2" />
+                          Lihat Struk
                         </Button>
                       </CardContent>
                     </Card>
