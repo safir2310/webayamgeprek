@@ -65,7 +65,9 @@ import {
   Globe,
   Eye,
   EyeOff,
-  Copy
+  Copy,
+  FileText,
+  Info
 } from 'lucide-react'
 
 type ScreenType = 'splash' | 'login' | 'register' | 'home' | 'menu' | 'cart' | 'checkout' | 'orderStatus' | 'account' | 'pos' | 'shift'
@@ -2651,6 +2653,129 @@ export default function RestaurantApp() {
               </div>
             </TabsContent>
           </Tabs>
+        </div>
+
+        {/* Menu Items */}
+        <div className="p-4 space-y-2">
+          <Card>
+            <CardContent className="p-0">
+              <button
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                onClick={() => {
+                  toast({
+                    title: 'Tukar Poin',
+                    description: 'Fitur tukar poin akan segera hadir!',
+                  })
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <Star className="w-5 h-5 text-orange-500" />
+                  <span>Tukar Poin</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+              <Separator />
+              <button
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                onClick={() => {
+                  toast({
+                    title: 'Keamanan dan Privasi',
+                    description: 'Fitur keamanan dan privasi akan segera hadir!',
+                  })
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <ShieldCheck className="w-5 h-5 text-blue-500" />
+                  <span>Keamanan dan Privasi</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+              <Separator />
+              <button
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                onClick={() => {
+                  toast({
+                    title: 'Pengaturan Notifikasi',
+                    description: 'Fitur pengaturan notifikasi akan segera hadir!',
+                  })
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <BellRing className="w-5 h-5 text-purple-500" />
+                  <span>Pengaturan Notifikasi</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+              <Separator />
+              <button
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                onClick={() => {
+                  toast({
+                    title: 'Bahasa',
+                    description: 'Fitur pengaturan bahasa akan segera hadir!',
+                  })
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <Globe className="w-5 h-5 text-green-500" />
+                  <span>Bahasa</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardContent className="p-0">
+              <button
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                onClick={() => {
+                  toast({
+                    title: 'Kebijakan',
+                    description: 'Fitur kebijakan akan segera hadir!',
+                  })
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <FileText className="w-5 h-5 text-gray-600" />
+                  <span>Kebijakan</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+              <Separator />
+              <button
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                onClick={() => {
+                  toast({
+                    title: 'Pusat Bantuan',
+                    description: 'Fitur pusat bantuan akan segera hadir!',
+                  })
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <HelpCircle className="w-5 h-5 text-orange-500" />
+                  <span>Pusat Bantuan</span>
+                </div>
+                <ChevronRight className="w-5 h-5 text-muted-foreground" />
+              </button>
+              <Separator />
+              <button
+                className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
+                onClick={() => {
+                  toast({
+                    title: 'Versi Aplikasi',
+                    description: 'Versi 1.0.0',
+                  })
+                }}
+              >
+                <div className="flex items-center gap-3">
+                  <Info className="w-5 h-5 text-blue-600" />
+                  <span>Versi Aplikasi</span>
+                </div>
+                <span className="text-sm text-muted-foreground">1.0.0</span>
+              </button>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Logout Button */}
