@@ -67,7 +67,9 @@ import {
   EyeOff,
   Copy,
   FileText,
-  Info
+  Info,
+  Download,
+  Trash2
 } from 'lucide-react'
 
 type ScreenType = 'splash' | 'login' | 'register' | 'home' | 'menu' | 'cart' | 'checkout' | 'orderStatus' | 'account' | 'pos' | 'shift'
@@ -360,6 +362,24 @@ export default function RestaurantApp() {
   const [editName, setEditName] = useState('')
   const [editEmail, setEditEmail] = useState('')
   const [editPhone, setEditPhone] = useState('')
+
+  // Dialog states for new features
+  const [showExchangePoints, setShowExchangePoints] = useState(false)
+  const [showSecurityPrivacy, setShowSecurityPrivacy] = useState(false)
+  const [showNotificationSettings, setShowNotificationSettings] = useState(false)
+  const [showLanguageSettings, setShowLanguageSettings] = useState(false)
+  const [showPolicy, setShowPolicy] = useState(false)
+  const [showHelpCenter, setShowHelpCenter] = useState(false)
+  const [selectedLanguage, setSelectedLanguage] = useState('id')
+  const [selectedReward, setSelectedReward] = useState<string | null>(null)
+
+  // Notification settings state
+  const [notificationSettings, setNotificationSettings] = useState({
+    orderUpdates: true,
+    promotions: true,
+    newProducts: false,
+    newsletters: false
+  })
 
   // Featured products from database
   const [populerProducts, setPopulerProducts] = useState<Product[]>([])
@@ -2661,12 +2681,7 @@ export default function RestaurantApp() {
             <CardContent className="p-0">
               <button
                 className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-                onClick={() => {
-                  toast({
-                    title: 'Tukar Poin',
-                    description: 'Fitur tukar poin akan segera hadir!',
-                  })
-                }}
+                onClick={() => setShowExchangePoints(true)}
               >
                 <div className="flex items-center gap-3">
                   <Star className="w-5 h-5 text-orange-500" />
@@ -2677,12 +2692,7 @@ export default function RestaurantApp() {
               <Separator />
               <button
                 className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-                onClick={() => {
-                  toast({
-                    title: 'Keamanan dan Privasi',
-                    description: 'Fitur keamanan dan privasi akan segera hadir!',
-                  })
-                }}
+                onClick={() => setShowSecurityPrivacy(true)}
               >
                 <div className="flex items-center gap-3">
                   <ShieldCheck className="w-5 h-5 text-blue-500" />
@@ -2693,12 +2703,7 @@ export default function RestaurantApp() {
               <Separator />
               <button
                 className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-                onClick={() => {
-                  toast({
-                    title: 'Pengaturan Notifikasi',
-                    description: 'Fitur pengaturan notifikasi akan segera hadir!',
-                  })
-                }}
+                onClick={() => setShowNotificationSettings(true)}
               >
                 <div className="flex items-center gap-3">
                   <BellRing className="w-5 h-5 text-purple-500" />
@@ -2709,12 +2714,7 @@ export default function RestaurantApp() {
               <Separator />
               <button
                 className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-                onClick={() => {
-                  toast({
-                    title: 'Bahasa',
-                    description: 'Fitur pengaturan bahasa akan segera hadir!',
-                  })
-                }}
+                onClick={() => setShowLanguageSettings(true)}
               >
                 <div className="flex items-center gap-3">
                   <Globe className="w-5 h-5 text-green-500" />
@@ -2729,12 +2729,7 @@ export default function RestaurantApp() {
             <CardContent className="p-0">
               <button
                 className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-                onClick={() => {
-                  toast({
-                    title: 'Kebijakan',
-                    description: 'Fitur kebijakan akan segera hadir!',
-                  })
-                }}
+                onClick={() => setShowPolicy(true)}
               >
                 <div className="flex items-center gap-3">
                   <FileText className="w-5 h-5 text-gray-600" />
@@ -2745,12 +2740,7 @@ export default function RestaurantApp() {
               <Separator />
               <button
                 className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
-                onClick={() => {
-                  toast({
-                    title: 'Pusat Bantuan',
-                    description: 'Fitur pusat bantuan akan segera hadir!',
-                  })
-                }}
+                onClick={() => setShowHelpCenter(true)}
               >
                 <div className="flex items-center gap-3">
                   <HelpCircle className="w-5 h-5 text-orange-500" />
@@ -2888,6 +2878,555 @@ export default function RestaurantApp() {
                 variant="destructive"
               >
                 Ya, Keluar
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Exchange Points Dialog */}
+        <Dialog open={showExchangePoints} onOpenChange={setShowExchangePoints}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Tukar Poin</DialogTitle>
+              <DialogDescription>
+                Tukarkan poin rewards Anda untuk mendapatkan hadiah menarik!
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4">
+              <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 mb-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-orange-700">Poin Tersedia</span>
+                  <span className="text-2xl font-bold text-orange-600">{points.toLocaleString()}</span>
+                </div>
+              </div>
+              <div className="space-y-3">
+                <Card 
+                  className={`cursor-pointer border-2 transition-colors ${selectedReward === 'voucher100k' ? 'border-orange-500 bg-orange-50' : 'border-gray-200'}`}
+                  onClick={() => setSelectedReward('voucher100k')}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Gift className="w-6 h-6 text-orange-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold">Voucher Rp 100.000</p>
+                        <p className="text-sm text-muted-foreground">500 Poin</p>
+                      </div>
+                      <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center">
+                        {selectedReward === 'voucher100k' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card 
+                  className={`cursor-pointer border-2 transition-colors ${selectedReward === 'diskon20' ? 'border-orange-500 bg-orange-50' : 'border-gray-200'}`}
+                  onClick={() => setSelectedReward('diskon20')}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <Tag className="w-6 h-6 text-blue-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold">Diskon 20%</p>
+                        <p className="text-sm text-muted-foreground">300 Poin</p>
+                      </div>
+                      <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center">
+                        {selectedReward === 'diskon20' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card 
+                  className={`cursor-pointer border-2 transition-colors ${selectedReward === 'gratisongkir' ? 'border-orange-500 bg-orange-50' : 'border-gray-200'}`}
+                  onClick={() => setSelectedReward('gratisongkir')}
+                >
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <Package className="w-6 h-6 text-green-600" />
+                      </div>
+                      <div className="flex-1">
+                        <p className="font-semibold">Gratis Ongkir</p>
+                        <p className="text-sm text-muted-foreground">200 Poin</p>
+                      </div>
+                      <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center">
+                        {selectedReward === 'gratisongkir' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => {
+                setShowExchangePoints(false)
+                setSelectedReward(null)
+              }}>
+                Batal
+              </Button>
+              <Button 
+                onClick={() => {
+                  if (!selectedReward) {
+                    toast({
+                      title: 'Pilih Hadiah',
+                      description: 'Silakan pilih hadiah yang ingin ditukar',
+                      variant: 'destructive'
+                    })
+                    return
+                  }
+                  const requiredPoints = selectedReward === 'voucher100k' ? 500 : 
+                                      selectedReward === 'diskon20' ? 300 : 200
+                  if (points < requiredPoints) {
+                    toast({
+                      title: 'Poin Tidak Cukup',
+                      description: `Anda membutuhkan ${requiredPoints} poin untuk menukar hadiah ini`,
+                      variant: 'destructive'
+                    })
+                    return
+                  }
+                  setPoints(points - requiredPoints)
+                  setShowExchangePoints(false)
+                  setSelectedReward(null)
+                  toast({
+                    title: 'Poin Berhasil Ditukar!',
+                    description: 'Hadiah telah ditambahkan ke akun Anda',
+                  })
+                }}
+                className="bg-orange-500 hover:bg-orange-600"
+              >
+                Tukar Poin
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Security & Privacy Dialog */}
+        <Dialog open={showSecurityPrivacy} onOpenChange={setShowSecurityPrivacy}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Keamanan dan Privasi</DialogTitle>
+              <DialogDescription>
+                Kelola pengaturan keamanan dan privasi akun Anda
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-96 py-4">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Lock className="w-5 h-5 text-gray-600" />
+                    <div>
+                      <p className="font-medium text-sm">Ubah Password</p>
+                      <p className="text-xs text-muted-foreground">Terakhir diubah 30 hari lalu</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm" onClick={() => toast({
+                    title: 'Ubah Password',
+                    description: 'Fitur ubah password akan segera hadir!',
+                  })}>
+                    Ubah
+                  </Button>
+                </div>
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <Eye className="w-5 h-5 text-gray-600" />
+                    <div>
+                      <p className="font-medium text-sm">Two-Factor Authentication</p>
+                      <p className="text-xs text-muted-foreground">Tambahkan lapisan keamanan ekstra</p>
+                    </div>
+                  </div>
+                  <Button variant="outline" size="sm">Aktifkan</Button>
+                </div>
+                <Separator />
+                <div>
+                  <p className="text-sm font-medium mb-3">Privasi</p>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <EyeOff className="w-5 h-5 text-gray-600" />
+                        <div>
+                          <p className="font-medium text-sm">Profil Privat</p>
+                          <p className="text-xs text-muted-foreground">Sembunyikan profil dari pengguna lain</p>
+                        </div>
+                      </div>
+                      <input type="checkbox" className="w-5 h-5 accent-orange-500" />
+                    </div>
+                    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                      <div className="flex items-center gap-3">
+                        <MapPin className="w-5 h-5 text-gray-600" />
+                        <div>
+                          <p className="font-medium text-sm">Lokasi</p>
+                          <p className="text-xs text-muted-foreground">Izinkan akses lokasi</p>
+                        </div>
+                      </div>
+                      <input type="checkbox" defaultChecked className="w-5 h-5 accent-orange-500" />
+                    </div>
+                  </div>
+                </div>
+                <Separator />
+                <div>
+                  <p className="text-sm font-medium mb-3">Data Pribadi</p>
+                  <div className="space-y-2">
+                    <Button variant="outline" className="w-full justify-start" onClick={() => toast({
+                      title: 'Unduh Data',
+                      description: 'Permintaan unduhan data telah dikirim',
+                    })}>
+                      <Download className="w-4 h-4 mr-2" />
+                      Unduh Data Saya
+                    </Button>
+                    <Button variant="outline" className="w-full justify-start text-red-600 border-red-200 hover:bg-red-50" onClick={() => toast({
+                      title: 'Hapus Akun',
+                      description: 'Hubungi customer service untuk menghapus akun',
+                    })}>
+                      <Trash2 className="w-4 h-4 mr-2" />
+                      Hapus Akun
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </ScrollArea>
+            <DialogFooter>
+              <Button onClick={() => setShowSecurityPrivacy(false)} className="bg-orange-500 hover:bg-orange-600">
+                Tutup
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Notification Settings Dialog */}
+        <Dialog open={showNotificationSettings} onOpenChange={setShowNotificationSettings}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Pengaturan Notifikasi</DialogTitle>
+              <DialogDescription>
+                Pilih jenis notifikasi yang ingin Anda terima
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-4">
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <ShoppingCart className="w-5 h-5 text-orange-500" />
+                  <div>
+                    <p className="font-medium text-sm">Update Pesanan</p>
+                    <p className="text-xs text-muted-foreground">Status pesanan & pengiriman</p>
+                  </div>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={notificationSettings.orderUpdates}
+                  onChange={(e) => setNotificationSettings({...notificationSettings, orderUpdates: e.target.checked})}
+                  className="w-5 h-5 accent-orange-500" 
+                />
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Star className="w-5 h-5 text-yellow-500" />
+                  <div>
+                    <p className="font-medium text-sm">Promo & Diskon</p>
+                    <p className="text-xs text-muted-foreground">Penawaran khusus member</p>
+                  </div>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={notificationSettings.promotions}
+                  onChange={(e) => setNotificationSettings({...notificationSettings, promotions: e.target.checked})}
+                  className="w-5 h-5 accent-orange-500" 
+                />
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Package className="w-5 h-5 text-green-500" />
+                  <div>
+                    <p className="font-medium text-sm">Produk Baru</p>
+                    <p className="text-xs text-muted-foreground">Menu terbaru dari kami</p>
+                  </div>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={notificationSettings.newProducts}
+                  onChange={(e) => setNotificationSettings({...notificationSettings, newProducts: e.target.checked})}
+                  className="w-5 h-5 accent-orange-500" 
+                />
+              </div>
+              <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                <div className="flex items-center gap-3">
+                  <Mail className="w-5 h-5 text-blue-500" />
+                  <div>
+                    <p className="font-medium text-sm">Newsletter</p>
+                    <p className="text-xs text-muted-foreground">Info & tips menarik</p>
+                  </div>
+                </div>
+                <input 
+                  type="checkbox" 
+                  checked={notificationSettings.newsletters}
+                  onChange={(e) => setNotificationSettings({...notificationSettings, newsletters: e.target.checked})}
+                  className="w-5 h-5 accent-orange-500" 
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowNotificationSettings(false)}>
+                Batal
+              </Button>
+              <Button 
+                onClick={() => {
+                  setShowNotificationSettings(false)
+                  toast({
+                    title: 'Pengaturan Disimpan',
+                    description: 'Preferensi notifikasi Anda telah diperbarui',
+                  })
+                }}
+                className="bg-orange-500 hover:bg-orange-600"
+              >
+                Simpan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Language Settings Dialog */}
+        <Dialog open={showLanguageSettings} onOpenChange={setShowLanguageSettings}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Bahasa</DialogTitle>
+              <DialogDescription>
+                Pilih bahasa yang Anda inginkan
+              </DialogDescription>
+            </DialogHeader>
+            <div className="py-4 space-y-2">
+              <Card 
+                className={`cursor-pointer border-2 transition-colors ${selectedLanguage === 'id' ? 'border-orange-500 bg-orange-50' : 'border-gray-200'}`}
+                onClick={() => setSelectedLanguage('id')}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🇮🇩</span>
+                      <div>
+                        <p className="font-semibold">Bahasa Indonesia</p>
+                        <p className="text-sm text-muted-foreground">Indonesian</p>
+                      </div>
+                    </div>
+                    <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center">
+                      {selectedLanguage === 'id' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card 
+                className={`cursor-pointer border-2 transition-colors ${selectedLanguage === 'en' ? 'border-orange-500 bg-orange-50' : 'border-gray-200'}`}
+                onClick={() => setSelectedLanguage('en')}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🇺🇸</span>
+                      <div>
+                        <p className="font-semibold">English</p>
+                        <p className="text-sm text-muted-foreground">English (US)</p>
+                      </div>
+                    </div>
+                    <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center">
+                      {selectedLanguage === 'en' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+              <Card 
+                className={`cursor-pointer border-2 transition-colors ${selectedLanguage === 'zh' ? 'border-orange-500 bg-orange-50' : 'border-gray-200'}`}
+                onClick={() => setSelectedLanguage('zh')}
+              >
+                <CardContent className="p-4">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-3">
+                      <span className="text-2xl">🇨🇳</span>
+                      <div>
+                        <p className="font-semibold">中文</p>
+                        <p className="text-sm text-muted-foreground">Chinese (Simplified)</p>
+                      </div>
+                    </div>
+                    <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center">
+                      {selectedLanguage === 'zh' && <div className="w-4 h-4 bg-orange-500 rounded-full" />}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowLanguageSettings(false)}>
+                Batal
+              </Button>
+              <Button 
+                onClick={() => {
+                  setShowLanguageSettings(false)
+                  toast({
+                    title: 'Bahasa Diubah',
+                    description: 'Bahasa aplikasi telah diperbarui',
+                  })
+                }}
+                className="bg-orange-500 hover:bg-orange-600"
+              >
+                Simpan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Policy Dialog */}
+        <Dialog open={showPolicy} onOpenChange={setShowPolicy}>
+          <DialogContent className="max-w-lg">
+            <DialogHeader>
+              <DialogTitle>Kebijakan</DialogTitle>
+              <DialogDescription>
+                Kebijakan dan ketentuan penggunaan aplikasi
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-96 py-4">
+              <div className="space-y-4">
+                <div>
+                  <h4 className="font-semibold mb-2">Kebijakan Privasi</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Kami menghargai privasi Anda. Informasi pribadi yang Anda berikan akan digunakan untuk meningkatkan layanan kami dan tidak akan dibagikan kepada pihak ketiga tanpa persetujuan Anda.
+                  </p>
+                </div>
+                <Separator />
+                <div>
+                  <h4 className="font-semibold mb-2">Syarat & Ketentuan</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Dengan menggunakan aplikasi ini, Anda menyetujui untuk mematuhi semua syarat dan ketentuan yang berlaku. Penggunaan yang melanggar dapat mengakibatkan penangguhan akun.
+                  </p>
+                </div>
+                <Separator />
+                <div>
+                  <h4 className="font-semibold mb-2">Kebijakan Pengembalian</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Pengembalian atau penukaran produk dapat dilakukan dalam waktu 24 jam setelah pemesanan jika terdapat masalah dengan produk. Silakan hubungi customer service untuk bantuan.
+                  </p>
+                </div>
+                <Separator />
+                <div>
+                  <h4 className="font-semibold mb-2">Kebijakan Poin & Rewards</h4>
+                  <p className="text-sm text-muted-foreground leading-relaxed">
+                    Poin rewards diperoleh dari setiap pembelian dan dapat ditukarkan dengan hadiah yang tersedia. Poin tidak dapat ditransfer ke akun lain dan berlaku selama 1 tahun.
+                  </p>
+                </div>
+              </div>
+            </ScrollArea>
+            <DialogFooter>
+              <Button 
+                onClick={() => setShowPolicy(false)} 
+                className="bg-orange-500 hover:bg-orange-600 w-full"
+              >
+                Saya Mengerti
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Help Center Dialog */}
+        <Dialog open={showHelpCenter} onOpenChange={setShowHelpCenter}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>Pusat Bantuan</DialogTitle>
+              <DialogDescription>
+                Temukan jawaban untuk pertanyaan Anda
+              </DialogDescription>
+            </DialogHeader>
+            <ScrollArea className="max-h-96 py-4">
+              <div className="space-y-3">
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => toast({
+                  title: 'Cara Pesan',
+                  description: 'Pilih menu yang Anda inginkan, tambahkan ke keranjang, dan lakukan checkout',
+                })}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                        <ShoppingCart className="w-5 h-5 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">Cara Memesan</p>
+                        <p className="text-xs text-muted-foreground">Panduan pemesanan makanan</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => toast({
+                  title: 'Cara Bayar',
+                  description: 'Pilih metode pembayaran yang tersedia di halaman checkout',
+                })}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                        <CreditCard className="w-5 h-5 text-green-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">Metode Pembayaran</p>
+                        <p className="text-xs text-muted-foreground">Opsi pembayaran yang tersedia</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => toast({
+                  title: 'Poin Rewards',
+                  description: 'Dapatkan poin dari setiap pembelian dan tukarkan dengan hadiah',
+                })}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-yellow-100 rounded-full flex items-center justify-center">
+                        <Star className="w-5 h-5 text-yellow-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">Poin Rewards</p>
+                        <p className="text-xs text-muted-foreground">Cara mendapatkan dan menukar poin</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => toast({
+                  title: 'Lacak Pesanan',
+                  description: 'Cek status pesanan Anda di halaman Akun > Pesanan',
+                })}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                        <Package className="w-5 h-5 text-blue-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">Lacak Pesanan</p>
+                        <p className="text-xs text-muted-foreground">Cek status pesanan Anda</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => toast({
+                  title: 'Kendala Login',
+                  description: 'Gunakan fitur Lupa Password atau hubungi customer service',
+                })}>
+                  <CardContent className="p-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 bg-red-100 rounded-full flex items-center justify-center">
+                        <Lock className="w-5 h-5 text-red-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium text-sm">Kendala Login</p>
+                        <p className="text-xs text-muted-foreground">Solusi masalah akun</p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </ScrollArea>
+            <DialogFooter>
+              <Button 
+                onClick={() => {
+                  setShowHelpCenter(false)
+                  setShowChat(true)
+                }} 
+                className="bg-orange-500 hover:bg-orange-600 w-full"
+              >
+                <MessageCircle className="w-4 h-4 mr-2" />
+                Hubungi Customer Service
               </Button>
             </DialogFooter>
           </DialogContent>
