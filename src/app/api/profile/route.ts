@@ -7,13 +7,14 @@ const updateProfileSchema = z.object({
   name: z.string().min(1),
   email: z.string().email(),
   phone: z.string().min(10),
+  address: z.string().optional(),
   avatar: z.string().optional(),
 })
 
 export async function PATCH(req: NextRequest) {
   try {
     const body = await req.json()
-    const { userId, name, email, phone, avatar } = updateProfileSchema.parse(body)
+    const { userId, name, email, phone, address, avatar } = updateProfileSchema.parse(body)
 
     // Check if user exists
     const existingUser = await db.user.findUnique({
@@ -62,6 +63,7 @@ export async function PATCH(req: NextRequest) {
         name,
         email,
         phone,
+        address: address || existingUser.address,
         avatar: avatar || existingUser.avatar,
       },
       select: {
@@ -69,6 +71,7 @@ export async function PATCH(req: NextRequest) {
         name: true,
         email: true,
         phone: true,
+        address: true,
         avatar: true,
         role: true,
       }
@@ -112,6 +115,7 @@ export async function GET(req: NextRequest) {
         name: true,
         email: true,
         phone: true,
+        address: true,
         avatar: true,
         role: true,
         createdAt: true,

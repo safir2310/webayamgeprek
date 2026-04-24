@@ -362,6 +362,8 @@ export default function RestaurantApp() {
   const [editName, setEditName] = useState('')
   const [editEmail, setEditEmail] = useState('')
   const [editPhone, setEditPhone] = useState('')
+  const [editAddress, setEditAddress] = useState('')
+  const [editAvatar, setEditAvatar] = useState<string | null>(null)
 
   // Dialog states for new features
   const [showExchangePoints, setShowExchangePoints] = useState(false)
@@ -597,7 +599,9 @@ export default function RestaurantApp() {
           userId: user.id,
           name: editName,
           email: editEmail,
-          phone: editPhone
+          phone: editPhone,
+          address: editAddress,
+          avatar: editAvatar
         })
       })
 
@@ -617,7 +621,9 @@ export default function RestaurantApp() {
         ...user,
         name: editName,
         email: editEmail,
-        phone: editPhone
+        phone: editPhone,
+        address: editAddress,
+        avatar: editAvatar
       })
 
       // Update memberData state
@@ -628,7 +634,9 @@ export default function RestaurantApp() {
             ...memberData.user,
             name: editName,
             email: editEmail,
-            phone: editPhone
+            phone: editPhone,
+            address: editAddress,
+            avatar: editAvatar
           }
         })
       }
@@ -2413,6 +2421,8 @@ export default function RestaurantApp() {
                       setEditName(user?.name || '')
                       setEditEmail(user?.email || '')
                       setEditPhone(user?.phone || '')
+                      setEditAddress(user?.address || memberData?.user?.address || '')
+                      setEditAvatar(user?.avatar || memberData?.user?.avatar || null)
                       setShowEditProfile(true)
                     }}
                     className="mt-2 text-sm text-orange-500 hover:underline"
@@ -2816,12 +2826,58 @@ export default function RestaurantApp() {
 
         {/* Edit Profile Dialog */}
         <Dialog open={showEditProfile} onOpenChange={setShowEditProfile}>
-          <DialogContent>
+          <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle>Edit Profil</DialogTitle>
               <DialogDescription>Ubah informasi profil Anda</DialogDescription>
             </DialogHeader>
             <div className="space-y-4 py-4">
+              {/* Photo Upload */}
+              <div className="flex flex-col items-center gap-3">
+                <div className="relative">
+                  <div
+                    className="w-24 h-24 bg-blue-100 rounded-full flex items-center justify-center text-5xl overflow-hidden border-2 border-orange-500"
+                  >
+                    {editAvatar ? (
+                      <img
+                        src={editAvatar}
+                        alt="Preview"
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <span>👤</span>
+                    )}
+                  </div>
+                  <input
+                    type="file"
+                    id="edit-avatar-upload"
+                    accept="image/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0]
+                      if (file) {
+                        const reader = new FileReader()
+                        reader.onloadend = () => {
+                          setEditAvatar(reader.result as string)
+                        }
+                        reader.readAsDataURL(file)
+                      }
+                    }}
+                  />
+                  <label
+                    htmlFor="edit-avatar-upload"
+                    className="absolute bottom-0 right-0 bg-orange-500 text-white rounded-full p-2 cursor-pointer hover:bg-orange-600"
+                  >
+                    <Edit3 className="w-4 h-4" />
+                  </label>
+                </div>
+                <p className="text-xs text-muted-foreground text-center">
+                  Klik ikon pensil untuk ubah foto
+                </p>
+              </div>
+
+              <Separator />
+
               <div className="space-y-2">
                 <Label>Nama Lengkap</Label>
                 <Input
@@ -2848,9 +2904,21 @@ export default function RestaurantApp() {
                   placeholder="081234567890"
                 />
               </div>
+              <div className="space-y-2">
+                <Label>Alamat</Label>
+                <Textarea
+                  value={editAddress}
+                  onChange={(e) => setEditAddress(e.target.value)}
+                  placeholder="Masukkan alamat lengkap Anda"
+                  rows={3}
+                />
+              </div>
             </div>
             <DialogFooter>
-              <Button variant="outline" onClick={() => setShowEditProfile(false)}>
+              <Button variant="outline" onClick={() => {
+                setShowEditProfile(false)
+                setEditAvatar(null)
+              }}>
                 Batal
               </Button>
               <Button onClick={handleEditProfile} className="bg-orange-500 hover:bg-orange-600">
