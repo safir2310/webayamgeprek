@@ -1032,8 +1032,8 @@ export default function RestaurantApp() {
                 <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-3">
                   <div className="grid grid-cols-2 gap-4 text-left">
                     <div>
-                      <p className="text-white/60 text-xs uppercase tracking-wider mb-1">No. HP</p>
-                      <p className="font-mono font-semibold">{memberData?.user?.phone || user?.phone || '081234567890'}</p>
+                      <p className="text-white/60 text-xs uppercase tracking-wider mb-1">Poin Rewards</p>
+                      <p className="font-mono font-semibold">{points.toLocaleString()}</p>
                     </div>
                     <div>
                       <p className="text-white/60 text-xs uppercase tracking-wider mb-1">Tier</p>
