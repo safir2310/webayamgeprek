@@ -335,6 +335,8 @@ export default function RestaurantApp() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState('all')
   const [orders, setOrders] = useState<Order[]>(mockOrders)
+  const [lastOrderId, setLastOrderId] = useState<string | null>(null)
+  const [isCreatingOrder, setIsCreatingOrder] = useState(false)
   const [points, setPoints] = useState(150)
   const [memberCardTab, setMemberCardTab] = useState<'card' | 'barcode'>('card')
   const [productTab, setProductTab] = useState<'populer' | 'terlaris' | 'terbaru'>('populer')
@@ -601,6 +603,7 @@ export default function RestaurantApp() {
           fetchNotifications(data.user.id)
           fetchChatMessages(data.user.id)
           fetchFavorites(data.user.id)
+          fetchOrders(data.user.id)
         }
 
         toast({
@@ -907,6 +910,19 @@ export default function RestaurantApp() {
       }
     } catch (error) {
       console.error('Failed to fetch favorites:', error)
+    }
+  }
+
+  // Fetch orders from database
+  const fetchOrders = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/orders/user?userId=${userId}`)
+      const data = await response.json()
+      if (response.ok && data.orders) {
+        setOrders(data.orders)
+      }
+    } catch (error) {
+      console.error('Failed to fetch orders:', error)
     }
   }
 
@@ -2549,21 +2565,98 @@ export default function RestaurantApp() {
 
           {/* Confirm Button */}
           <Button
-            onClick={() => {
-              setCart([])
-              setOrders([...orders, {
-                id: String(orders.length + 1),
-                orderNumber: `ORD00${orders.length + 1}`,
-                status: 'pending',
-                total: getCartTotal() * 1.1,
-                items: cart,
-                createdAt: new Date()
-              }])
-              setScreen('orderStatus')
+            onClick={async () => {
+              if (!user?.id) {
+                toast({
+                  title: 'Login Diperlukan',
+                  description: 'Silakan login untuk membuat pesanan',
+                  variant: 'destructive'
+                })
+                return
+              }
+
+              if (!selectedPaymentMethod) {
+                toast({
+                  title: 'Metode Pembayaran',
+                  description: 'Silakan pilih metode pembayaran',
+                  variant: 'destructive'
+                })
+                return
+              }
+
+              if (cart.length === 0) {
+                toast({
+                  title: 'Keranjang Kosong',
+                  description: 'Silakan tambahkan produk ke keranjang',
+                  variant: 'destructive'
+                })
+                return
+              }
+
+              setIsCreatingOrder(true)
+              try {
+                const response = await fetch('/api/orders', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    userId: user.id,
+                    paymentMethod: selectedPaymentMethod,
+                    address: addresses.find(a => a.isDefault)?.address || addresses[0]?.address,
+                    note: ''
+                  })
+                })
+
+                const data = await response.json()
+
+                if (response.ok) {
+                  // Set last order ID for PDF generation
+                  setLastOrderId(data.order.id)
+
+                  // Update orders list
+                  setOrders([...orders, {
+                    id: data.order.id,
+                    orderNumber: data.order.orderNumber,
+                    status: data.order.status,
+                    total: data.order.total,
+                    items: cart,
+                    createdAt: data.order.createdAt
+                  }])
+
+                  // Clear cart
+                  setCart([])
+
+                  // Move to order status
+                  setScreen('orderStatus')
+
+                  toast({
+                    title: 'Pesanan Berhasil',
+                    description: `Order #${data.order.orderNumber} telah dibuat`,
+                  })
+                } else {
+                  throw new Error(data.error || 'Gagal membuat pesanan')
+                }
+              } catch (error) {
+                console.error('Error creating order:', error)
+                toast({
+                  title: 'Gagal Membuat Pesanan',
+                  description: error instanceof Error ? error.message : 'Terjadi kesalahan',
+                  variant: 'destructive'
+                })
+              } finally {
+                setIsCreatingOrder(false)
+              }
             }}
+            disabled={isCreatingOrder || cart.length === 0}
             className="w-full h-14 bg-orange-500 hover:bg-orange-600 text-lg"
           >
-            Konfirmasi Pesanan
+            {isCreatingOrder ? (
+              <span className="flex items-center justify-center gap-2">
+                <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                Memproses...
+              </span>
+            ) : (
+              'Konfirmasi Pesanan'
+            )}
           </Button>
         </div>
       </div>
@@ -2648,6 +2741,46 @@ export default function RestaurantApp() {
               </div>
             </CardContent>
           </Card>
+
+          {/* Download Receipt Button */}
+          {lastOrderId && (
+            <Button
+              onClick={async () => {
+                try {
+                  const response = await fetch(`/api/orders/${lastOrderId}/receipt`)
+                  if (response.ok) {
+                    const blob = await response.blob()
+                    const url = window.URL.createObjectURL(blob)
+                    const a = document.createElement('a')
+                    a.href = url
+                    a.download = `struk-${latestOrder?.orderNumber}.pdf`
+                    document.body.appendChild(a)
+                    a.click()
+                    window.URL.revokeObjectURL(url)
+                    document.body.removeChild(a)
+
+                    toast({
+                      title: 'Struk Berhasil Diunduh',
+                      description: 'File PDF struk telah diunduh',
+                    })
+                  } else {
+                    throw new Error('Gagal mengunduh struk')
+                  }
+                } catch (error) {
+                  console.error('Error downloading receipt:', error)
+                  toast({
+                    title: 'Gagal Mengunduh Struk',
+                    description: 'Terjadi kesalahan saat mengunduh struk',
+                    variant: 'destructive'
+                  })
+                }
+              }}
+              className="w-full mt-4 gap-2 bg-green-600 hover:bg-green-700"
+            >
+              <Download className="w-5 h-5" />
+              Download Struk PDF
+            </Button>
+          )}
         </div>
 
         {/* Bottom Navigation */}
@@ -3082,16 +3215,40 @@ export default function RestaurantApp() {
                           <p className="font-bold text-orange-600">Rp {order.total.toLocaleString()}</p>
                         </div>
                         <Button
-                          onClick={() => {
-                            toast({
-                              title: 'Mencetak Struk...',
-                              description: `Struk untuk pesanan ${order.orderNumber} sedang dicetak`,
-                            })
+                          onClick={async () => {
+                            try {
+                              const response = await fetch(`/api/orders/${order.id}/receipt`)
+                              if (response.ok) {
+                                const blob = await response.blob()
+                                const url = window.URL.createObjectURL(blob)
+                                const a = document.createElement('a')
+                                a.href = url
+                                a.download = `struk-${order.orderNumber}.pdf`
+                                document.body.appendChild(a)
+                                a.click()
+                                window.URL.revokeObjectURL(url)
+                                document.body.removeChild(a)
+
+                                toast({
+                                  title: 'Struk Berhasil Diunduh',
+                                  description: `Struk untuk pesanan ${order.orderNumber} telah diunduh`,
+                                })
+                              } else {
+                                throw new Error('Gagal mengunduh struk')
+                              }
+                            } catch (error) {
+                              console.error('Error downloading receipt:', error)
+                              toast({
+                                title: 'Gagal Mengunduh Struk',
+                                description: 'Terjadi kesalahan saat mengunduh struk',
+                                variant: 'destructive'
+                              })
+                            }
                           }}
                           className="w-full mt-3 bg-orange-500 hover:bg-orange-600"
                         >
-                          <Printer className="w-4 h-4 mr-2" />
-                          Cetak Struk
+                          <Download className="w-4 h-4 mr-2" />
+                          Download Struk
                         </Button>
                       </CardContent>
                     </Card>
