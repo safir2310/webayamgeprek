@@ -307,3 +307,30 @@ model Voucher {
 
   user User @relation(fields: [userId], references: [id])
 }
+
+// Payment Methods
+model PaymentMethod {
+  id          String   @id @default(cuid())
+  name        String   @unique // cash, qris, transfer
+  displayName String   // Cash, QRIS, Transfer Bank
+  description String?
+  icon        String?  // emoji or icon name
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+// Redeem Products (Exchange Points)
+model RedeemProduct {
+  id          String   @id @default(cuid())
+  name        String
+  description String?
+  points      Int      // points required to redeem
+  image       String?
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  stock       Int      @default(-1) // -1 for unlimited
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}

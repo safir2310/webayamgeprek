@@ -47,6 +47,113 @@ async function main() {
     console.log('Cashier user already exists:', existingCashier.email)
   }
 
+  // Create default payment methods
+  const paymentMethods = [
+    {
+      name: 'cash',
+      displayName: 'Cash',
+      description: 'Bayar dengan uang tunai',
+      icon: '💵',
+      isActive: true,
+      sortOrder: 1,
+    },
+    {
+      name: 'qris',
+      displayName: 'QRIS',
+      description: 'Bayar dengan QRIS',
+      icon: '📱',
+      isActive: true,
+      sortOrder: 2,
+    },
+    {
+      name: 'transfer',
+      displayName: 'Transfer Bank',
+      description: 'Transfer ke rekening bank',
+      icon: '🏦',
+      isActive: true,
+      sortOrder: 3,
+    },
+  ]
+
+  for (const pm of paymentMethods) {
+    const existingPM = await prisma.paymentMethod.findUnique({
+      where: { name: pm.name },
+    })
+
+    if (!existingPM) {
+      const createdPM = await prisma.paymentMethod.create({
+        data: pm,
+      })
+      console.log('Created payment method:', createdPM.displayName)
+    } else {
+      console.log('Payment method already exists:', existingPM.displayName)
+    }
+  }
+
+  // Create default redeem products
+  const redeemProducts = [
+    {
+      name: 'Voucher Diskon 20%',
+      description: 'Tukar 500 poin untuk voucher diskon 20%',
+      points: 500,
+      image: '🎟️',
+      isActive: true,
+      sortOrder: 1,
+      stock: -1,
+    },
+    {
+      name: 'Voucher Gratis Ongkir',
+      description: 'Tukar 300 poin untuk voucher gratis ongkir',
+      points: 300,
+      image: '🚚',
+      isActive: true,
+      sortOrder: 2,
+      stock: -1,
+    },
+    {
+      name: 'Minuman Gratis',
+      description: 'Tukar 400 poin untuk minuman gratis',
+      points: 400,
+      image: '🥤',
+      isActive: true,
+      sortOrder: 3,
+      stock: 20,
+    },
+    {
+      name: 'Makanan Tambahan',
+      description: 'Tukar 600 poin untuk tambahan makanan',
+      points: 600,
+      image: '🍗',
+      isActive: true,
+      sortOrder: 4,
+      stock: 10,
+    },
+    {
+      name: 'Voucher Belanja 100K',
+      description: 'Tukar 1000 poin untuk voucher belanja 100K',
+      points: 1000,
+      image: '💰',
+      isActive: true,
+      sortOrder: 5,
+      stock: -1,
+    },
+  ]
+
+  for (const rp of redeemProducts) {
+    const existingRP = await prisma.redeemProduct.findFirst({
+      where: { name: rp.name },
+    })
+
+    if (!existingRP) {
+      const createdRP = await prisma.redeemProduct.create({
+        data: rp,
+      })
+      console.log('Created redeem product:', createdRP.name)
+    } else {
+      console.log('Redeem product already exists:', existingRP.name)
+    }
+  }
+
   // Create sample categories
   const categories = [
     { name: 'Main Course', description: 'Menu utama' },

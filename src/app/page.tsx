@@ -429,6 +429,13 @@ export default function RestaurantApp() {
   const [isShiftOpen, setIsShiftOpen] = useState(false)
   const [shiftAmount, setShiftAmount] = useState(0)
 
+  // Payment methods and redeem products state
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([])
+  const [redeemProducts, setRedeemProducts] = useState<any[]>([])
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string | null>(null)
+  const [loadingPaymentMethods, setLoadingPaymentMethods] = useState(false)
+  const [loadingRedeemProducts, setLoadingRedeemProducts] = useState(false)
+
   // Notification & Chat state
   const [showNotifications, setShowNotifications] = useState(false)
   const [showChat, setShowChat] = useState(false)
@@ -482,6 +489,52 @@ export default function RestaurantApp() {
     }
 
     fetchFeaturedProducts()
+  }, [])
+
+  // Fetch payment methods from database
+  useEffect(() => {
+    const fetchPaymentMethods = async () => {
+      try {
+        setLoadingPaymentMethods(true)
+        const response = await fetch('/api/payment-methods')
+        const data = await response.json()
+
+        if (data.paymentMethods) {
+          setPaymentMethods(data.paymentMethods)
+          // Select first payment method as default
+          if (data.paymentMethods.length > 0) {
+            setSelectedPaymentMethod(data.paymentMethods[0].name)
+          }
+        }
+      } catch (error) {
+        console.error('Failed to fetch payment methods:', error)
+      } finally {
+        setLoadingPaymentMethods(false)
+      }
+    }
+
+    fetchPaymentMethods()
+  }, [])
+
+  // Fetch redeem products from database
+  useEffect(() => {
+    const fetchRedeemProducts = async () => {
+      try {
+        setLoadingRedeemProducts(true)
+        const response = await fetch('/api/redeem-products')
+        const data = await response.json()
+
+        if (data.redeemProducts) {
+          setRedeemProducts(data.redeemProducts)
+        }
+      } catch (error) {
+        console.error('Failed to fetch redeem products:', error)
+      } finally {
+        setLoadingRedeemProducts(false)
+      }
+    }
+
+    fetchRedeemProducts()
   }, [])
 
   const handleLogin = async () => {
@@ -2424,25 +2477,42 @@ export default function RestaurantApp() {
                 <span className="font-semibold">Metode Pembayaran</span>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center justify-between p-3 border-2 border-orange-500 rounded-lg bg-orange-50">
-                  <div className="flex items-center gap-3">
-                    <QrCode className="w-6 h-6 text-orange-500" />
-                    <div>
-                      <p className="font-medium">QRIS</p>
-                      <p className="text-sm text-muted-foreground">Scan QR Code untuk bayar</p>
+                {loadingPaymentMethods ? (
+                  <div className="text-center py-4 text-gray-500">Memuat metode pembayaran...</div>
+                ) : paymentMethods.length === 0 ? (
+                  <div className="text-center py-4 text-gray-500">Tidak ada metode pembayaran tersedia</div>
+                ) : (
+                  paymentMethods.filter((pm) => pm.isActive).map((pm) => (
+                    <div
+                      key={pm.id}
+                      onClick={() => setSelectedPaymentMethod(pm.name)}
+                      className={`flex items-center justify-between p-3 border-2 rounded-lg cursor-pointer transition-all ${
+                        selectedPaymentMethod === pm.name
+                          ? 'border-orange-500 bg-orange-50'
+                          : 'border-gray-200 hover:border-orange-300'
+                      }`}
+                    >
+                      <div className="flex items-center gap-3">
+                        {pm.icon ? (
+                          <span className="text-2xl">{pm.icon}</span>
+                        ) : pm.name === 'qris' ? (
+                          <QrCode className="w-6 h-6 text-orange-500" />
+                        ) : pm.name === 'transfer' ? (
+                          <WalletCards className="w-6 h-6 text-gray-500" />
+                        ) : (
+                          <Wallet className="w-6 h-6 text-gray-500" />
+                        )}
+                        <div>
+                          <p className="font-medium">{pm.displayName}</p>
+                          <p className="text-sm text-muted-foreground">{pm.description}</p>
+                        </div>
+                      </div>
+                      {selectedPaymentMethod === pm.name && (
+                        <CheckCircle className="w-5 h-5 text-orange-500" />
+                      )}
                     </div>
-                  </div>
-                  <CheckCircle className="w-5 h-5 text-orange-500" />
-                </div>
-                <div className="flex items-center justify-between p-3 border-2 border-gray-200 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    <Wallet className="w-6 h-6 text-gray-500" />
-                    <div>
-                      <p className="font-medium">Tunai</p>
-                      <p className="text-sm text-muted-foreground">Bayar di kasir</p>
-                    </div>
-                  </div>
-                </div>
+                  ))
+                )}
               </div>
             </CardContent>
           </Card>
@@ -3422,253 +3492,87 @@ export default function RestaurantApp() {
               </p>
 
               <div className="grid grid-cols-2 gap-3">
-                {/* Voucher Rp 100.000 */}
-                <Card
-                  className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${selectedReward === 'voucher100k' ? 'border-orange-500 bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg' : 'border-gray-200 bg-white hover:border-orange-300'}`}
-                  onClick={() => setSelectedReward('voucher100k')}
-                >
-                  <CardContent className="p-3">
-                    <div className="space-y-2">
-                      <div className="w-12 h-12 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center shadow-md mx-auto">
-                        <Gift className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="text-center">
-                        <p className="font-bold text-sm text-gray-900 mb-1 leading-tight">Voucher Rp 100.000</p>
-                        <Badge className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-[10px] py-0.5 px-2">500 Poin</Badge>
-                      </div>
-                      <div className="space-y-1 text-[10px] text-gray-600 border-t pt-1.5">
-                        <div className="flex items-center gap-1 justify-center">
-                          <Tag className="w-3 h-3 text-orange-500" />
-                          <span className="truncate">Min. pembelian Rp 300.000</span>
-                        </div>
-                        <div className="flex items-center gap-1 justify-center">
-                          <ClockIcon className="w-3 h-3 text-orange-500" />
-                          <span>Berlaku 30 hari</span>
-                        </div>
-                      </div>
-                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
-                        {selectedReward === 'voucher100k' && <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse" />}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                {loadingRedeemProducts ? (
+                  <div className="col-span-2 text-center py-8 text-gray-500">
+                    Memuat hadiah...
+                  </div>
+                ) : redeemProducts.length === 0 ? (
+                  <div className="col-span-2 text-center py-8 text-gray-500">
+                    Tidak ada hadiah tersedia saat ini
+                  </div>
+                ) : (
+                  redeemProducts
+                    .filter((rp) => rp.isActive)
+                    .map((rp) => {
+                      // Determine gradient based on index for variety
+                      const gradients = [
+                        'from-orange-500 to-amber-500',
+                        'from-blue-500 to-indigo-600',
+                        'from-green-500 to-emerald-600',
+                        'from-teal-500 to-green-600',
+                        'from-purple-500 to-violet-600',
+                        'from-rose-500 to-pink-600'
+                      ]
+                      const gradient = gradients[rp.sortOrder % gradients.length]
+                      const bgGradient = `bg-gradient-to-br ${gradient}`
+                      const isSelected = selectedReward === rp.id
+                      const outOfStock = rp.stock > 0 && rp.stock <= 0
 
-                {/* Diskon 20% */}
-                <Card
-                  className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${selectedReward === 'diskon20' ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg' : 'border-gray-200 bg-white hover:border-blue-300'}`}
-                  onClick={() => setSelectedReward('diskon20')}
-                >
-                  <CardContent className="p-3">
-                    <div className="space-y-2">
-                      <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md mx-auto">
-                        <Tag className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="text-center">
-                        <p className="font-bold text-sm text-gray-900 mb-1 leading-tight">Diskon 20%</p>
-                        <Badge className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-[10px] py-0.5 px-2">300 Poin</Badge>
-                      </div>
-                      <div className="space-y-1 text-[10px] text-gray-600 border-t pt-1.5">
-                        <div className="flex items-center gap-1 justify-center">
-                          <Tag className="w-3 h-3 text-blue-500" />
-                          <span className="truncate">Maks. diskon Rp 50.000</span>
-                        </div>
-                        <div className="flex items-center gap-1 justify-center">
-                          <CheckCircle className="w-3 h-3 text-blue-500" />
-                          <span>Berlaku semua menu</span>
-                        </div>
-                      </div>
-                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
-                        {selectedReward === 'diskon20' && <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" />}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Gratis Ongkir */}
-                <Card
-                  className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${selectedReward === 'gratisongkir' ? 'border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg' : 'border-gray-200 bg-white hover:border-green-300'}`}
-                  onClick={() => setSelectedReward('gratisongkir')}
-                >
-                  <CardContent className="p-3">
-                    <div className="space-y-2">
-                      <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md mx-auto">
-                        <Package className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="text-center">
-                        <p className="font-bold text-sm text-gray-900 mb-1 leading-tight">Gratis Ongkir</p>
-                        <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-[10px] py-0.5 px-2">200 Poin</Badge>
-                      </div>
-                      <div className="space-y-1 text-[10px] text-gray-600 border-t pt-1.5">
-                        <div className="flex items-center gap-1 justify-center">
-                          <MapPin className="w-3 h-3 text-green-500" />
-                          <span className="truncate">Radius maks. 10 km</span>
-                        </div>
-                        <div className="flex items-center gap-1 justify-center">
-                          <ClockIcon className="w-3 h-3 text-green-500" />
-                          <span>Berlaku 14 hari</span>
-                        </div>
-                      </div>
-                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
-                        {selectedReward === 'gratisongkir' && <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Buy 1 Get 1 */}
-                <Card
-                  className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${selectedReward === 'bogo' ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg' : 'border-gray-200 bg-white hover:border-purple-300'}`}
-                  onClick={() => setSelectedReward('bogo')}
-                >
-                  <CardContent className="p-3">
-                    <div className="space-y-2">
-                      <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-md mx-auto">
-                        <Heart className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="text-center">
-                        <p className="font-bold text-sm text-gray-900 mb-1 leading-tight">Buy 1 Get 1 Free</p>
-                        <Badge className="bg-gradient-to-r from-purple-500 to-pink-600 text-white text-[10px] py-0.5 px-2">400 Poin</Badge>
-                      </div>
-                      <div className="space-y-1 text-[10px] text-gray-600 border-t pt-1.5">
-                        <div className="flex items-center gap-1 justify-center">
-                          <Gift className="w-3 h-3 text-purple-500" />
-                          <span className="truncate">Untuk menu Ayam Geprek</span>
-                        </div>
-                        <div className="flex items-center gap-1 justify-center">
-                          <ClockIcon className="w-3 h-3 text-purple-500" />
-                          <span>Berlaku 7 hari</span>
-                        </div>
-                      </div>
-                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
-                        {selectedReward === 'bogo' && <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse" />}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Free Drink */}
-                <Card
-                  className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${selectedReward === 'freedrink' ? 'border-red-500 bg-gradient-to-br from-red-50 to-rose-50 shadow-lg' : 'border-gray-200 bg-white hover:border-red-300'}`}
-                  onClick={() => setSelectedReward('freedrink')}
-                >
-                  <CardContent className="p-3">
-                    <div className="space-y-2">
-                      <div className="w-12 h-12 bg-gradient-to-br from-rose-500 to-red-600 rounded-xl flex items-center justify-center shadow-md mx-auto">
-                        <Flame className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="text-center">
-                        <p className="font-bold text-sm text-gray-900 mb-1 leading-tight">Minuman Gratis</p>
-                        <Badge className="bg-gradient-to-r from-red-500 to-rose-600 text-white text-[10px] py-0.5 px-2">100 Poin</Badge>
-                      </div>
-                      <div className="space-y-1 text-[10px] text-gray-600 border-t pt-1.5">
-                        <div className="flex items-center gap-1 justify-center">
-                          <Star className="w-3 h-3 text-red-500" />
-                          <span className="truncate">Es Teh / Es Jeruk</span>
-                        </div>
-                        <div className="flex items-center gap-1 justify-center">
-                          <ClockIcon className="w-3 h-3 text-red-500" />
-                          <span>Berlaku 7 hari</span>
-                        </div>
-                      </div>
-                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
-                        {selectedReward === 'freedrink' && <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Special Menu */}
-                <Card
-                  className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${selectedReward === 'specialmenu' ? 'border-amber-500 bg-gradient-to-br from-amber-50 to-yellow-50 shadow-lg' : 'border-gray-200 bg-white hover:border-amber-300'}`}
-                  onClick={() => setSelectedReward('specialmenu')}
-                >
-                  <CardContent className="p-3">
-                    <div className="space-y-2">
-                      <div className="w-12 h-12 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-xl flex items-center justify-center shadow-md mx-auto">
-                        <Crown className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="text-center">
-                        <p className="font-bold text-sm text-gray-900 mb-1 leading-tight">Menu Spesial</p>
-                        <Badge className="bg-gradient-to-r from-amber-500 to-yellow-600 text-white text-[10px] py-0.5 px-2">600 Poin</Badge>
-                      </div>
-                      <div className="space-y-1 text-[10px] text-gray-600 border-t pt-1.5">
-                        <div className="flex items-center gap-1 justify-center">
-                          <Flame className="w-3 h-3 text-amber-500" />
-                          <span className="truncate">Ayam Geprek Spesial Level 5</span>
-                        </div>
-                        <div className="flex items-center gap-1 justify-center">
-                          <ClockIcon className="w-3 h-3 text-amber-500" />
-                          <span>Berlaku 30 hari</span>
-                        </div>
-                      </div>
-                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
-                        {selectedReward === 'specialmenu' && <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse" />}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Birthday Special */}
-                <Card
-                  className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${selectedReward === 'birthday' ? 'border-cyan-500 bg-gradient-to-br from-cyan-50 to-blue-50 shadow-lg' : 'border-gray-200 bg-white hover:border-cyan-300'}`}
-                  onClick={() => setSelectedReward('birthday')}
-                >
-                  <CardContent className="p-3">
-                    <div className="space-y-2">
-                      <div className="w-12 h-12 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md mx-auto">
-                        <Award className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="text-center">
-                        <p className="font-bold text-sm text-gray-900 mb-1 leading-tight">Birthday Special</p>
-                        <Badge className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-[10px] py-0.5 px-2">800 Poin</Badge>
-                      </div>
-                      <div className="space-y-1 text-[10px] text-gray-600 border-t pt-1.5">
-                        <div className="flex items-center gap-1 justify-center">
-                          <Gift className="w-3 h-3 text-cyan-500" />
-                          <span className="truncate">Paket lengkap ulang tahun</span>
-                        </div>
-                        <div className="flex items-center gap-1 justify-center">
-                          <ClockIcon className="w-3 h-3 text-cyan-500" />
-                          <span>Berlaku 60 hari</span>
-                        </div>
-                      </div>
-                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
-                        {selectedReward === 'birthday' && <div className="w-3 h-3 bg-cyan-500 rounded-full animate-pulse" />}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                {/* Cashback */}
-                <Card
-                  className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${selectedReward === 'cashback' ? 'border-teal-500 bg-gradient-to-br from-teal-50 to-green-50 shadow-lg' : 'border-gray-200 bg-white hover:border-teal-300'}`}
-                  onClick={() => setSelectedReward('cashback')}
-                >
-                  <CardContent className="p-3">
-                    <div className="space-y-2">
-                      <div className="w-12 h-12 bg-gradient-to-br from-teal-500 to-green-600 rounded-xl flex items-center justify-center shadow-md mx-auto">
-                        <Wallet className="w-6 h-6 text-white" />
-                      </div>
-                      <div className="text-center">
-                        <p className="font-bold text-sm text-gray-900 mb-1 leading-tight">Cashback 10%</p>
-                        <Badge className="bg-gradient-to-r from-teal-500 to-green-600 text-white text-[10px] py-0.5 px-2">350 Poin</Badge>
-                      </div>
-                      <div className="space-y-1 text-[10px] text-gray-600 border-t pt-1.5">
-                        <div className="flex items-center gap-1 justify-center">
-                          <TrendingUp className="w-3 h-3 text-teal-500" />
-                          <span className="truncate">Maks. cashback Rp 30.000</span>
-                        </div>
-                        <div className="flex items-center gap-1 justify-center">
-                          <ClockIcon className="w-3 h-3 text-teal-500" />
-                          <span>Berlaku 21 hari</span>
-                        </div>
-                      </div>
-                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
-                        {selectedReward === 'cashback' && <div className="w-3 h-3 bg-teal-500 rounded-full animate-pulse" />}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
+                      return (
+                        <Card
+                          key={rp.id}
+                          disabled={outOfStock}
+                          className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${
+                            isSelected
+                              ? 'border-orange-500 bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg'
+                              : 'border-gray-200 bg-white hover:border-orange-300'
+                          } ${outOfStock ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          onClick={() => !outOfStock && setSelectedReward(rp.id)}
+                        >
+                          <CardContent className="p-3">
+                            <div className="space-y-2">
+                              <div className={`w-12 h-12 ${bgGradient} rounded-xl flex items-center justify-center shadow-md mx-auto`}>
+                                {rp.image ? (
+                                  <span className="text-2xl">{rp.image}</span>
+                                ) : (
+                                  <Gift className="w-6 h-6 text-white" />
+                                )}
+                              </div>
+                              <div className="text-center">
+                                <p className="font-bold text-sm text-gray-900 mb-1 leading-tight line-clamp-2">
+                                  {rp.name}
+                                </p>
+                                <Badge className={`bg-gradient-to-r ${gradient} text-white text-[10px] py-0.5 px-2`}>
+                                  {rp.points} Poin
+                                </Badge>
+                              </div>
+                              <div className="space-y-1 text-[10px] text-gray-600 border-t pt-1.5">
+                                <div className="flex items-center gap-1 justify-center">
+                                  <Tag className="w-3 h-3 text-orange-500" />
+                                  <span className="truncate">{rp.description || 'Tukarkan poin Anda'}</span>
+                                </div>
+                                {outOfStock && (
+                                  <div className="flex items-center gap-1 justify-center text-red-500">
+                                    <XCircle className="w-3 h-3" />
+                                    <span>Habis</span>
+                                  </div>
+                                )}
+                                {rp.stock > 0 && rp.stock <= 10 && (
+                                  <div className="flex items-center gap-1 justify-center text-orange-500">
+                                    <TrendingUp className="w-3 h-3" />
+                                    <span>{rp.stock} tersisa</span>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
+                                {isSelected && <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse" />}
+                              </div>
+                            </div>
+                          </CardContent>
+                        </Card>
+                      )
+                    })
+                )}
               </div>
             </div>
 
@@ -3695,14 +3599,19 @@ export default function RestaurantApp() {
                     })
                     return
                   }
-                  const requiredPoints = selectedReward === 'voucher100k' ? 500 :
-                                      selectedReward === 'diskon20' ? 300 :
-                                      selectedReward === 'gratisongkir' ? 200 :
-                                      selectedReward === 'bogo' ? 400 :
-                                      selectedReward === 'freedrink' ? 100 :
-                                      selectedReward === 'specialmenu' ? 600 :
-                                      selectedReward === 'birthday' ? 800 :
-                                      selectedReward === 'cashback' ? 350 : 0
+
+                  // Find selected redeem product
+                  const selectedProduct = redeemProducts.find((rp) => rp.id === selectedReward)
+                  if (!selectedProduct) {
+                    toast({
+                      title: 'Produk Tidak Ditemukan',
+                      description: 'Hadiah yang dipilih tidak tersedia',
+                      variant: 'destructive'
+                    })
+                    return
+                  }
+
+                  const requiredPoints = selectedProduct.points
                   if (points < requiredPoints) {
                     toast({
                       title: 'Poin Tidak Cukup',
@@ -3714,19 +3623,18 @@ export default function RestaurantApp() {
 
                   setIsExchanging(true)
                   try {
-                    const response = await fetch('/api/profile/voucher', {
+                    const response = await fetch('/api/redeem', {
                       method: 'POST',
                       headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
                         userId: user?.id,
-                        rewardType: selectedReward,
-                        pointsUsed: requiredPoints
+                        redeemProductId: selectedReward
                       })
                     })
 
                     const data = await response.json()
 
-                    if (data.success) {
+                    if (response.ok) {
                       setPoints(points - requiredPoints)
                       setGeneratedVoucher(data.voucher)
                       setShowExchangePoints(false)
@@ -3740,7 +3648,7 @@ export default function RestaurantApp() {
                       throw new Error(data.error || 'Gagal membuat voucher')
                     }
                   } catch (error) {
-                    console.error('Error creating voucher:', error)
+                    console.error('Error redeeming product:', error)
                     toast({
                       title: 'Gagal Membuat Voucher',
                       description: 'Terjadi kesalahan saat membuat voucher',

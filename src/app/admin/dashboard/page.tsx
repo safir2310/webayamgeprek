@@ -3,8 +3,15 @@
 import { useEffect, useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
-import { ShieldCheck, Utensils, Users, ShoppingCart, ArrowRight, LogOut } from 'lucide-react'
+import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import { ShieldCheck, Utensils, Users, ShoppingCart, ArrowRight, LogOut, CreditCard, QrCode, Wallet, WalletCards, Plus, Edit2, Trash2, Gift, Star, Package } from 'lucide-react'
 import { logout, getToken } from '@/lib/auth'
+import { toast } from '@/hooks/use-toast'
 
 interface DashboardStats {
   totalOrders: number
@@ -16,10 +23,33 @@ interface DashboardStats {
 export default function AdminDashboardPage() {
   const [user, setUser] = useState<any>(null)
   const [stats, setStats] = useState<DashboardStats>({
-    totalOrders: 0,
-    totalRevenue: 0,
-    totalUsers: 0,
-    totalProducts: 0,
+    totalOrders: 156,
+    totalRevenue: 4580000,
+    totalUsers: 89,
+    totalProducts: 24,
+  })
+
+  // Payment methods state
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([])
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false)
+  const [editingPayment, setEditingPayment] = useState<any>(null)
+  const [newPayment, setNewPayment] = useState({
+    name: '',
+    displayName: '',
+    description: '',
+    icon: ''
+  })
+
+  // Redeem products state
+  const [redeemProducts, setRedeemProducts] = useState<any[]>([])
+  const [showRedeemDialog, setShowRedeemDialog] = useState(false)
+  const [editingRedeem, setEditingRedeem] = useState<any>(null)
+  const [newRedeemProduct, setNewRedeemProduct] = useState({
+    name: '',
+    description: '',
+    points: 0,
+    image: '',
+    stock: -1
   })
 
   useEffect(() => {
@@ -47,15 +77,226 @@ export default function AdminDashboardPage() {
       .catch(() => {
         window.location.href = '/admin/login'
       })
-
-    // Fetch stats (mock data for now)
-    setStats({
-      totalOrders: 156,
-      totalRevenue: 4580000,
-      totalUsers: 89,
-      totalProducts: 24,
-    })
   }, [])
+
+  // Fetch payment methods
+  useEffect(() => {
+    fetch('/api/payment-methods')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.paymentMethods) {
+          setPaymentMethods(data.paymentMethods)
+        }
+      })
+      .catch(() => console.error('Failed to fetch payment methods'))
+  }, [])
+
+  // Fetch redeem products
+  useEffect(() => {
+    fetch('/api/redeem-products')
+      .then((res) => res.json())
+      .then((data) => {
+        if (data.redeemProducts) {
+          setRedeemProducts(data.redeemProducts)
+        }
+      })
+      .catch(() => console.error('Failed to fetch redeem products'))
+  }, [])
+
+  // Payment method handlers
+  const handleTogglePaymentMethod = async (id: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch(`/api/payment-methods/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !currentStatus })
+      })
+
+      if (response.ok) {
+        setPaymentMethods(paymentMethods.map((pm) =>
+          pm.id === id ? { ...pm, isActive: !currentStatus } : pm
+        ))
+        toast({
+          title: 'Berhasil',
+          description: `Metode pembayaran telah ${!currentStatus ? 'diaktifkan' : 'dinonaktifkan'}`,
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat mengubah status metode pembayaran',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleSavePaymentMethod = async () => {
+    try {
+      const response = await fetch('/api/payment-methods', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newPayment,
+          isActive: true,
+          sortOrder: paymentMethods.length + 1
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setPaymentMethods([...paymentMethods, data.paymentMethod])
+        setShowPaymentDialog(false)
+        setNewPayment({ name: '', displayName: '', description: '', icon: '' })
+        toast({
+          title: 'Berhasil',
+          description: 'Metode pembayaran baru telah ditambahkan',
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menambahkan metode pembayaran',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleDeletePaymentMethod = async (id: string) => {
+    try {
+      const response = await fetch(`/api/payment-methods/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setPaymentMethods(paymentMethods.filter((pm) => pm.id !== id))
+        toast({
+          title: 'Berhasil',
+          description: 'Metode pembayaran telah dihapus',
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menghapus metode pembayaran',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  // Redeem product handlers
+  const handleToggleRedeemProduct = async (id: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch(`/api/redeem-products/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !currentStatus })
+      })
+
+      if (response.ok) {
+        setRedeemProducts(redeemProducts.map((rp) =>
+          rp.id === id ? { ...rp, isActive: !currentStatus } : rp
+        ))
+        toast({
+          title: 'Berhasil',
+          description: `Produk telah ${!currentStatus ? 'diaktifkan' : 'dinonaktifkan'}`,
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat mengubah status produk',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleSaveRedeemProduct = async () => {
+    try {
+      if (editingRedeem) {
+        // Update existing product
+        const response = await fetch(`/api/redeem-products/${editingRedeem.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newRedeemProduct)
+        })
+
+        if (response.ok) {
+          setRedeemProducts(redeemProducts.map((rp) =>
+            rp.id === editingRedeem.id ? { ...rp, ...newRedeemProduct } : rp
+          ))
+          setShowRedeemDialog(false)
+          setEditingRedeem(null)
+          setNewRedeemProduct({ name: '', description: '', points: 0, image: '', stock: -1 })
+          toast({
+            title: 'Berhasil',
+            description: 'Produk telah diperbarui',
+          })
+        }
+      } else {
+        // Create new product
+        const response = await fetch('/api/redeem-products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...newRedeemProduct,
+            isActive: true,
+            sortOrder: redeemProducts.length + 1
+          })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setRedeemProducts([...redeemProducts, data.redeemProduct])
+          setShowRedeemDialog(false)
+          setNewRedeemProduct({ name: '', description: '', points: 0, image: '', stock: -1 })
+          toast({
+            title: 'Berhasil',
+            description: 'Produk baru telah ditambahkan',
+          })
+        }
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menyimpan produk',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleEditRedeemProduct = (product: any) => {
+    setEditingRedeem(product)
+    setNewRedeemProduct({
+      name: product.name,
+      description: product.description,
+      points: product.points,
+      image: product.image,
+      stock: product.stock
+    })
+    setShowRedeemDialog(true)
+  }
+
+  const handleDeleteRedeemProduct = async (id: string) => {
+    try {
+      const response = await fetch(`/api/redeem-products/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setRedeemProducts(redeemProducts.filter((rp) => rp.id !== id))
+        toast({
+          title: 'Berhasil',
+          description: 'Produk telah dihapus',
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menghapus produk',
+        variant: 'destructive'
+      })
+    }
+  }
 
   const handleLogout = () => {
     logout()
@@ -221,6 +462,271 @@ export default function AdminDashboardPage() {
             <span>Pengaturan</span>
           </Button>
         </div>
+
+        {/* Payment Methods Management */}
+        <Card className="mt-8">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">Metode Pembayaran</h3>
+                <p className="text-sm text-gray-500">Kelola metode pembayaran yang tersedia</p>
+              </div>
+              <Button
+                onClick={() => {
+                  setShowPaymentDialog(true)
+                  setNewPayment({ name: '', displayName: '', description: '', icon: '' })
+                }}
+                size="sm"
+                className="gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah</span>
+              </Button>
+            </div>
+            <div className="space-y-3">
+              {paymentMethods.map((pm) => (
+                <div key={pm.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50 transition-colors">
+                  <div className="flex items-center gap-4">
+                    <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                      {pm.icon ? (
+                        <span className="text-2xl">{pm.icon}</span>
+                      ) : pm.name === 'qris' ? (
+                        <QrCode className="w-6 h-6 text-gray-600" />
+                      ) : pm.name === 'transfer' ? (
+                        <WalletCards className="w-6 h-6 text-gray-600" />
+                      ) : (
+                        <Wallet className="w-6 h-6 text-gray-600" />
+                      )}
+                    </div>
+                    <div>
+                      <p className="font-semibold text-gray-900">{pm.displayName}</p>
+                      <p className="text-sm text-gray-500">{pm.description}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Badge variant={pm.isActive ? 'default' : 'secondary'}>
+                      {pm.isActive ? 'Aktif' : 'Nonaktif'}
+                    </Badge>
+                    <div className="flex gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleTogglePaymentMethod(pm.id, pm.isActive)}
+                      >
+                        {pm.isActive ? '🔴' : '🟢'}
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleDeletePaymentMethod(pm.id)}
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Add Payment Method Dialog */}
+        <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+          <DialogContent>
+            <DialogHeader>
+              <DialogTitle>Tambah Metode Pembayaran</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label>Nama (unik)</Label>
+                <Input
+                  value={newPayment.name}
+                  onChange={(e) => setNewPayment({ ...newPayment, name: e.target.value })}
+                  placeholder="Contoh: cash, qris, transfer"
+                />
+              </div>
+              <div>
+                <Label>Nama Tampilan</Label>
+                <Input
+                  value={newPayment.displayName}
+                  onChange={(e) => setNewPayment({ ...newPayment, displayName: e.target.value })}
+                  placeholder="Contoh: Cash, QRIS, Transfer Bank"
+                />
+              </div>
+              <div>
+                <Label>Deskripsi</Label>
+                <Input
+                  value={newPayment.description}
+                  onChange={(e) => setNewPayment({ ...newPayment, description: e.target.value })}
+                  placeholder="Deskripsi singkat metode pembayaran"
+                />
+              </div>
+              <div>
+                <Label>Icon (emoji)</Label>
+                <Input
+                  value={newPayment.icon}
+                  onChange={(e) => setNewPayment({ ...newPayment, icon: e.target.value })}
+                  placeholder="💵 atau biarkan kosong"
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>
+                Batal
+              </Button>
+              <Button onClick={handleSavePaymentMethod}>
+                Simpan
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Redeem Products Management */}
+        <Card className="mt-8">
+          <CardContent className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h3 className="text-lg font-bold text-gray-900 mb-1">Produk Tukar Poin</h3>
+                <p className="text-sm text-gray-500">Kelola produk yang dapat ditukar dengan poin</p>
+              </div>
+              <Button
+                onClick={() => {
+                  setShowRedeemDialog(true)
+                  setEditingRedeem(null)
+                  setNewRedeemProduct({ name: '', description: '', points: 0, image: '', stock: -1 })
+                }}
+                size="sm"
+                className="gap-2"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Tambah Produk</span>
+              </Button>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {redeemProducts.map((rp) => (
+                <Card key={rp.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start justify-between mb-3">
+                      <div className="flex-1">
+                        <div className="flex items-center gap-2 mb-2">
+                          <span className="text-2xl">{rp.image || <Gift className="w-8 h-8 text-orange-500" />}</span>
+                          <Badge variant={rp.isActive ? 'default' : 'secondary'}>
+                            {rp.isActive ? 'Aktif' : 'Nonaktif'}
+                          </Badge>
+                        </div>
+                        <p className="font-semibold text-gray-900 line-clamp-1">{rp.name}</p>
+                        <p className="text-sm text-gray-500 line-clamp-2">{rp.description}</p>
+                      </div>
+                      <div className="flex gap-1">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleToggleRedeemProduct(rp.id, rp.isActive)}
+                        >
+                          {rp.isActive ? '🔴' : '🟢'}
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleEditRedeemProduct(rp)}
+                        >
+                          <Edit2 className="w-4 h-4 text-blue-500" />
+                        </Button>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteRedeemProduct(rp.id)}
+                        >
+                          <Trash2 className="w-4 h-4 text-red-500" />
+                        </Button>
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between pt-3 border-t">
+                      <div>
+                        <p className="text-xs text-gray-500">Poin</p>
+                        <p className="text-lg font-bold text-orange-600">{rp.points}</p>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500">Stock</p>
+                        <p className="text-sm font-semibold text-gray-900">
+                          {rp.stock === -1 ? 'Unlimited' : rp.stock}
+                        </p>
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Add/Edit Redeem Product Dialog */}
+        <Dialog open={showRedeemDialog} onOpenChange={setShowRedeemDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle>{editingRedeem ? 'Edit Produk' : 'Tambah Produk Baru'}</DialogTitle>
+            </DialogHeader>
+            <div className="space-y-4 py-4">
+              <div>
+                <Label>Nama Produk</Label>
+                <Input
+                  value={newRedeemProduct.name}
+                  onChange={(e) => setNewRedeemProduct({ ...newRedeemProduct, name: e.target.value })}
+                  placeholder="Nama produk tukar poin"
+                />
+              </div>
+              <div>
+                <Label>Deskripsi</Label>
+                <Textarea
+                  value={newRedeemProduct.description}
+                  onChange={(e) => setNewRedeemProduct({ ...newRedeemProduct, description: e.target.value })}
+                  placeholder="Deskripsi produk"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label>Poin yang Dibutuhkan</Label>
+                <Input
+                  type="number"
+                  value={newRedeemProduct.points}
+                  onChange={(e) => setNewRedeemProduct({ ...newRedeemProduct, points: parseInt(e.target.value) || 0 })}
+                  placeholder="Jumlah poin"
+                  min={0}
+                />
+              </div>
+              <div>
+                <Label>Icon/Emoji (opsional)</Label>
+                <Input
+                  value={newRedeemProduct.image}
+                  onChange={(e) => setNewRedeemProduct({ ...newRedeemProduct, image: e.target.value })}
+                  placeholder="🎟️ atau biarkan kosong"
+                />
+              </div>
+              <div>
+                <Label>Stock (-1 untuk unlimited)</Label>
+                <Input
+                  type="number"
+                  value={newRedeemProduct.stock}
+                  onChange={(e) => setNewRedeemProduct({ ...newRedeemProduct, stock: parseInt(e.target.value) || -1 })}
+                  placeholder="-1 untuk unlimited"
+                  min={-1}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => {
+                setShowRedeemDialog(false)
+                setEditingRedeem(null)
+                setNewRedeemProduct({ name: '', description: '', points: 0, image: '', stock: -1 })
+              }}>
+                Batal
+              </Button>
+              <Button onClick={handleSaveRedeemProduct}>
+                {editingRedeem ? 'Update' : 'Simpan'}
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
       </main>
     </div>
   )
