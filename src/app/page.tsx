@@ -557,6 +557,75 @@ export default function RestaurantApp() {
     })
   }
 
+  const handleEditProfile = async () => {
+    if (!user?.id) {
+      toast({
+        title: 'Gagal',
+        description: 'User tidak ditemukan',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      const response = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          name: editName,
+          email: editEmail,
+          phone: editPhone
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        toast({
+          title: 'Gagal Mengupdate Profil',
+          description: data.error || 'Terjadi kesalahan',
+          variant: 'destructive'
+        })
+        return
+      }
+
+      // Update local user state
+      setUser({
+        ...user,
+        name: editName,
+        email: editEmail,
+        phone: editPhone
+      })
+
+      // Update memberData state
+      if (memberData) {
+        setMemberData({
+          ...memberData,
+          user: {
+            ...memberData.user,
+            name: editName,
+            email: editEmail,
+            phone: editPhone
+          }
+        })
+      }
+
+      toast({
+        title: 'Profil Berhasil Diupdate',
+        description: 'Informasi profil Anda telah diperbarui'
+      })
+      setShowEditProfile(false)
+    } catch (error) {
+      console.error('Profile update error:', error)
+      toast({
+        title: 'Gagal Mengupdate Profil',
+        description: 'Terjadi kesalahan koneksi',
+        variant: 'destructive'
+      })
+    }
+  }
+
   // Fetch notifications from database
   const fetchNotifications = async (userId: string) => {
     try {
