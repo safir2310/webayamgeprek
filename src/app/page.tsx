@@ -547,6 +547,7 @@ export default function RestaurantApp() {
           // Fetch notifications and chat
           fetchNotifications(data.user.id)
           fetchChatMessages(data.user.id)
+          fetchFavorites(data.user.id)
         }
 
         toast({
@@ -839,6 +840,106 @@ export default function RestaurantApp() {
       }
     } catch (error) {
       console.error('Failed to fetch chat messages:', error)
+    }
+  }
+
+  // Fetch favorites from database
+  const fetchFavorites = async (userId: string) => {
+    try {
+      const response = await fetch(`/api/favorites?userId=${userId}`)
+      const data = await response.json()
+      if (response.ok) {
+        const favoriteIds = data.favorites?.map((fav: any) => fav.productId) || []
+        setFavorites(favoriteIds)
+      }
+    } catch (error) {
+      console.error('Failed to fetch favorites:', error)
+    }
+  }
+
+  // Add product to favorites
+  const addToFavorites = async (productId: string) => {
+    if (!user?.id) {
+      toast({
+        title: 'Login Diperlukan',
+        description: 'Silakan login untuk menambahkan ke favorit',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      const response = await fetch('/api/favorites', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          userId: user.id,
+          productId
+        })
+      })
+
+      if (response.ok) {
+        setFavorites(prev => [...prev, productId])
+        toast({
+          title: 'Ditambahkan ke Favorit',
+          description: 'Produk berhasil ditambahkan ke favorit',
+        })
+      } else {
+        const data = await response.json()
+        toast({
+          title: 'Gagal',
+          description: data.error || 'Terjadi kesalahan',
+          variant: 'destructive'
+        })
+      }
+    } catch (error) {
+      console.error('Error adding to favorites:', error)
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan koneksi',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  // Remove product from favorites
+  const removeFromFavorites = async (productId: string) => {
+    if (!user?.id) return
+
+    try {
+      const response = await fetch(`/api/favorites?userId=${user.id}`)
+      const data = await response.json()
+      const favorite = data.favorites?.find((fav: any) => fav.productId === productId)
+
+      if (favorite) {
+        const deleteResponse = await fetch(`/api/favorites/${favorite.id}`, {
+          method: 'DELETE'
+        })
+
+        if (deleteResponse.ok) {
+          setFavorites(prev => prev.filter(id => id !== productId))
+          toast({
+            title: 'Dihapus dari Favorit',
+            description: 'Produk berhasil dihapus dari favorit',
+          })
+        }
+      }
+    } catch (error) {
+      console.error('Error removing from favorites:', error)
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan koneksi',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  // Toggle favorite
+  const toggleFavorite = (productId: string) => {
+    if (favorites.includes(productId)) {
+      removeFromFavorites(productId)
+    } else {
+      addToFavorites(productId)
     }
   }
 
@@ -1270,8 +1371,25 @@ export default function RestaurantApp() {
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
                     {populerProducts.map(product => (
-                      <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
-                        <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl">
+                      <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow relative">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2 z-10 bg-white/90 hover:bg-white shadow-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(product.id);
+                          }}
+                        >
+                          <Heart
+                            className={`w-5 h-5 ${
+                              favorites.includes(product.id)
+                                ? 'fill-red-500 text-red-500'
+                                : 'text-gray-400'
+                            }`}
+                          />
+                        </Button>
+                        <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
                           {product.image?.startsWith('data:') ? (
                             <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                           ) : (
@@ -1305,8 +1423,25 @@ export default function RestaurantApp() {
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
                     {terlarisProducts.map(product => (
-                      <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
-                        <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl">
+                      <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow relative">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2 z-10 bg-white/90 hover:bg-white shadow-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(product.id);
+                          }}
+                        >
+                          <Heart
+                            className={`w-5 h-5 ${
+                              favorites.includes(product.id)
+                                ? 'fill-red-500 text-red-500'
+                                : 'text-gray-400'
+                            }`}
+                          />
+                        </Button>
+                        <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
                           {product.image?.startsWith('data:') ? (
                             <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                           ) : (
@@ -1340,8 +1475,25 @@ export default function RestaurantApp() {
                 ) : (
                   <div className="grid grid-cols-2 gap-3">
                     {terbaruProducts.map(product => (
-                      <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
-                        <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl">
+                      <Card key={product.id} className="overflow-hidden hover:shadow-lg transition-shadow relative">
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="absolute top-2 right-2 z-10 bg-white/90 hover:bg-white shadow-sm"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleFavorite(product.id);
+                          }}
+                        >
+                          <Heart
+                            className={`w-5 h-5 ${
+                              favorites.includes(product.id)
+                                ? 'fill-red-500 text-red-500'
+                                : 'text-gray-400'
+                            }`}
+                          />
+                        </Button>
+                        <div className="bg-orange-50 h-28 flex items-center justify-center text-5xl cursor-pointer" onClick={() => { setSelectedProduct(product); addToCart(product); }}>
                           {product.image?.startsWith('data:') ? (
                             <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
                           ) : (
@@ -1590,7 +1742,24 @@ export default function RestaurantApp() {
         <div className="p-4 pt-0">
           <div className="grid grid-cols-2 gap-3">
             {filteredProducts.map(product => (
-              <Card key={product.id} className="overflow-hidden">
+              <Card key={product.id} className="overflow-hidden relative">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="absolute top-2 right-2 z-10 bg-white/90 hover:bg-white shadow-sm"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    toggleFavorite(product.id);
+                  }}
+                >
+                  <Heart
+                    className={`w-5 h-5 ${
+                      favorites.includes(product.id)
+                        ? 'fill-red-500 text-red-500'
+                        : 'text-gray-400'
+                    }`}
+                  />
+                </Button>
                 <div className="bg-orange-50 h-32 flex items-center justify-center text-6xl overflow-hidden">
                   {product.image?.startsWith('data:') ? (
                     <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
@@ -4410,7 +4579,7 @@ export default function RestaurantApp() {
               {filteredProducts.map(product => (
                 <Card
                   key={product.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow"
+                  className="cursor-pointer hover:shadow-md transition-shadow relative"
                   onClick={() => {
                     setPosCart(prev => {
                       const existing = prev.find(item => item.product.id === product.id)
@@ -4425,6 +4594,23 @@ export default function RestaurantApp() {
                     })
                   }}
                 >
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="absolute top-1 right-1 z-10 bg-white/90 hover:bg-white shadow-sm h-6 w-6"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      toggleFavorite(product.id);
+                    }}
+                  >
+                    <Heart
+                      className={`w-4 h-4 ${
+                        favorites.includes(product.id)
+                          ? 'fill-red-500 text-red-500'
+                          : 'text-gray-400'
+                      }`}
+                    />
+                  </Button>
                   <CardContent className="p-2">
                     <div className="bg-orange-50 h-16 rounded-lg flex items-center justify-center text-2xl mb-2 overflow-hidden">
                       {product.image?.startsWith('data:') ? (

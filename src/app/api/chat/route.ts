@@ -6,6 +6,7 @@ export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
+    const includeRead = searchParams.get('includeRead') === 'true'
 
     if (!userId) {
       return NextResponse.json(
@@ -14,8 +15,14 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Only return unread messages by default
+    const where: any = { userId }
+    if (!includeRead) {
+      where.isRead = false
+    }
+
     const messages = await db.chatMessage.findMany({
-      where: { userId },
+      where,
       orderBy: { createdAt: 'asc' }
     })
 
