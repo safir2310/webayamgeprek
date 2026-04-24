@@ -335,6 +335,29 @@ export default function RestaurantApp() {
   const [memberCardTab, setMemberCardTab] = useState<'card' | 'barcode'>('card')
   const [productTab, setProductTab] = useState<'populer' | 'terlaris' | 'terbaru'>('populer')
   const [accountTab, setAccountTab] = useState<'profile' | 'orders' | 'vouchers' | 'favorites'>('profile')
+  const [showEditProfile, setShowEditProfile] = useState(false)
+  const [showVoucherDetail, setShowVoucherDetail] = useState(false)
+  const [selectedVoucher, setSelectedVoucher] = useState<any>(null)
+  const [favorites, setFavorites] = useState<string[]>([])
+  const [vouchers, setVouchers] = useState<any[]>([
+    { id: '1', code: 'AYAMHEMAT', discount: '20%', minOrder: 50000, expiry: '2024-12-31', type: 'percentage', isUsed: false },
+    { id: '2', code: 'FREEDELIVERY', discount: 'Gratis Ongkir', minOrder: 30000, expiry: '2024-12-25', type: 'delivery', isUsed: false },
+    { id: '3', code: 'MEMBERVIP', discount: '15%', minOrder: 100000, expiry: '2024-12-20', type: 'percentage', isUsed: true }
+  ])
+  const [addresses, setAddresses] = useState([
+    { id: '1', label: 'Rumah', address: 'Jl. Merdeka No. 123, Jakarta Pusat', isDefault: true },
+    { id: '2', label: 'Kantor', address: 'Jl. Sudirman No. 456, Jakarta Selatan', isDefault: false }
+  ])
+  const [stats, setStats] = useState({
+    totalOrders: 12,
+    totalSpent: 1250000,
+    pointsEarned: 12500,
+    totalSaved: 85000
+  })
+  const [showLogoutDialog, setShowLogoutDialog] = useState(false)
+  const [editName, setEditName] = useState('')
+  const [editEmail, setEditEmail] = useState('')
+  const [editPhone, setEditPhone] = useState('')
 
   // Featured products from database
   const [populerProducts, setPopulerProducts] = useState<Product[]>([])
