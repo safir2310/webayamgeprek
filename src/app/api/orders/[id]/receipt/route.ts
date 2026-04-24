@@ -34,8 +34,8 @@ export async function GET(
 
     // Restaurant info
     const restaurantName = 'Ayam Geprek Sambal Ijo'
-    const restaurantAddress = 'Jl. Merdeka No. 123, Jakarta'
-    const restaurantPhone = '+62 812-3456-7890'
+    const restaurantAddress = 'Jl. Medan - Banda Aceh, Simpang Camat, Gampong Tijue, 24151'
+    const restaurantPhone = '085260812758'
 
     // Set up PDF
     let yPos = 20
