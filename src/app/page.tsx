@@ -3204,309 +3204,296 @@ export default function RestaurantApp() {
           </DialogContent>
         </Dialog>
 
-        {/* Exchange Points Dialog - Scrollable Design */}
+        {/* Exchange Points Dialog - All Visible */}
         <Dialog open={showExchangePoints} onOpenChange={setShowExchangePoints}>
-          <DialogContent className="max-w-2xl max-h-[85vh] flex flex-col p-0 overflow-hidden">
+          <DialogContent className="max-w-4xl max-h-[95vh] flex flex-col p-0 overflow-hidden">
             {/* Header with gradient background */}
-            <div className="bg-gradient-to-br from-orange-600 via-amber-500 to-yellow-400 p-6 relative overflow-hidden flex-shrink-0">
+            <div className="bg-gradient-to-br from-orange-600 via-amber-500 to-yellow-400 p-5 relative overflow-hidden flex-shrink-0">
               <div className="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -translate-y-1/2 translate-x-1/2"></div>
               <div className="absolute bottom-0 left-0 w-32 h-32 bg-white/10 rounded-full translate-y-1/2 -translate-x-1/2"></div>
               <div className="relative z-10">
-                <div className="flex items-center justify-between mb-4">
+                <div className="flex items-center justify-between mb-3">
                   <div>
                     <DialogTitle className="text-white text-2xl font-bold">Tukar Poin</DialogTitle>
-                    <DialogDescription className="text-orange-100">
+                    <DialogDescription className="text-orange-100 text-sm">
                       Dapatkan voucher eksklusif dengan poin Anda
                     </DialogDescription>
                   </div>
-                  <div className="w-20 h-20 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
-                    <Trophy className="w-12 h-12 text-white" />
+                  <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                    <Trophy className="w-9 h-9 text-white" />
                   </div>
                 </div>
 
                 {/* Points display */}
-                <div className="bg-white/25 backdrop-blur-sm rounded-2xl p-5 border border-white/40">
+                <div className="bg-white/25 backdrop-blur-sm rounded-xl p-4 border border-white/40">
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="text-orange-100 text-sm font-medium mb-1">Poin Tersedia</p>
-                      <p className="text-white text-4xl font-bold tracking-tight">{points.toLocaleString()}</p>
+                      <p className="text-white text-3xl font-bold tracking-tight">{points.toLocaleString()}</p>
                     </div>
-                    <div className="w-16 h-16 bg-yellow-400/30 rounded-full flex items-center justify-center">
-                      <Star className="w-10 h-10 text-yellow-200 fill-yellow-200" />
+                    <div className="w-14 h-14 bg-yellow-400/30 rounded-full flex items-center justify-center">
+                      <Star className="w-8 h-8 text-yellow-200 fill-yellow-200" />
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Scrollable Rewards Section - Horizontal */}
-            <div className="flex-1 bg-gray-50 p-6 flex-shrink-0">
+            {/* All Rewards Section - Grid Layout */}
+            <div className="flex-1 bg-gray-50 p-5 overflow-auto">
               <p className="text-sm font-medium text-gray-600 mb-4 flex items-center gap-2">
                 <Gift className="w-4 h-4" />
                 Pilih Voucher yang Ingin Ditukar
               </p>
 
-              {/* Horizontal Scroll Container */}
-              <div className="overflow-x-auto overflow-y-hidden pb-4 snap-x snap-mandatory" style={{
-                scrollbarWidth: 'thin',
-                scrollbarColor: '#f97316 #f1f5f9'
-              }}>
-                <div className="flex gap-4 min-w-max px-1">
-                  {/* Voucher Rp 100.000 */}
-                  <Card
-                    className={`cursor-pointer border-2 transition-all hover:shadow-xl hover:scale-105 w-64 flex-shrink-0 snap-start ${selectedReward === 'voucher100k' ? 'border-orange-500 bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg' : 'border-gray-200 bg-white hover:border-orange-300'}`}
-                    onClick={() => setSelectedReward('voucher100k')}
-                  >
-                    <CardContent className="p-5">
-                      <div className="space-y-4">
-                        <div className="w-20 h-20 bg-gradient-to-br from-orange-500 to-amber-500 rounded-2xl flex items-center justify-center shadow-lg mx-auto">
-                          <Gift className="w-10 h-10 text-white" />
+              <div className="grid grid-cols-4 gap-4">
+                {/* Voucher Rp 100.000 */}
+                <Card
+                  className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${selectedReward === 'voucher100k' ? 'border-orange-500 bg-gradient-to-br from-orange-50 to-amber-50 shadow-lg' : 'border-gray-200 bg-white hover:border-orange-300'}`}
+                  onClick={() => setSelectedReward('voucher100k')}
+                >
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="w-16 h-16 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center shadow-md mx-auto">
+                        <Gift className="w-8 h-8 text-white" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-base text-gray-900 mb-2 leading-tight">Voucher Rp 100.000</p>
+                        <Badge className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-xs py-1 px-3">500 Poin</Badge>
+                      </div>
+                      <div className="space-y-1.5 text-xs text-gray-600 border-t pt-2">
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <Tag className="w-3.5 h-3.5 text-orange-500" />
+                          <span>Min. pembelian Rp 300.000</span>
                         </div>
-                        <div className="text-center">
-                          <p className="font-bold text-xl text-gray-900 mb-2">Voucher Rp 100.000</p>
-                          <Badge className="bg-gradient-to-r from-orange-500 to-amber-500 text-white text-sm py-1 px-4">500 Poin</Badge>
-                        </div>
-                        <div className="space-y-2 text-sm text-gray-600 border-t pt-3">
-                          <div className="flex items-center gap-2 justify-center">
-                            <Tag className="w-4 h-4 text-orange-500" />
-                            <span>Min. pembelian Rp 300.000</span>
-                          </div>
-                          <div className="flex items-center gap-2 justify-center">
-                            <ClockIcon className="w-4 h-4 text-orange-500" />
-                            <span>Berlaku 30 hari</span>
-                          </div>
-                        </div>
-                        <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center mx-auto">
-                          {selectedReward === 'voucher100k' && <div className="w-4 h-4 bg-orange-500 rounded-full animate-pulse" />}
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <ClockIcon className="w-3.5 h-3.5 text-orange-500" />
+                          <span>Berlaku 30 hari</span>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
+                        {selectedReward === 'voucher100k' && <div className="w-3 h-3 bg-orange-500 rounded-full animate-pulse" />}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                  {/* Diskon 20% */}
-                  <Card
-                    className={`cursor-pointer border-2 transition-all hover:shadow-xl hover:scale-105 w-64 flex-shrink-0 snap-start ${selectedReward === 'diskon20' ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg' : 'border-gray-200 bg-white hover:border-blue-300'}`}
-                    onClick={() => setSelectedReward('diskon20')}
-                  >
-                    <CardContent className="p-5">
-                      <div className="space-y-4">
-                        <div className="w-20 h-20 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto">
-                          <Tag className="w-10 h-10 text-white" />
+                {/* Diskon 20% */}
+                <Card
+                  className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${selectedReward === 'diskon20' ? 'border-blue-500 bg-gradient-to-br from-blue-50 to-indigo-50 shadow-lg' : 'border-gray-200 bg-white hover:border-blue-300'}`}
+                  onClick={() => setSelectedReward('diskon20')}
+                >
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="w-16 h-16 bg-gradient-to-br from-blue-500 to-indigo-600 rounded-xl flex items-center justify-center shadow-md mx-auto">
+                        <Tag className="w-8 h-8 text-white" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-base text-gray-900 mb-2 leading-tight">Diskon 20%</p>
+                        <Badge className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-xs py-1 px-3">300 Poin</Badge>
+                      </div>
+                      <div className="space-y-1.5 text-xs text-gray-600 border-t pt-2">
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <Tag className="w-3.5 h-3.5 text-blue-500" />
+                          <span>Maks. diskon Rp 50.000</span>
                         </div>
-                        <div className="text-center">
-                          <p className="font-bold text-xl text-gray-900 mb-2">Diskon 20%</p>
-                          <Badge className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white text-sm py-1 px-4">300 Poin</Badge>
-                        </div>
-                        <div className="space-y-2 text-sm text-gray-600 border-t pt-3">
-                          <div className="flex items-center gap-2 justify-center">
-                            <Tag className="w-4 h-4 text-blue-500" />
-                            <span>Maks. diskon Rp 50.000</span>
-                          </div>
-                          <div className="flex items-center gap-2 justify-center">
-                            <CheckCircle className="w-4 h-4 text-blue-500" />
-                            <span>Berlaku semua menu</span>
-                          </div>
-                        </div>
-                        <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center mx-auto">
-                          {selectedReward === 'diskon20' && <div className="w-4 h-4 bg-blue-500 rounded-full animate-pulse" />}
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <CheckCircle className="w-3.5 h-3.5 text-blue-500" />
+                          <span>Berlaku semua menu</span>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
+                        {selectedReward === 'diskon20' && <div className="w-3 h-3 bg-blue-500 rounded-full animate-pulse" />}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                  {/* Gratis Ongkir */}
-                  <Card
-                    className={`cursor-pointer border-2 transition-all hover:shadow-xl hover:scale-105 w-64 flex-shrink-0 snap-start ${selectedReward === 'gratisongkir' ? 'border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg' : 'border-gray-200 bg-white hover:border-green-300'}`}
-                    onClick={() => setSelectedReward('gratisongkir')}
-                  >
-                    <CardContent className="p-5">
-                      <div className="space-y-4">
-                        <div className="w-20 h-20 bg-gradient-to-br from-green-500 to-emerald-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto">
-                          <Package className="w-10 h-10 text-white" />
+                {/* Gratis Ongkir */}
+                <Card
+                  className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${selectedReward === 'gratisongkir' ? 'border-green-500 bg-gradient-to-br from-green-50 to-emerald-50 shadow-lg' : 'border-gray-200 bg-white hover:border-green-300'}`}
+                  onClick={() => setSelectedReward('gratisongkir')}
+                >
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="w-16 h-16 bg-gradient-to-br from-green-500 to-emerald-600 rounded-xl flex items-center justify-center shadow-md mx-auto">
+                        <Package className="w-8 h-8 text-white" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-base text-gray-900 mb-2 leading-tight">Gratis Ongkir</p>
+                        <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-xs py-1 px-3">200 Poin</Badge>
+                      </div>
+                      <div className="space-y-1.5 text-xs text-gray-600 border-t pt-2">
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <MapPin className="w-3.5 h-3.5 text-green-500" />
+                          <span>Radius maks. 10 km</span>
                         </div>
-                        <div className="text-center">
-                          <p className="font-bold text-xl text-gray-900 mb-2">Gratis Ongkir</p>
-                          <Badge className="bg-gradient-to-r from-green-500 to-emerald-600 text-white text-sm py-1 px-4">200 Poin</Badge>
-                        </div>
-                        <div className="space-y-2 text-sm text-gray-600 border-t pt-3">
-                          <div className="flex items-center gap-2 justify-center">
-                            <MapPin className="w-4 h-4 text-green-500" />
-                            <span>Radius maks. 10 km</span>
-                          </div>
-                          <div className="flex items-center gap-2 justify-center">
-                            <ClockIcon className="w-4 h-4 text-green-500" />
-                            <span>Berlaku 14 hari</span>
-                          </div>
-                        </div>
-                        <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center mx-auto">
-                          {selectedReward === 'gratisongkir' && <div className="w-4 h-4 bg-green-500 rounded-full animate-pulse" />}
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <ClockIcon className="w-3.5 h-3.5 text-green-500" />
+                          <span>Berlaku 14 hari</span>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
+                        {selectedReward === 'gratisongkir' && <div className="w-3 h-3 bg-green-500 rounded-full animate-pulse" />}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                  {/* Buy 1 Get 1 */}
-                  <Card
-                    className={`cursor-pointer border-2 transition-all hover:shadow-xl hover:scale-105 w-64 flex-shrink-0 snap-start ${selectedReward === 'bogo' ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg' : 'border-gray-200 bg-white hover:border-purple-300'}`}
-                    onClick={() => setSelectedReward('bogo')}
-                  >
-                    <CardContent className="p-5">
-                      <div className="space-y-4">
-                        <div className="w-20 h-20 bg-gradient-to-br from-purple-500 to-pink-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto">
-                          <Heart className="w-10 h-10 text-white" />
+                {/* Buy 1 Get 1 */}
+                <Card
+                  className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${selectedReward === 'bogo' ? 'border-purple-500 bg-gradient-to-br from-purple-50 to-pink-50 shadow-lg' : 'border-gray-200 bg-white hover:border-purple-300'}`}
+                  onClick={() => setSelectedReward('bogo')}
+                >
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="w-16 h-16 bg-gradient-to-br from-purple-500 to-pink-600 rounded-xl flex items-center justify-center shadow-md mx-auto">
+                        <Heart className="w-8 h-8 text-white" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-base text-gray-900 mb-2 leading-tight">Buy 1 Get 1 Free</p>
+                        <Badge className="bg-gradient-to-r from-purple-500 to-pink-600 text-white text-xs py-1 px-3">400 Poin</Badge>
+                      </div>
+                      <div className="space-y-1.5 text-xs text-gray-600 border-t pt-2">
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <Gift className="w-3.5 h-3.5 text-purple-500" />
+                          <span>Untuk menu Ayam Geprek</span>
                         </div>
-                        <div className="text-center">
-                          <p className="font-bold text-xl text-gray-900 mb-2">Buy 1 Get 1 Free</p>
-                          <Badge className="bg-gradient-to-r from-purple-500 to-pink-600 text-white text-sm py-1 px-4">400 Poin</Badge>
-                        </div>
-                        <div className="space-y-2 text-sm text-gray-600 border-t pt-3">
-                          <div className="flex items-center gap-2 justify-center">
-                            <Gift className="w-4 h-4 text-purple-500" />
-                            <span>Untuk menu Ayam Geprek</span>
-                          </div>
-                          <div className="flex items-center gap-2 justify-center">
-                            <ClockIcon className="w-4 h-4 text-purple-500" />
-                            <span>Berlaku 7 hari</span>
-                          </div>
-                        </div>
-                        <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center mx-auto">
-                          {selectedReward === 'bogo' && <div className="w-4 h-4 bg-purple-500 rounded-full animate-pulse" />}
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <ClockIcon className="w-3.5 h-3.5 text-purple-500" />
+                          <span>Berlaku 7 hari</span>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
+                        {selectedReward === 'bogo' && <div className="w-3 h-3 bg-purple-500 rounded-full animate-pulse" />}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                  {/* Free Drink */}
-                  <Card
-                    className={`cursor-pointer border-2 transition-all hover:shadow-xl hover:scale-105 w-64 flex-shrink-0 snap-start ${selectedReward === 'freedrink' ? 'border-red-500 bg-gradient-to-br from-red-50 to-rose-50 shadow-lg' : 'border-gray-200 bg-white hover:border-red-300'}`}
-                    onClick={() => setSelectedReward('freedrink')}
-                  >
-                    <CardContent className="p-5">
-                      <div className="space-y-4">
-                        <div className="w-20 h-20 bg-gradient-to-br from-rose-500 to-red-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto">
-                          <Flame className="w-10 h-10 text-white" />
+                {/* Free Drink */}
+                <Card
+                  className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${selectedReward === 'freedrink' ? 'border-red-500 bg-gradient-to-br from-red-50 to-rose-50 shadow-lg' : 'border-gray-200 bg-white hover:border-red-300'}`}
+                  onClick={() => setSelectedReward('freedrink')}
+                >
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="w-16 h-16 bg-gradient-to-br from-rose-500 to-red-600 rounded-xl flex items-center justify-center shadow-md mx-auto">
+                        <Flame className="w-8 h-8 text-white" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-base text-gray-900 mb-2 leading-tight">Minuman Gratis</p>
+                        <Badge className="bg-gradient-to-r from-red-500 to-rose-600 text-white text-xs py-1 px-3">100 Poin</Badge>
+                      </div>
+                      <div className="space-y-1.5 text-xs text-gray-600 border-t pt-2">
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <Star className="w-3.5 h-3.5 text-red-500" />
+                          <span>Es Teh / Es Jeruk</span>
                         </div>
-                        <div className="text-center">
-                          <p className="font-bold text-xl text-gray-900 mb-2">Minuman Gratis</p>
-                          <Badge className="bg-gradient-to-r from-red-500 to-rose-600 text-white text-sm py-1 px-4">100 Poin</Badge>
-                        </div>
-                        <div className="space-y-2 text-sm text-gray-600 border-t pt-3">
-                          <div className="flex items-center gap-2 justify-center">
-                            <Star className="w-4 h-4 text-red-500" />
-                            <span>Es Teh / Es Jeruk</span>
-                          </div>
-                          <div className="flex items-center gap-2 justify-center">
-                            <ClockIcon className="w-4 h-4 text-red-500" />
-                            <span>Berlaku 7 hari</span>
-                          </div>
-                        </div>
-                        <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center mx-auto">
-                          {selectedReward === 'freedrink' && <div className="w-4 h-4 bg-red-500 rounded-full animate-pulse" />}
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <ClockIcon className="w-3.5 h-3.5 text-red-500" />
+                          <span>Berlaku 7 hari</span>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
+                        {selectedReward === 'freedrink' && <div className="w-3 h-3 bg-red-500 rounded-full animate-pulse" />}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                  {/* Special Menu */}
-                  <Card
-                    className={`cursor-pointer border-2 transition-all hover:shadow-xl hover:scale-105 w-64 flex-shrink-0 snap-start ${selectedReward === 'specialmenu' ? 'border-amber-500 bg-gradient-to-br from-amber-50 to-yellow-50 shadow-lg' : 'border-gray-200 bg-white hover:border-amber-300'}`}
-                    onClick={() => setSelectedReward('specialmenu')}
-                  >
-                    <CardContent className="p-5">
-                      <div className="space-y-4">
-                        <div className="w-20 h-20 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto">
-                          <Crown className="w-10 h-10 text-white" />
+                {/* Special Menu */}
+                <Card
+                  className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${selectedReward === 'specialmenu' ? 'border-amber-500 bg-gradient-to-br from-amber-50 to-yellow-50 shadow-lg' : 'border-gray-200 bg-white hover:border-amber-300'}`}
+                  onClick={() => setSelectedReward('specialmenu')}
+                >
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="w-16 h-16 bg-gradient-to-br from-amber-500 to-yellow-600 rounded-xl flex items-center justify-center shadow-md mx-auto">
+                        <Crown className="w-8 h-8 text-white" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-base text-gray-900 mb-2 leading-tight">Menu Spesial</p>
+                        <Badge className="bg-gradient-to-r from-amber-500 to-yellow-600 text-white text-xs py-1 px-3">600 Poin</Badge>
+                      </div>
+                      <div className="space-y-1.5 text-xs text-gray-600 border-t pt-2">
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <Flame className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Ayam Geprek Spesial Level 5</span>
                         </div>
-                        <div className="text-center">
-                          <p className="font-bold text-xl text-gray-900 mb-2">Menu Spesial</p>
-                          <Badge className="bg-gradient-to-r from-amber-500 to-yellow-600 text-white text-sm py-1 px-4">600 Poin</Badge>
-                        </div>
-                        <div className="space-y-2 text-sm text-gray-600 border-t pt-3">
-                          <div className="flex items-center gap-2 justify-center">
-                            <Flame className="w-4 h-4 text-amber-500" />
-                            <span>Ayam Geprek Spesial Level 5</span>
-                          </div>
-                          <div className="flex items-center gap-2 justify-center">
-                            <ClockIcon className="w-4 h-4 text-amber-500" />
-                            <span>Berlaku 30 hari</span>
-                          </div>
-                        </div>
-                        <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center mx-auto">
-                          {selectedReward === 'specialmenu' && <div className="w-4 h-4 bg-amber-500 rounded-full animate-pulse" />}
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <ClockIcon className="w-3.5 h-3.5 text-amber-500" />
+                          <span>Berlaku 30 hari</span>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
+                        {selectedReward === 'specialmenu' && <div className="w-3 h-3 bg-amber-500 rounded-full animate-pulse" />}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                  {/* Birthday Special */}
-                  <Card
-                    className={`cursor-pointer border-2 transition-all hover:shadow-xl hover:scale-105 w-64 flex-shrink-0 snap-start ${selectedReward === 'birthday' ? 'border-cyan-500 bg-gradient-to-br from-cyan-50 to-blue-50 shadow-lg' : 'border-gray-200 bg-white hover:border-cyan-300'}`}
-                    onClick={() => setSelectedReward('birthday')}
-                  >
-                    <CardContent className="p-5">
-                      <div className="space-y-4">
-                        <div className="w-20 h-20 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto">
-                          <Award className="w-10 h-10 text-white" />
+                {/* Birthday Special */}
+                <Card
+                  className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${selectedReward === 'birthday' ? 'border-cyan-500 bg-gradient-to-br from-cyan-50 to-blue-50 shadow-lg' : 'border-gray-200 bg-white hover:border-cyan-300'}`}
+                  onClick={() => setSelectedReward('birthday')}
+                >
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="w-16 h-16 bg-gradient-to-br from-cyan-500 to-blue-600 rounded-xl flex items-center justify-center shadow-md mx-auto">
+                        <Award className="w-8 h-8 text-white" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-base text-gray-900 mb-2 leading-tight">Birthday Special</p>
+                        <Badge className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-xs py-1 px-3">800 Poin</Badge>
+                      </div>
+                      <div className="space-y-1.5 text-xs text-gray-600 border-t pt-2">
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <Gift className="w-3.5 h-3.5 text-cyan-500" />
+                          <span>Paket lengkap ulang tahun</span>
                         </div>
-                        <div className="text-center">
-                          <p className="font-bold text-xl text-gray-900 mb-2">Birthday Special</p>
-                          <Badge className="bg-gradient-to-r from-cyan-500 to-blue-600 text-white text-sm py-1 px-4">800 Poin</Badge>
-                        </div>
-                        <div className="space-y-2 text-sm text-gray-600 border-t pt-3">
-                          <div className="flex items-center gap-2 justify-center">
-                            <Gift className="w-4 h-4 text-cyan-500" />
-                            <span>Paket lengkap ulang tahun</span>
-                          </div>
-                          <div className="flex items-center gap-2 justify-center">
-                            <ClockIcon className="w-4 h-4 text-cyan-500" />
-                            <span>Berlaku 60 hari</span>
-                          </div>
-                        </div>
-                        <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center mx-auto">
-                          {selectedReward === 'birthday' && <div className="w-4 h-4 bg-cyan-500 rounded-full animate-pulse" />}
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <ClockIcon className="w-3.5 h-3.5 text-cyan-500" />
+                          <span>Berlaku 60 hari</span>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
+                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
+                        {selectedReward === 'birthday' && <div className="w-3 h-3 bg-cyan-500 rounded-full animate-pulse" />}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
 
-                  {/* Cashback */}
-                  <Card
-                    className={`cursor-pointer border-2 transition-all hover:shadow-xl hover:scale-105 w-64 flex-shrink-0 snap-start ${selectedReward === 'cashback' ? 'border-teal-500 bg-gradient-to-br from-teal-50 to-green-50 shadow-lg' : 'border-gray-200 bg-white hover:border-teal-300'}`}
-                    onClick={() => setSelectedReward('cashback')}
-                  >
-                    <CardContent className="p-5">
-                      <div className="space-y-4">
-                        <div className="w-20 h-20 bg-gradient-to-br from-teal-500 to-green-600 rounded-2xl flex items-center justify-center shadow-lg mx-auto">
-                          <Wallet className="w-10 h-10 text-white" />
+                {/* Cashback */}
+                <Card
+                  className={`cursor-pointer border-2 transition-all hover:shadow-lg hover:scale-[1.02] ${selectedReward === 'cashback' ? 'border-teal-500 bg-gradient-to-br from-teal-50 to-green-50 shadow-lg' : 'border-gray-200 bg-white hover:border-teal-300'}`}
+                  onClick={() => setSelectedReward('cashback')}
+                >
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="w-16 h-16 bg-gradient-to-br from-teal-500 to-green-600 rounded-xl flex items-center justify-center shadow-md mx-auto">
+                        <Wallet className="w-8 h-8 text-white" />
+                      </div>
+                      <div className="text-center">
+                        <p className="font-bold text-base text-gray-900 mb-2 leading-tight">Cashback 10%</p>
+                        <Badge className="bg-gradient-to-r from-teal-500 to-green-600 text-white text-xs py-1 px-3">350 Poin</Badge>
+                      </div>
+                      <div className="space-y-1.5 text-xs text-gray-600 border-t pt-2">
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <TrendingUp className="w-3.5 h-3.5 text-teal-500" />
+                          <span>Maks. cashback Rp 30.000</span>
                         </div>
-                        <div className="text-center">
-                          <p className="font-bold text-xl text-gray-900 mb-2">Cashback 10%</p>
-                          <Badge className="bg-gradient-to-r from-teal-500 to-green-600 text-white text-sm py-1 px-4">350 Poin</Badge>
-                        </div>
-                        <div className="space-y-2 text-sm text-gray-600 border-t pt-3">
-                          <div className="flex items-center gap-2 justify-center">
-                            <TrendingUp className="w-4 h-4 text-teal-500" />
-                            <span>Maks. cashback Rp 30.000</span>
-                          </div>
-                          <div className="flex items-center gap-2 justify-center">
-                            <ClockIcon className="w-4 h-4 text-teal-500" />
-                            <span>Berlaku 21 hari</span>
-                          </div>
-                        </div>
-                        <div className="w-6 h-6 border-2 rounded-full flex items-center justify-center mx-auto">
-                          {selectedReward === 'cashback' && <div className="w-4 h-4 bg-teal-500 rounded-full animate-pulse" />}
+                        <div className="flex items-center gap-1.5 justify-center">
+                          <ClockIcon className="w-3.5 h-3.5 text-teal-500" />
+                          <span>Berlaku 21 hari</span>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-
-              {/* Scroll indicator */}
-              <div className="flex items-center justify-center gap-2 mt-4 text-sm text-gray-500">
-                <ChevronRight className="w-4 h-4 rotate-180" />
-                <span>Geser ke samping untuk melihat semua voucher</span>
-                <ChevronRight className="w-4 h-4" />
+                      <div className="w-5 h-5 border-2 rounded-full flex items-center justify-center mx-auto">
+                        {selectedReward === 'cashback' && <div className="w-3 h-3 bg-teal-500 rounded-full animate-pulse" />}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
               </div>
             </div>
 
@@ -3518,7 +3505,7 @@ export default function RestaurantApp() {
                   setSelectedReward(null)
                 }}
                 disabled={isExchanging}
-                className="min-w-[120px]"
+                className="min-w-[100px]"
               >
                 Batal
               </Button>
@@ -3588,7 +3575,7 @@ export default function RestaurantApp() {
                   }
                 }}
                 disabled={isExchanging || !selectedReward}
-                className="bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-700 hover:to-amber-600 text-white min-w-[140px] shadow-lg"
+                className="bg-gradient-to-r from-orange-600 to-amber-500 hover:from-orange-700 hover:to-amber-600 text-white min-w-[120px] shadow-lg"
               >
                 {isExchanging ? (
                   <span className="flex items-center gap-2">
