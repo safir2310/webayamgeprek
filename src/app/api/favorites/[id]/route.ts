@@ -4,12 +4,12 @@ import { db } from '@/lib/db'
 // DELETE /api/favorites/[id] - Remove a product from favorites
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const favoriteId = params.id
+    const { id: favoriteId } = await params
 
-    const favorite = await db.favorite.findUnique({
+    const favorite = await db.favorite.findFirst({
       where: { id: favoriteId }
     })
 
@@ -20,7 +20,7 @@ export async function DELETE(
       )
     }
 
-    await db.favorite.delete({
+    await db.favorite.deleteMany({
       where: { id: favoriteId }
     })
 

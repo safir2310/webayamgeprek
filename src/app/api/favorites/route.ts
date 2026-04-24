@@ -62,12 +62,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Check if already favorited
-    const existingFavorite = await db.favorite.findUnique({
+    const existingFavorite = await db.favorite.findFirst({
       where: {
-        userId_productId: {
-          userId,
-          productId
-        }
+        userId,
+        productId
       }
     })
 
