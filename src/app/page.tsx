@@ -500,6 +500,7 @@ export default function RestaurantApp() {
   const [selectedProductForDialog, setSelectedProductForDialog] = useState<Product | null>(null)
   const [posProductTab, setPosProductTab] = useState('all')
   const [showPosProductListDialog, setShowPosProductListDialog] = useState(false)
+  const [posProductSearchQuery, setPosProductSearchQuery] = useState('')
 
   // Member state
   const [posSelectedMember, setPosSelectedMember] = useState<any>(null)
@@ -5712,59 +5713,104 @@ export default function RestaurantApp() {
 
         {/* Product List Dialog */}
         <Dialog open={showPosProductListDialog} onOpenChange={setShowPosProductListDialog}>
-          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
-            <DialogHeader>
-              <DialogTitle>Daftar Produk</DialogTitle>
-            </DialogHeader>
-            <ScrollArea className="flex-1">
-              <div className="grid grid-cols-3 gap-4 p-4">
-                {allProducts.length > 0 ? (
-                  allProducts.map(product => (
-                    <Card
-                      key={product.id}
-                      className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200 overflow-hidden group"
-                      onClick={() => {
-                        handlePosShowProductDialog(product)
-                        setShowPosProductListDialog(false)
-                      }}
+          <DialogContent className="max-w-5xl max-h-[85vh] overflow-hidden flex flex-col p-0">
+            <div className="p-4 border-b bg-gradient-to-r from-orange-50 to-amber-50">
+              <DialogTitle className="text-lg font-bold mb-4">Daftar Produk</DialogTitle>
+
+              {/* Search Input */}
+              <div className="relative mb-4">
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
+                <Input
+                  placeholder="Cari nama produk..."
+                  value={posProductSearchQuery}
+                  onChange={(e) => setPosProductSearchQuery(e.target.value)}
+                  className="pl-10 border-orange-200 focus:border-orange-400"
+                />
+              </div>
+
+              {/* Category Tabs */}
+              <Tabs value={posProductTab} onValueChange={setPosProductTab} className="w-full">
+                <TabsList className="w-full h-auto bg-white border border-orange-200 p-1 flex-wrap">
+                  <TabsTrigger value="all" className="flex-1 min-w-max text-xs px-3 py-2 data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                    Semua
+                  </TabsTrigger>
+                  {categories.map(cat => (
+                    <TabsTrigger
+                      key={cat.id}
+                      value={cat.name}
+                      className="flex-1 min-w-max text-xs px-3 py-2 data-[state=active]:bg-orange-500 data-[state=active]:text-white"
                     >
-                      <CardContent className="p-3">
-                        <div className="relative">
-                          <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg h-32 flex items-center justify-center overflow-hidden mb-2">
-                            {product.image?.startsWith('data:') ? (
-                              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                            ) : (
-                              <span className="text-5xl">{product.image || '🍗'}</span>
-                            )}
-                          </div>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="absolute top-1 right-1 z-10 bg-white/90 hover:bg-white shadow-sm h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                            onClick={(e) => {
-                              e.stopPropagation()
-                              handlePosAddToCart(product)
-                              toast({
-                                title: 'Ditambahkan',
-                                description: `${product.name} ditambahkan ke keranjang`,
-                              })
-                            }}
-                          >
-                            <Plus className="w-4 h-4" />
-                          </Button>
-                        </div>
-                        <p className="text-sm font-semibold line-clamp-2 mb-1">{product.name}</p>
-                        <p className="text-lg text-orange-600 font-bold">Rp {product.price.toLocaleString()}</p>
-                        <p className="text-xs text-gray-500 mt-1">Stok: {product.stock}</p>
-                      </CardContent>
-                    </Card>
-                  ))
-                ) : (
-                  <div className="col-span-3 text-center py-12 text-gray-400">
-                    <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                    <p className="text-lg font-medium">Tidak ada produk ditemukan</p>
-                  </div>
-                )}
+                      {cat.name}
+                    </TabsTrigger>
+                  ))}
+                </TabsList>
+              </Tabs>
+            </div>
+
+            <ScrollArea className="flex-1">
+              <div className="p-4">
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {allProducts.filter(product => {
+                    // Filter by search query
+                    const matchesSearch = product.name.toLowerCase().includes(posProductSearchQuery.toLowerCase())
+                    // Filter by category
+                    const matchesCategory = posProductTab === 'all' || product.category === posProductTab
+                    return matchesSearch && matchesCategory
+                  }).length > 0 ? (
+                    allProducts
+                      .filter(product => {
+                        const matchesSearch = product.name.toLowerCase().includes(posProductSearchQuery.toLowerCase())
+                        const matchesCategory = posProductTab === 'all' || product.category === posProductTab
+                        return matchesSearch && matchesCategory
+                      })
+                      .map(product => (
+                        <Card
+                          key={product.id}
+                          className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200 overflow-hidden group"
+                          onClick={() => {
+                            handlePosShowProductDialog(product)
+                            setShowPosProductListDialog(false)
+                          }}
+                        >
+                          <CardContent className="p-3">
+                            <div className="relative">
+                              <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg h-32 flex items-center justify-center overflow-hidden mb-2">
+                                {product.image?.startsWith('data:') ? (
+                                  <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                                ) : (
+                                  <span className="text-5xl">{product.image || '🍗'}</span>
+                                )}
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="absolute top-1 right-1 z-10 bg-white/90 hover:bg-white shadow-sm h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                                onClick={(e) => {
+                                  e.stopPropagation()
+                                  handlePosAddToCart(product)
+                                  toast({
+                                    title: 'Ditambahkan',
+                                    description: `${product.name} ditambahkan ke keranjang`,
+                                  })
+                                }}
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                            </div>
+                            <p className="text-sm font-semibold line-clamp-2 mb-1">{product.name}</p>
+                            <p className="text-lg text-orange-600 font-bold">Rp {product.price.toLocaleString()}</p>
+                            <p className="text-xs text-gray-500 mt-1">Stok: {product.stock}</p>
+                          </CardContent>
+                        </Card>
+                      ))
+                  ) : (
+                    <div className="col-span-2 md:col-span-3 lg:col-span-4 text-center py-12 text-gray-400">
+                      <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg font-medium">Tidak ada produk ditemukan</p>
+                      <p className="text-sm mt-1">Coba kata kunci lain atau kategori berbeda</p>
+                    </div>
+                  )}
+                </div>
               </div>
             </ScrollArea>
           </DialogContent>
