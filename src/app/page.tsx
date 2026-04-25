@@ -5749,7 +5749,7 @@ export default function RestaurantApp() {
 
             <ScrollArea className="flex-1">
               <div className="p-4">
-                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-4">
                   {allProducts.filter(product => {
                     // Filter by search query
                     const matchesSearch = product.name.toLowerCase().includes(posProductSearchQuery.toLowerCase())
@@ -5804,7 +5804,7 @@ export default function RestaurantApp() {
                         </Card>
                       ))
                   ) : (
-                    <div className="col-span-2 md:col-span-3 lg:col-span-4 text-center py-12 text-gray-400">
+                    <div className="col-span-2 text-center py-12 text-gray-400">
                       <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
                       <p className="text-lg font-medium">Tidak ada produk ditemukan</p>
                       <p className="text-sm mt-1">Coba kata kunci lain atau kategori berbeda</p>
