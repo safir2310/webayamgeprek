@@ -656,6 +656,34 @@ export default function RestaurantApp() {
           return
         }
 
+        // Validate that the user role matches the selected login role
+        if (loginRole === 'cashier' && data.user.role !== 'cashier') {
+          toast({
+            title: 'Login Gagal',
+            description: 'Akun ini bukan akun kasir. Silakan gunakan akun kasir yang valid.',
+            variant: 'destructive'
+          })
+          return
+        }
+
+        if (loginRole === 'admin' && data.user.role !== 'admin') {
+          toast({
+            title: 'Login Gagal',
+            description: 'Akun ini bukan akun admin. Silakan gunakan akun admin yang valid.',
+            variant: 'destructive'
+          })
+          return
+        }
+
+        if (loginRole === 'customer' && (data.user.role === 'cashier' || data.user.role === 'admin')) {
+          toast({
+            title: 'Perhatian',
+            description: 'Akun ini memiliki akses staff. Silakan pilih role yang sesuai.',
+            variant: 'destructive'
+          })
+          return
+        }
+
         // Save token to localStorage
         if (data.token) {
           localStorage.setItem('auth_token', data.token)
@@ -673,9 +701,17 @@ export default function RestaurantApp() {
         } else if (data.user.role === 'cashier') {
           // Go to POS screen
           setScreen('pos')
+          toast({
+            title: 'Login Berhasil',
+            description: 'Selamat datang, Kasir! Anda sekarang dapat menggunakan POS.',
+          })
         } else {
           // Regular user - go to home screen
           setScreen('home')
+          toast({
+            title: 'Login Berhasil',
+            description: 'Selamat datang kembali!',
+          })
         }
 
         // Fetch member data
@@ -695,19 +731,14 @@ export default function RestaurantApp() {
             console.error('Failed to fetch member data:', error)
           }
 
-          // Fetch notifications and chat
-          fetchNotifications(data.user.id)
-          fetchChatMessages(data.user.id)
-          fetchFavorites(data.user.id)
-          fetchOrders(data.user.id)
+          // Fetch notifications and chat (only for customers)
+          if (data.user.role === 'user') {
+            fetchNotifications(data.user.id)
+            fetchChatMessages(data.user.id)
+            fetchFavorites(data.user.id)
+            fetchOrders(data.user.id)
+          }
         }
-
-        toast({
-          title: 'Login Berhasil',
-          description: data.user.role === 'admin' ? 'Selamat datang, Admin!' :
-                        data.user.role === 'cashier' ? 'Selamat datang, Kasir!' :
-                        'Selamat datang kembali!',
-        })
       } catch (error) {
         console.error('Login error:', error)
         toast({
@@ -1267,29 +1298,25 @@ export default function RestaurantApp() {
               </div>
             </div>
 
-            <Button onClick={handleLogin} className="w-full bg-orange-500 hover:bg-orange-600">
-              <LogIn className="w-4 h-4 mr-2" />
-              Masuk
-            </Button>
-
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Belum punya akun?{' '}
-                <button
-                  onClick={() => setScreen('register')}
-                  className="text-orange-500 hover:underline font-medium"
-                >
-                  Daftar
-                </button>
-              </p>
-            </div>
-
-            <Separator />
-
             <div className="flex justify-center gap-3">
               <Button
-                variant="outline"
-                size="lg"
+                variant={loginRole === 'customer' ? 'default' : 'outline'}
+                size="sm"
+                onClick={() => {
+                  setLoginRole('customer')
+                  toast({
+                    title: 'Mode Pelanggan',
+                    description: 'Login sebagai pelanggan untuk memesan',
+                  })
+                }}
+                className={loginRole === 'customer' ? 'bg-orange-500 hover:bg-orange-600' : ''}
+              >
+                <User className="mr-2 h-4 w-4" />
+                Pelanggan
+              </Button>
+              <Button
+                variant={loginRole === 'cashier' ? 'default' : 'outline'}
+                size="sm"
                 onClick={() => {
                   setLoginRole('cashier')
                   toast({
@@ -1297,13 +1324,14 @@ export default function RestaurantApp() {
                     description: 'Silakan login menggunakan akun kasir',
                   })
                 }}
+                className={loginRole === 'cashier' ? 'bg-orange-500 hover:bg-orange-600' : ''}
               >
-                <Utensils className="mr-2 h-5 w-5" />
+                <Utensils className="mr-2 h-4 w-4" />
                 POS Kasir
               </Button>
               <Button
-                variant="outline"
-                size="lg"
+                variant={loginRole === 'admin' ? 'default' : 'outline'}
+                size="sm"
                 onClick={() => {
                   setLoginRole('admin')
                   toast({
@@ -1311,10 +1339,33 @@ export default function RestaurantApp() {
                     description: 'Silakan login menggunakan akun admin',
                   })
                 }}
+                className={loginRole === 'admin' ? 'bg-orange-500 hover:bg-orange-600' : ''}
               >
-                <ShieldCheck className="mr-2 h-5 w-5" />
+                <ShieldCheck className="mr-2 h-4 w-4" />
                 Admin Panel
               </Button>
+            </div>
+
+            <Separator />
+
+            <Button onClick={handleLogin} className="w-full bg-orange-500 hover:bg-orange-600">
+              <LogIn className="w-4 h-4 mr-2" />
+              Masuk sebagai {loginRole === 'cashier' ? 'Kasir' : loginRole === 'admin' ? 'Admin' : 'Pelanggan'}
+            </Button>
+
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">
+                Belum punya akun pelanggan?{' '}
+                <button
+                  onClick={() => {
+                    setLoginRole('customer')
+                    setScreen('register')
+                  }}
+                  className="text-orange-500 hover:underline font-medium"
+                >
+                  Daftar
+                </button>
+              </p>
             </div>
           </CardContent>
         </Card>
