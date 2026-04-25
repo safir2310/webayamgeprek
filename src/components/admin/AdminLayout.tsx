@@ -94,9 +94,9 @@ export default function AdminLayout({
   ]
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex flex-col bg-gray-50" style={{ minHeight: '100vh' }}>
       {/* Header */}
-      <header className="bg-white border-b shadow-sm sticky top-0 z-50">
+      <header className="bg-white border-b shadow-sm z-50 flex-shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-3">
@@ -200,7 +200,7 @@ export default function AdminLayout({
       </header>
 
       {/* Main Content */}
-      <div className="flex">
+      <div className="flex flex-1 overflow-hidden">
         {/* Desktop Sidebar */}
         <AdminSidebar
           currentTab={currentTab}
@@ -252,7 +252,7 @@ export default function AdminLayout({
         )}
 
         {/* Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+        <main className="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
           {children}
         </main>
       </div>
