@@ -5416,23 +5416,18 @@ export default function RestaurantApp() {
                   />
                 </div>
 
-                {/* Product Category Tabs */}
-                <div className="flex gap-2 overflow-x-auto pb-1 items-center">
-                  {menuCategories.map(cat => (
-                    <Button
-                      key={cat}
-                      variant="outline"
-                      onClick={() => {
-                        setPosProductTab(cat)
-                        setShowPosProductListDialog(true)
-                      }}
-                      size="sm"
-                      className="flex-shrink-0 bg-white hover:bg-orange-50"
-                    >
-                      {cat === 'all' ? 'Semua' : cat}
-                    </Button>
-                  ))}
-                </div>
+                {/* Product List Button */}
+                <Button
+                  variant="outline"
+                  onClick={() => {
+                    setShowPosProductListDialog(true)
+                  }}
+                  size="sm"
+                  className="flex-shrink-0 bg-white hover:bg-orange-50"
+                >
+                  <Package className="w-4 h-4 mr-2" />
+                  Daftar Produk
+                </Button>
 
                 <Button
                   onClick={() => handlePosBarcodeScan(posBarcodeInput)}
@@ -5736,14 +5731,12 @@ export default function RestaurantApp() {
         <Dialog open={showPosProductListDialog} onOpenChange={setShowPosProductListDialog}>
           <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
             <DialogHeader>
-              <DialogTitle>
-                Daftar Produk - {posProductTab === 'all' ? 'Semua Kategori' : posProductTab}
-              </DialogTitle>
+              <DialogTitle>Daftar Produk</DialogTitle>
             </DialogHeader>
             <ScrollArea className="flex-1">
               <div className="grid grid-cols-3 gap-4 p-4">
-                {posFilteredProducts.length > 0 ? (
-                  posFilteredProducts.map(product => (
+                {allProducts.length > 0 ? (
+                  allProducts.map(product => (
                     <Card
                       key={product.id}
                       className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200 overflow-hidden group"
@@ -5787,7 +5780,6 @@ export default function RestaurantApp() {
                   <div className="col-span-3 text-center py-12 text-gray-400">
                     <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
                     <p className="text-lg font-medium">Tidak ada produk ditemukan</p>
-                    <p className="text-sm mt-1">Coba kategori lain</p>
                   </div>
                 )}
               </div>
