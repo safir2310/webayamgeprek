@@ -497,6 +497,8 @@ export default function RestaurantApp() {
   const [posDiscount, setPosDiscount] = useState(0)
   const [posOrderData, setPosOrderData] = useState<any>(null)
   const [posBarcodeInput, setPosBarcodeInput] = useState('')
+  const [posCustomerName, setPosCustomerName] = useState('')
+  const [posCustomerPhone, setPosCustomerPhone] = useState('')
   const [showProductDialog, setShowProductDialog] = useState(false)
   const [selectedProductForDialog, setSelectedProductForDialog] = useState<Product | null>(null)
   const [posProductTab, setPosProductTab] = useState('all')
@@ -1412,6 +1414,9 @@ export default function RestaurantApp() {
       if (data.member && data.user) {
         setPosSelectedMember(data.member)
         setPosSelectedMemberUser(data.user)
+        // Auto-fill customer info from member
+        setPosCustomerName(data.user.name)
+        setPosCustomerPhone(data.user.phone)
         toast({
           title: 'Member Ditemukan',
           description: `${data.user.name} - ${data.member.memberId}`,
@@ -1441,6 +1446,9 @@ export default function RestaurantApp() {
     setPosSelectedMember(null)
     setPosSelectedMemberUser(null)
     setPosMemberSearch('')
+    // Clear customer info when member is cleared
+    setPosCustomerName('')
+    setPosCustomerPhone('')
   }
 
   // POS Handlers
@@ -5638,7 +5646,7 @@ export default function RestaurantApp() {
                   </div>
                 </div>
               ) : (
-                // No Member - Show Search Form
+                // No Member - Show Customer Info Form
                 <div className="space-y-2">
                   <div className="flex gap-2">
                     <Input
@@ -5659,6 +5667,19 @@ export default function RestaurantApp() {
                     >
                       <Search className="w-4 h-4" />
                     </Button>
+                  </div>
+                  <div className="border-t border-gray-200 pt-2 mt-2">
+                    <Input
+                      placeholder="Nama Pelanggan"
+                      value={posCustomerName}
+                      onChange={(e) => setPosCustomerName(e.target.value)}
+                      className="mb-2"
+                    />
+                    <Input
+                      placeholder="No. Telepon"
+                      value={posCustomerPhone}
+                      onChange={(e) => setPosCustomerPhone(e.target.value)}
+                    />
                   </div>
                   <p className="text-xs text-gray-500">
                     Masukkan nomor HP atau email member yang terdaftar
