@@ -2819,8 +2819,8 @@ export default function RestaurantApp() {
                 {/* Header */}
                 <div className="text-center mb-4">
                   <h2 className="text-2xl font-bold text-orange-600 mb-1">Ayam Geprek Sambal Ijo</h2>
-                  <p className="text-sm text-gray-600">Jl. Merdeka No. 123, Jakarta</p>
-                  <p className="text-sm text-gray-600">+62 812-3456-7890</p>
+                  <p className="text-sm text-gray-600">Jl. Medan - Banda Aceh, Simpang Camat, Gampong Tijue, 24151</p>
+                  <p className="text-sm text-gray-600">085260812758</p>
                 </div>
 
                 <Separator className="my-4" />
@@ -2863,12 +2863,12 @@ export default function RestaurantApp() {
                       </tr>
                     </thead>
                     <tbody>
-                      {latestOrder?.items.map((item, idx) => (
+                      {previewOrderData?.items.map((item, idx) => (
                         <tr key={idx} className="border-b border-gray-200">
                           <td className="py-2">{item.product.name}</td>
                           <td className="py-2 text-center">{item.qty}</td>
-                          <td className="py-2 text-right">Rp {item.product.price.toLocaleString()}</td>
-                          <td className="py-2 text-right">Rp {(item.product.price * item.qty).toLocaleString()}</td>
+                          <td className="py-2 text-right">Rp {item.price.toLocaleString()}</td>
+                          <td className="py-2 text-right">Rp {item.subtotal.toLocaleString()}</td>
                         </tr>
                       ))}
                     </tbody>
