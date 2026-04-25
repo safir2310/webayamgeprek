@@ -337,7 +337,7 @@ export default function AdminPage() {
   const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
     try {
       const response = await fetch('/api/admin/order/status', {
-        method: 'POST',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, status: newStatus })
       })
@@ -349,6 +349,13 @@ export default function AdminPage() {
         toast({
           title: 'Berhasil',
           description: `Status pesanan telah diubah menjadi ${getStatusLabel(newStatus)}`,
+        })
+      } else {
+        const errorData = await response.json()
+        toast({
+          title: 'Gagal',
+          description: errorData.error || 'Terjadi kesalahan saat mengubah status',
+          variant: 'destructive'
         })
       }
     } catch (error) {
@@ -1076,17 +1083,57 @@ export default function AdminPage() {
                             </div>
                           </div>
                           <div className="flex flex-wrap gap-2">
-                            {order.status !== 'completed' && order.status !== 'cancelled' && (
+                            {order.status === 'pending' && (
                               <>
                                 <Button
                                   size="sm"
+                                  onClick={() => handleUpdateOrderStatus(order.id, 'paid')}
+                                  variant="outline"
+                                  className="bg-blue-600 hover:bg-blue-700 text-white"
+                                >
+                                  <DollarSign className="h-3 w-3 mr-1" />
+                                  Dibayar
+                                </Button>
+                                <Button
+                                  size="sm"
                                   onClick={() => handleUpdateOrderStatus(order.id, 'processing')}
-                                  disabled={order.status === 'processing'}
                                   variant="outline"
                                 >
                                   <Clock className="h-3 w-3 mr-1" />
                                   Proses
                                 </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleUpdateOrderStatus(order.id, 'cancelled')}
+                                  variant="destructive"
+                                >
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  Batalkan
+                                </Button>
+                              </>
+                            )}
+                            {order.status === 'paid' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleUpdateOrderStatus(order.id, 'processing')}
+                                  variant="outline"
+                                >
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  Proses
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleUpdateOrderStatus(order.id, 'cancelled')}
+                                  variant="destructive"
+                                >
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  Batalkan
+                                </Button>
+                              </>
+                            )}
+                            {order.status === 'processing' && (
+                              <>
                                 <Button
                                   size="sm"
                                   onClick={() => handleUpdateOrderStatus(order.id, 'completed')}
@@ -1095,13 +1142,25 @@ export default function AdminPage() {
                                   <CheckCircle className="h-3 w-3 mr-1" />
                                   Selesai
                                 </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleUpdateOrderStatus(order.id, 'cancelled')}
+                                  variant="destructive"
+                                >
+                                  <XCircle className="h-3 w-3 mr-1" />
+                                  Batalkan
+                                </Button>
                               </>
                             )}
                             <Button
                               size="sm"
                               variant="outline"
                               onClick={() => {
-                                // View order details
+                                // View order details - TODO: implement detail view
+                                toast({
+                                  title: 'Detail Pesanan',
+                                  description: `Nomor pesanan: ${order.orderNumber}`,
+                                })
                               }}
                             >
                               <Eye className="h-3 w-3 mr-1" />
