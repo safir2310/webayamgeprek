@@ -1294,20 +1294,23 @@ export default function AdminPage() {
                       <CardContent className="p-4">
                         <div className="flex items-start gap-4">
                           <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
-                            {product.image && product.image.length < 100 ? (
+                            {product.image ? (
                               <img
                                 src={product.image}
                                 alt={product.name}
                                 className="w-full h-full object-cover rounded-lg"
                                 onError={(e) => {
-                                  (e.target as HTMLImageElement).style.display = 'none'
-                                  ;(e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden')
+                                  const target = e.target as HTMLImageElement
+                                  target.style.display = 'none'
+                                  const parent = target.parentElement
+                                  if (parent) {
+                                    parent.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>'
+                                  }
                                 }}
                               />
                             ) : (
                               <Package className="h-8 w-8 text-gray-400" />
                             )}
-                            <Package className="h-8 w-8 text-gray-400 hidden" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2 mb-2">
