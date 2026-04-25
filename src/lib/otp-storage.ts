@@ -20,6 +20,10 @@ class OtpStorage {
     return this.storage.get(userId)
   }
 
+  getAll(): Map<string, OtpData> {
+    return this.storage
+  }
+
   verify(userId: string, otp: string): boolean {
     const data = this.storage.get(userId)
     if (!data) return false
