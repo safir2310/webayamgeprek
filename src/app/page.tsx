@@ -6054,7 +6054,7 @@ export default function RestaurantApp() {
     return (
       <div className="min-h-screen bg-gray-100">
         {/* Header */}
-        <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-3 pt-8 shadow-md">
+        <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-3 pt-8 shadow-lg">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <Button
@@ -6080,10 +6080,10 @@ export default function RestaurantApp() {
         <div className="flex h-[calc(100vh-100px)]">
           {/* LEFT PANEL - Receipt */}
           <div className="w-1/2 bg-white p-6 overflow-y-auto">
-            <Card className="max-w-md mx-auto">
+            <Card className="max-w-md mx-auto border-2 border-orange-200 shadow-lg">
               <CardContent className="p-6">
                 {/* Receipt Header */}
-                <div className="text-center mb-6 pb-4 border-b-2 border-dashed">
+                <div className="text-center mb-6 pb-4 border-b-2 border-dashed border-orange-200">
                   <div className="text-4xl mb-2">🍗</div>
                   <h2 className="text-2xl font-bold text-gray-800">Ayam Geprek</h2>
                   <p className="text-gray-600">Sambal Ijo</p>
@@ -6091,36 +6091,45 @@ export default function RestaurantApp() {
                   <p className="text-xs text-gray-500">Telp: 0812-3456-7890</p>
                 </div>
 
-                {/* Order Info */}
-                <div className="mb-6 pb-4 border-b-2 border-dashed">
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">No. Pesanan:</span>
-                    <span className="font-medium">{orderNumber}</span>
-                  </div>
-                  <div className="flex justify-between text-sm mb-1">
-                    <span className="text-gray-600">Tanggal:</span>
-                    <span className="font-medium">{orderDate}</span>
+                {/* Order Info - Grid 2 columns */}
+                <div className="mb-6 pb-4 border-b-2 border-dashed border-orange-200">
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-gray-600 text-xs mb-1">No. Pesanan</p>
+                      <p className="font-medium">{orderNumber}</p>
+                    </div>
+                    <div>
+                      <p className="text-gray-600 text-xs mb-1">Tanggal</p>
+                      <p className="font-medium text-xs">{orderDate}</p>
+                    </div>
                   </div>
                   {posCustomerName && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Pelanggan:</span>
-                      <span className="font-medium">{posCustomerName}</span>
+                    <div className="flex items-center gap-2 mt-3">
+                      <User className="w-4 h-4 text-gray-400" />
+                      <div>
+                        <p className="text-gray-600 text-xs">Pelanggan</p>
+                        <p className="font-medium">{posCustomerName}</p>
+                      </div>
                     </div>
                   )}
                   {posCustomerPhone && (
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Telepon:</span>
-                      <span className="font-medium">{posCustomerPhone}</span>
+                    <div className="flex items-center gap-2 mt-2">
+                      <Phone className="w-4 h-4 text-gray-400" />
+                      <div>
+                        <p className="text-gray-600 text-xs">Telepon</p>
+                        <p className="font-medium">{posCustomerPhone}</p>
+                      </div>
                     </div>
                   )}
                 </div>
 
-                {/* Order Items */}
-                <div className="mb-6 pb-4 border-b-2 border-dashed">
+                {/* Order Items Table with Barcode */}
+                <div className="mb-6 pb-4 border-b-2 border-dashed border-orange-200">
                   <table className="w-full text-sm">
                     <thead>
-                      <tr className="text-gray-600 text-xs">
-                        <th className="text-left pb-2">Item</th>
+                      <tr className="text-gray-600 text-xs border-b">
+                        <th className="text-left pb-2">Produk</th>
+                        <th className="text-left pb-2">Barcode</th>
                         <th className="text-center pb-2">Qty</th>
                         <th className="text-right pb-2">Harga</th>
                         <th className="text-right pb-2">Total</th>
@@ -6129,14 +6138,13 @@ export default function RestaurantApp() {
                     <tbody>
                       {posOrderData?.items.map((item: any) => (
                         <tr key={item.product.id} className="border-b border-gray-100">
-                          <td className="py-2 text-xs">
-                            <div className="font-medium">{item.product.name}</div>
-                          </td>
+                          <td className="py-2 text-xs font-medium">{item.product.name}</td>
+                          <td className="py-2 text-xs font-mono text-gray-500">{item.product.barcode || '-'}</td>
                           <td className="py-2 text-center">x{item.qty}</td>
-                          <td className="py-2 text-right">
+                          <td className="py-2 text-right text-xs">
                             Rp {item.product.price.toLocaleString()}
                           </td>
-                          <td className="py-2 text-right font-medium">
+                          <td className="py-2 text-right font-bold text-xs">
                             Rp {(item.product.price * item.qty).toLocaleString()}
                           </td>
                         </tr>
@@ -6146,7 +6154,7 @@ export default function RestaurantApp() {
                 </div>
 
                 {/* Totals */}
-                <div className="space-y-2 mb-6 pb-4 border-b-2 border-dashed">
+                <div className="space-y-2 mb-6 pb-4 border-b-2 border-dashed border-orange-200">
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal</span>
                     <span>Rp {posOrderData?.subtotal.toLocaleString()}</span>
@@ -6157,35 +6165,39 @@ export default function RestaurantApp() {
                       <span>-Rp {posOrderData.discount.toLocaleString()}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-lg font-bold pt-2 border-t">
-                    <span>Total</span>
-                    <span className="text-orange-600">Rp {posOrderData?.total.toLocaleString()}</span>
+                  <div className="flex justify-between pt-2 border-t border-orange-200">
+                    <span className="text-lg font-bold">Total</span>
+                    <span className="text-2xl font-bold text-orange-600">
+                      Rp {posOrderData?.total.toLocaleString()}
+                    </span>
                   </div>
                 </div>
 
-                {/* Payment Info */}
-                <div className="mb-6 pb-4 border-b-2 border-dashed">
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Metode Pembayaran:</span>
-                    <span className="font-medium uppercase">
+                {/* Payment Method Badge */}
+                <div className="mb-6 pb-4 border-b-2 border-dashed border-orange-200">
+                  <div className="flex justify-center">
+                    <Badge 
+                      variant="outline" 
+                      className="text-xs px-4 py-2 border-orange-300 text-orange-700 font-medium"
+                    >
                       {posOrderData?.paymentMethod === 'qris' ? 'QRIS' :
-                       posOrderData?.paymentMethod === 'cash' ? 'Tunai' :
-                       posOrderData?.paymentMethod === 'transfer' ? 'Transfer' : posOrderData?.paymentMethod}
-                    </span>
+                       posOrderData?.paymentMethod === 'cash' ? 'TUNAI' :
+                       posOrderData?.paymentMethod === 'transfer' ? 'TRANSFER BANK' : posOrderData?.paymentMethod?.toUpperCase()}
+                    </Badge>
                   </div>
                   {posOrderData?.voucher && (
-                    <div className="flex justify-between text-sm mt-1">
-                      <span className="text-gray-600">Voucher:</span>
-                      <span className="font-medium text-green-600">{posOrderData.voucher.code}</span>
+                    <div className="text-center mt-2">
+                      <span className="text-sm text-gray-600">Voucher: </span>
+                      <span className="text-sm font-medium text-green-600">{posOrderData.voucher.code}</span>
                     </div>
                   )}
                 </div>
 
-                {/* Footer */}
+                {/* Footer with Print Button */}
                 <div className="text-center space-y-2">
                   <p className="text-xs text-gray-500">Terima kasih atas kunjungan Anda!</p>
                   <p className="text-xs text-gray-500">Simpan struk ini sebagai bukti pembayaran</p>
-                  <div className="pt-4 border-t border-dashed mt-4">
+                  <div className="pt-4 mt-4">
                     <Button
                       variant="outline"
                       size="sm"
@@ -6205,97 +6217,108 @@ export default function RestaurantApp() {
             </Card>
           </div>
 
-          {/* RIGHT PANEL - Payment Methods */}
-          <div className="w-1/2 bg-gray-50 p-6 overflow-y-auto">
-            <div className="max-w-md mx-auto">
-              <h2 className="text-xl font-bold text-gray-800 mb-6">Metode Pembayaran</h2>
+          {/* RIGHT PANEL - Payment Methods (No Tabs) */}
+          <div className="w-1/2 bg-gradient-to-b from-orange-50 to-amber-50 p-6 overflow-y-auto">
+            <div className="max-w-md mx-auto space-y-4">
+              <h2 className="text-xl font-bold text-gray-800 mb-2">Pilih Metode Pembayaran</h2>
 
-              <Tabs value={posSelectedPaymentMethod} onValueChange={setPosSelectedPaymentMethod} className="w-full">
-                <TabsList className="w-full grid grid-cols-3 mb-6">
-                  <TabsTrigger value="qris">QRIS</TabsTrigger>
-                  <TabsTrigger value="cash">Tunai</TabsTrigger>
-                  <TabsTrigger value="transfer">Transfer</TabsTrigger>
-                </TabsList>
+              {/* QRIS Card */}
+              <Card 
+                className={`border-2 transition-all duration-200 cursor-pointer ${
+                  posSelectedPaymentMethod === 'qris' 
+                    ? 'border-orange-500 bg-orange-50 shadow-lg' 
+                    : 'border-gray-200 bg-white hover:border-orange-300'
+                }`}
+                onClick={() => setPosSelectedPaymentMethod('qris')}
+              >
+                <CardContent className="p-6 relative">
+                  {/* Checkmark indicator */}
+                  {posSelectedPaymentMethod === 'qris' && (
+                    <div className="absolute top-4 right-4 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                      <CheckCircle className="w-4 h-4 text-white" />
+                    </div>
+                  )}
 
-                {/* QRIS Tab */}
-                <TabsContent value="qris">
-                  <Card>
-                    <CardContent className="p-6 space-y-4">
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <QrCode className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-gray-800">QRIS Payment</h3>
+                      <p className="text-sm text-gray-600 mt-1">Scan QR code dengan e-wallet</p>
+                      
+                      {/* Support badges */}
+                      <div className="flex gap-2 mt-3">
+                        <Badge variant="secondary" className="text-xs">GoPay</Badge>
+                        <Badge variant="secondary" className="text-xs">OVO</Badge>
+                        <Badge variant="secondary" className="text-xs">Dana</Badge>
+                        <Badge variant="secondary" className="text-xs">ShopeePay</Badge>
+                      </div>
+                    </div>
+                  </div>
+
+                  {posSelectedPaymentMethod === 'qris' && (
+                    <div className="mt-4 pt-4 border-t">
                       <div className="text-center">
-                        <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4">
-                          <QrCode className="w-48 h-48 mx-auto text-gray-800" />
+                        <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-4 mb-3">
+                          <QrCode className="w-32 h-32 mx-auto text-gray-800" />
                         </div>
-                        <p className="text-sm text-gray-600 mb-2">Scan QRIS untuk pembayaran</p>
+                        <p className="text-2xl font-bold text-orange-600">
+                          Rp {posOrderData?.total.toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Cash Card */}
+              <Card 
+                className={`border-2 transition-all duration-200 cursor-pointer ${
+                  posSelectedPaymentMethod === 'cash' 
+                    ? 'border-orange-500 bg-orange-50 shadow-lg' 
+                    : 'border-gray-200 bg-white hover:border-orange-300'
+                }`}
+                onClick={() => setPosSelectedPaymentMethod('cash')}
+              >
+                <CardContent className="p-6 relative">
+                  {/* Checkmark indicator */}
+                  {posSelectedPaymentMethod === 'cash' && (
+                    <div className="absolute top-4 right-4 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                      <CheckCircle className="w-4 h-4 text-white" />
+                    </div>
+                  )}
+
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-green-500 to-green-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Wallet className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-gray-800">Pembayaran Tunai</h3>
+                    </div>
+                  </div>
+
+                  {posSelectedPaymentMethod === 'cash' && (
+                    <div className="mt-4 pt-4 border-t space-y-4">
+                      {/* Total amount box */}
+                      <div className="bg-white rounded-lg p-4 border-2 border-green-200">
+                        <p className="text-sm text-gray-600 mb-1">Total Bayar</p>
                         <p className="text-3xl font-bold text-orange-600">
                           Rp {posOrderData?.total.toLocaleString()}
                         </p>
                       </div>
 
-                      <div className="bg-blue-50 rounded-lg p-4 space-y-2">
-                        <p className="text-sm text-blue-800 font-medium">Instruksi:</p>
-                        <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
-                          <li>Buka aplikasi e-wallet (GoPay, OVO, Dana, dll)</li>
-                          <li>Pilih menu Scan QRIS</li>
-                          <li>Arahkan kamera ke QR code di atas</li>
-                          <li>Konfirmasi pembayaran</li>
-                        </ol>
-                      </div>
-
-                      <Button
-                        onClick={() => {
-                          toast({
-                            title: 'Menunggu Pembayaran',
-                            description: 'Menunggu pembayaran QRIS...',
-                          })
-                        }}
-                        className="w-full bg-orange-500 hover:bg-orange-600"
-                      >
-                        <CheckCircle className="w-4 h-4 mr-2" />
-                        Saya Sudah Bayar
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                {/* Cash Tab */}
-                <TabsContent value="cash">
-                  <Card>
-                    <CardContent className="p-6 space-y-4">
+                      {/* Quick amount buttons grid 2x2 */}
                       <div>
-                        <Label className="text-sm text-gray-600 font-medium">Total Bayar</Label>
-                        <div className="text-3xl font-bold text-orange-600 mt-1">
-                          Rp {posOrderData?.total.toLocaleString()}
-                        </div>
-                      </div>
-
-                      <Separator />
-
-                      <div>
-                        <Label className="text-sm text-gray-600 font-medium">Uang Diterima</Label>
-                        <Input
-                          type="number"
-                          placeholder="Rp 0"
-                          className="mt-1 text-lg font-semibold"
-                          defaultValue={posOrderData?.total}
-                        />
-                      </div>
-
-                      <div>
-                        <Label className="text-sm text-gray-600 font-medium">Kembalian</Label>
-                        <div className="mt-1 text-3xl font-bold text-green-600">
-                          Rp 0
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <p className="text-sm text-gray-600 font-medium">Uang Cepat:</p>
+                        <p className="text-sm text-gray-600 font-medium mb-2">Uang Cepat:</p>
                         <div className="grid grid-cols-2 gap-2">
                           {[10000, 20000, 50000, 100000].map((amount) => (
                             <Button
                               key={amount}
                               variant="outline"
                               size="sm"
-                              onClick={() => {
+                              onClick={(e) => {
+                                e.stopPropagation()
                                 toast({
                                   title: 'Jumlah Diisi',
                                   description: `Rp ${amount.toLocaleString()}`,
@@ -6303,51 +6326,57 @@ export default function RestaurantApp() {
                               }}
                               className="text-sm"
                             >
-                              {amount >= 10000 ? `${amount/1000}rb` : amount}
+                              Rp {amount.toLocaleString()}
                             </Button>
                           ))}
                         </div>
                       </div>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
-                      <Separator />
+              {/* Transfer Bank Card */}
+              <Card 
+                className={`border-2 transition-all duration-200 cursor-pointer ${
+                  posSelectedPaymentMethod === 'transfer' 
+                    ? 'border-orange-500 bg-orange-50 shadow-lg' 
+                    : 'border-gray-200 bg-white hover:border-orange-300'
+                }`}
+                onClick={() => setPosSelectedPaymentMethod('transfer')}
+              >
+                <CardContent className="p-6 relative">
+                  {/* Checkmark indicator */}
+                  {posSelectedPaymentMethod === 'transfer' && (
+                    <div className="absolute top-4 right-4 w-6 h-6 bg-orange-500 rounded-full flex items-center justify-center">
+                      <CheckCircle className="w-4 h-4 text-white" />
+                    </div>
+                  )}
 
-                      <Button
-                        onClick={() => {
-                          toast({
-                            title: 'Pembayaran Berhasil',
-                            description: 'Transaksi telah selesai',
-                          })
-                          setPosCart([])
-                          setPosOrderData(null)
-                          setScreen('pos')
-                        }}
-                        className="w-full bg-green-600 hover:bg-green-700 h-12 text-lg font-bold"
-                      >
-                        <CheckCircle className="w-5 h-5 mr-2" />
-                        Selesaikan Transaksi
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-purple-600 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <CreditCard className="w-6 h-6 text-white" />
+                    </div>
+                    <div className="flex-1">
+                      <h3 className="text-lg font-bold text-gray-800">Transfer Bank</h3>
+                    </div>
+                  </div>
 
-                {/* Transfer Tab */}
-                <TabsContent value="transfer">
-                  <Card>
-                    <CardContent className="p-6 space-y-4">
-                      <div>
-                        <Label className="text-sm text-gray-600 font-medium">Total Transfer</Label>
-                        <div className="text-3xl font-bold text-orange-600 mt-1">
+                  {posSelectedPaymentMethod === 'transfer' && (
+                    <div className="mt-4 pt-4 border-t space-y-4">
+                      {/* Total Transfer Box */}
+                      <div className="bg-white rounded-lg p-4 border-2 border-purple-200">
+                        <p className="text-sm text-gray-600 mb-1">Total Transfer</p>
+                        <p className="text-2xl font-bold text-orange-600">
                           Rp {posOrderData?.total.toLocaleString()}
-                        </div>
+                        </p>
                       </div>
 
-                      <Separator />
-
+                      {/* Bank options */}
                       <div className="space-y-3">
-                        <p className="text-sm text-gray-600 font-medium">Pilih Bank:</p>
-
-                        <div className="space-y-3">
-                          <div className="bg-gray-50 rounded-lg p-4 border-2 border-transparent hover:border-orange-300 cursor-pointer transition-colors">
+                        {/* Bank BCA */}
+                        <Card className="bg-white border-2">
+                          <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="text-sm font-bold text-blue-600">Bank BCA</p>
@@ -6357,7 +6386,8 @@ export default function RestaurantApp() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation()
                                   toast({
                                     title: 'Nomor Disalin',
                                     description: '123-456-7890',
@@ -6367,9 +6397,12 @@ export default function RestaurantApp() {
                                 <Copy className="w-4 h-4" />
                               </Button>
                             </div>
-                          </div>
+                          </CardContent>
+                        </Card>
 
-                          <div className="bg-gray-50 rounded-lg p-4 border-2 border-transparent hover:border-orange-300 cursor-pointer transition-colors">
+                        {/* Bank Mandiri */}
+                        <Card className="bg-white border-2">
+                          <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="text-sm font-bold text-yellow-600">Bank Mandiri</p>
@@ -6379,7 +6412,8 @@ export default function RestaurantApp() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation()
                                   toast({
                                     title: 'Nomor Disalin',
                                     description: '123-000-456-789',
@@ -6389,9 +6423,12 @@ export default function RestaurantApp() {
                                 <Copy className="w-4 h-4" />
                               </Button>
                             </div>
-                          </div>
+                          </CardContent>
+                        </Card>
 
-                          <div className="bg-gray-50 rounded-lg p-4 border-2 border-transparent hover:border-orange-300 cursor-pointer transition-colors">
+                        {/* Bank BRI */}
+                        <Card className="bg-white border-2">
+                          <CardContent className="p-4">
                             <div className="flex items-center justify-between">
                               <div>
                                 <p className="text-sm font-bold text-red-600">Bank BRI</p>
@@ -6401,7 +6438,8 @@ export default function RestaurantApp() {
                               <Button
                                 variant="outline"
                                 size="sm"
-                                onClick={() => {
+                                onClick={(e) => {
+                                  e.stopPropagation()
                                   toast({
                                     title: 'Nomor Disalin',
                                     description: '0123-0100-5678-501',
@@ -6411,12 +6449,11 @@ export default function RestaurantApp() {
                                 <Copy className="w-4 h-4" />
                               </Button>
                             </div>
-                          </div>
-                        </div>
+                          </CardContent>
+                        </Card>
                       </div>
 
-                      <Separator />
-
+                      {/* Notes checklist */}
                       <div className="bg-orange-50 rounded-lg p-4">
                         <p className="text-sm text-orange-800 font-medium mb-2">Catatan:</p>
                         <ul className="text-sm text-orange-700 space-y-1 list-disc list-inside">
@@ -6425,33 +6462,44 @@ export default function RestaurantApp() {
                           <li>Simpan bukti transfer</li>
                         </ul>
                       </div>
-
-                      <Button
-                        onClick={() => {
-                          toast({
-                            title: 'Menunggu Konfirmasi',
-                            description: 'Menunggu konfirmasi transfer...',
-                          })
-                        }}
-                        className="w-full bg-orange-500 hover:bg-orange-600"
-                      >
-                        <MessageCircle className="w-4 h-4 mr-2" />
-                        Hubungi Kasir
-                      </Button>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
 
               {/* Action Buttons */}
-              <div className="mt-6 space-y-2">
+              <div className="space-y-3 mt-6 pt-4 border-t">
                 <Button
                   variant="outline"
                   onClick={() => setScreen('pos')}
-                  className="w-full"
+                  className="w-full h-12"
                 >
                   <XCircle className="w-4 h-4 mr-2" />
                   Batalkan Transaksi
+                </Button>
+                <Button
+                  onClick={() => {
+                    toast({
+                      title: 'Pembayaran Berhasil',
+                      description: 'Transaksi telah selesai',
+                    })
+                    // Clear all states after payment
+                    setPosCart([])
+                    setPosOrderData(null)
+                    setPosCustomerName('')
+                    setPosCustomerPhone('')
+                    setPosSelectedMember(null)
+                    setPosSelectedMemberUser(null)
+                    setPosAppliedVoucher(null)
+                    setPosDiscount(0)
+                    setPosSelectedPaymentMethod('qris')
+                    // Go back to POS screen
+                    setScreen('pos')
+                  }}
+                  className="w-full h-14 text-lg font-bold bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg"
+                >
+                  <CheckCircle className="w-5 h-5 mr-2" />
+                  Selesaikan Pembayaran
                 </Button>
               </div>
             </div>

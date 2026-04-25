@@ -158,3 +158,87 @@ Work Log:
 - Removed unused icon imports: MapPin, Gift, BadgePercent, CreditCardIcon, TrendingUp, DollarSign
 - Successfully compiled and tested
 - Home screen now shows only: Member Card (phone, tier, member ID), Pengaturan, Bantuan
+---
+Task ID: 12
+Agent: Z.ai Code
+Task: Redesign POS Payment Screen
+
+Work Log:
+- Redesigned POS Payment Screen with modern and professional layout
+- Changed from tab-based to card-based payment method selection (no tabs)
+- Layout: 2-panel design (50% receipt left, 50% payment methods right)
+- Added gradient background for right panel: from-orange-50 to-amber-50
+- Enhanced header with shadow-lg styling
+
+Receipt Panel (Left):
+  - Card with border-2 border-orange-200 and shadow-lg
+  - Restaurant header with large emoji (🍗) and border-dashed border-orange-200
+  - Grid layout for Order Number and Tanggal (2 columns)
+  - Customer info section with icons (User, Phone)
+  - Updated item table with columns: Produk, Barcode (small font-mono), Qty, Harga, Total (bold)
+  - Totals section with Subtotal, Diskon (if any), and large Total display (text-2xl, text-orange-600)
+  - Payment method badge centered with proper styling
+  - Footer with "Cetak Struk" button (variant="outline")
+
+Payment Methods Panel (Right):
+  - Removed tabs, now uses clickable cards directly
+  - 3 payment cards in responsive grid:
+  
+  a. QRIS Card:
+     - Gradient icon background: from-blue-500 to-blue-600
+     - Large QrCode icon
+     - Title: "QRIS Payment"
+     - Description: "Scan QR code dengan e-wallet"
+     - Support badges: GoPay, OVO, Dana, ShopeePay
+     - Checkmark indicator when selected (top-right corner)
+     - Expanded view with QR code and amount when selected
+  
+  b. Cash Card:
+     - Gradient icon background: from-green-500 to-green-600
+     - Large Wallet icon
+     - Title: "Pembayaran Tunai"
+     - Total amount box (large display)
+     - Quick amount buttons: Rp 10rb, 20rb, 50rb, 100rb in 2x2 grid
+     - Checkmark indicator when selected
+  
+  c. Transfer Bank Card:
+     - Gradient icon background: from-purple-500 to-purple-600
+     - Large CreditCard icon
+     - Title: "Transfer Bank"
+     - Total transfer box
+     - 3 bank options in cards:
+       * Bank BCA: 123-456-7890
+       * Bank Mandiri: 123-000-456-789
+       * Bank BRI: 0123-0100-5678-501
+     - Each bank card has: name, account number, copy button
+     - Notes checklist in special box
+     - Checkmark indicator when selected
+
+Styling:
+  - Smooth hover states on all interactive elements
+  - Selection styling: border-orange-500 bg-orange-50 with shadow-lg
+  - Default styling: border-gray-200 bg-white with hover:border-orange-300
+  - Icons with gradient backgrounds and text-white
+  - Consistent shadows throughout
+  - Proper padding and gaps (gap-3, gap-4)
+
+Action Buttons:
+  - "Batalkan Transaksi": variant="outline", neutral color, XCircle icon
+  - "Selesaikan Pembayaran": gradient from-orange-500 to-orange-600, white text, CheckCircle icon, shadow-lg, h-14, text-lg, font-bold
+  - Space-y-3 gap between buttons
+
+Logic:
+  - Added state clearing after payment completes:
+    * posCart
+    * posOrderData
+    * posCustomerName
+    * posCustomerPhone
+    * posSelectedMember
+    * posSelectedMemberUser
+    * posAppliedVoucher
+    * posDiscount
+    * posSelectedPaymentMethod (reset to 'qris')
+  - Returns to screen='pos' after payment completed
+  - All existing icons (CheckCircle, XCircle, Wallet, CreditCard, QrCode) already imported
+
+Successfully compiled and tested
