@@ -503,13 +503,9 @@ export default function RestaurantApp() {
 
   // Member state
   const [posSelectedMember, setPosSelectedMember] = useState<any>(null)
+  const [posSelectedMemberUser, setPosSelectedMemberUser] = useState<any>(null)
   const [posMemberSearch, setPosMemberSearch] = useState('')
-  const [posMemberName, setPosMemberName] = useState('')
-  const [posMemberPhone, setPosMemberPhone] = useState('')
-  const [posMemberEmail, setPosMemberEmail] = useState('')
   const [searchingMember, setSearchingMember] = useState(false)
-  const [creatingMember, setCreatingMember] = useState(false)
-  const [showCreateMemberForm, setShowCreateMemberForm] = useState(false)
 
   // Payment methods and redeem products state
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
@@ -1373,10 +1369,7 @@ export default function RestaurantApp() {
 
       if (data.member && data.user) {
         setPosSelectedMember(data.member)
-        setPosMemberName(data.user.name)
-        setPosMemberPhone(data.user.phone)
-        setPosMemberEmail(data.user.email || '')
-        setShowCreateMemberForm(false)
+        setPosSelectedMemberUser(data.user)
         toast({
           title: 'Member Ditemukan',
           description: `${data.user.name} - ${data.member.memberId}`,
@@ -1384,11 +1377,11 @@ export default function RestaurantApp() {
       } else {
         toast({
           title: 'Member Tidak Ditemukan',
-          description: 'Silakan buat member baru',
+          description: 'Member tidak terdaftar di database',
           variant: 'destructive'
         })
-        setShowCreateMemberForm(true)
         setPosSelectedMember(null)
+        setPosSelectedMemberUser(null)
       }
     } catch (error) {
       console.error('Error searching member:', error)
@@ -1402,66 +1395,10 @@ export default function RestaurantApp() {
     }
   }
 
-  const handleCreateMember = async () => {
-    if (!posMemberName.trim() || !posMemberPhone.trim()) {
-      toast({
-        title: 'Data Tidak Lengkap',
-        description: 'Mohon isi nama dan no. telepon',
-        variant: 'destructive'
-      })
-      return
-    }
-
-    setCreatingMember(true)
-    try {
-      const response = await fetch('/api/pos/member', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          name: posMemberName,
-          phone: posMemberPhone,
-          email: posMemberEmail
-        })
-      })
-
-      const data = await response.json()
-
-      if (data.member && data.user) {
-        setPosSelectedMember(data.member)
-        setPosMemberName(data.user.name)
-        setPosMemberPhone(data.user.phone)
-        setPosMemberEmail(data.user.email || '')
-        setShowCreateMemberForm(false)
-        toast({
-          title: 'Member Berhasil Dibuat',
-          description: `${data.user.name} - ID: ${data.member.memberId}`,
-        })
-      } else {
-        toast({
-          title: 'Gagal Membuat Member',
-          description: data.error || 'Terjadi kesalahan',
-          variant: 'destructive'
-        })
-      }
-    } catch (error) {
-      console.error('Error creating member:', error)
-      toast({
-        title: 'Gagal Membuat Member',
-        description: 'Terjadi kesalahan koneksi',
-        variant: 'destructive'
-      })
-    } finally {
-      setCreatingMember(false)
-    }
-  }
-
   const handleClearMember = () => {
     setPosSelectedMember(null)
+    setPosSelectedMemberUser(null)
     setPosMemberSearch('')
-    setPosMemberName('')
-    setPosMemberPhone('')
-    setPosMemberEmail('')
-    setShowCreateMemberForm(false)
   }
 
   // POS Handlers
@@ -5643,7 +5580,7 @@ export default function RestaurantApp() {
                       <User className="w-6 h-6 text-orange-600" />
                     </div>
                     <div className="flex-1">
-                      <p className="font-bold text-gray-800">{posMemberName}</p>
+                      <p className="font-bold text-gray-800">{posSelectedMemberUser?.name || 'Member'}</p>
                       <p className="text-xs text-gray-500">ID: {posSelectedMember.memberId}</p>
                     </div>
                   </div>
@@ -5662,96 +5599,35 @@ export default function RestaurantApp() {
                   </div>
                 </div>
               ) : (
-                // No Member - Show Search/Create Form
-                <div className="space-y-3">
-                  {!showCreateMemberForm ? (
-                    // Search Member
-                    <div className="space-y-2">
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Masukkan no. HP atau email member"
-                          value={posMemberSearch}
-                          onChange={(e) => setPosMemberSearch(e.target.value)}
-                          onKeyPress={(e) => {
-                            if (e.key === 'Enter') {
-                              handleSearchMember()
-                            }
-                          }}
-                          className="flex-1"
-                        />
-                        <Button
-                          onClick={handleSearchMember}
-                          disabled={searchingMember}
-                          className="bg-orange-500 hover:bg-orange-600"
-                        >
-                          <Search className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setShowCreateMemberForm(true)}
-                        className="w-full text-xs"
-                      >
-                        <Plus className="w-3 h-3 mr-1" />
-                        Buat Member Baru
-                      </Button>
-                    </div>
-                  ) : (
-                    // Create Member Form
-                    <div className="space-y-2">
-                      <div>
-                        <Label className="text-xs text-gray-600">Nama Lengkap *</Label>
-                        <Input
-                          placeholder="Nama member"
-                          value={posMemberName}
-                          onChange={(e) => setPosMemberName(e.target.value)}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs text-gray-600">No. HP *</Label>
-                        <Input
-                          placeholder="08xxxxxxxxxx"
-                          value={posMemberPhone}
-                          onChange={(e) => setPosMemberPhone(e.target.value)}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-xs text-gray-600">Email (opsional)</Label>
-                        <Input
-                          placeholder="email@example.com"
-                          value={posMemberEmail}
-                          onChange={(e) => setPosMemberEmail(e.target.value)}
-                          className="mt-1"
-                        />
-                      </div>
-                      <div className="flex gap-2">
-                        <Button
-                          onClick={handleCreateMember}
-                          disabled={creatingMember}
-                          className="flex-1 bg-green-600 hover:bg-green-700"
-                        >
-                          {creatingMember ? 'Memproses...' : 'Simpan'}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          onClick={() => {
-                            setShowCreateMemberForm(false)
-                            setPosMemberSearch('')
-                          }}
-                        className="px-3"
-                        >
-                          <X className="w-4 h-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  )}
+                // No Member - Show Search Form
+                <div className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      placeholder="Masukkan no. HP atau email member"
+                      value={posMemberSearch}
+                      onChange={(e) => setPosMemberSearch(e.target.value)}
+                      onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                          handleSearchMember()
+                        }
+                      }}
+                      className="flex-1"
+                    />
+                    <Button
+                      onClick={handleSearchMember}
+                      disabled={searchingMember}
+                      className="bg-orange-500 hover:bg-orange-600"
+                    >
+                      <Search className="w-4 h-4" />
+                    </Button>
+                  </div>
+                  <p className="text-xs text-gray-500">
+                    Masukkan nomor HP atau email member yang terdaftar
+                  </p>
                 </div>
               )}
-            </div>
 
+            </div>
             {/* Totals */}
             <div className="p-4 border-b bg-white space-y-2">
               <div className="flex justify-between text-sm">
