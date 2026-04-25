@@ -497,8 +497,6 @@ export default function RestaurantApp() {
   const [posCustomerName, setPosCustomerName] = useState('')
   const [posCustomerPhone, setPosCustomerPhone] = useState('')
   const [posOrderData, setPosOrderData] = useState<any>(null)
-  const [showProductDialog, setShowProductDialog] = useState(false)
-  const [selectedProductForDialog, setSelectedProductForDialog] = useState<Product | null>(null)
   const [posBarcodeInput, setPosBarcodeInput] = useState('')
 
   // Payment methods and redeem products state
@@ -1399,11 +1397,6 @@ export default function RestaurantApp() {
         variant: 'destructive'
       })
     }
-  }
-
-  const handlePosShowProductDialog = (product: Product) => {
-    setSelectedProductForDialog(product)
-    setShowProductDialog(true)
   }
 
   const handlePosApplyVoucher = async () => {
@@ -5370,13 +5363,13 @@ export default function RestaurantApp() {
 
         {/* 2-Panel Layout */}
         <div className="flex h-[calc(100vh-100px)]">
-          {/* LEFT PANEL - Scanner, Products, Cart */}
+          {/* LEFT PANEL - Scanner and Cart */}
           <div className="w-2/3 flex flex-col border-r bg-white">
             {/* Barcode Scanner */}
-            <div className="p-3 border-b bg-gradient-to-r from-orange-50 to-amber-50">
+            <div className="p-4 border-b bg-gradient-to-r from-orange-50 to-amber-50">
               <div className="flex gap-2">
-                <div className="flex-1 flex items-center gap-2 bg-white border rounded-lg px-3 py-2">
-                  <Scan className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                <div className="flex-1 flex items-center gap-3 bg-white border rounded-lg px-4 py-3">
+                  <Scan className="w-6 h-6 text-orange-500 flex-shrink-0" />
                   <Input
                     placeholder="Scan barcode atau cari produk..."
                     value={posBarcodeInput}
@@ -5386,133 +5379,77 @@ export default function RestaurantApp() {
                         handlePosBarcodeScan(posBarcodeInput)
                       }
                     }}
-                    className="border-none focus-visible:ring-0 px-2 py-1"
+                    className="border-none focus-visible:ring-0 px-2 py-1 text-lg"
                   />
                 </div>
                 <Button
                   onClick={() => handlePosBarcodeScan(posBarcodeInput)}
-                  className="bg-orange-500 hover:bg-orange-600"
+                  className="bg-orange-500 hover:bg-orange-600 px-6"
                 >
                   <Search className="w-5 h-5" />
                 </Button>
               </div>
             </div>
 
-            {/* Category Tabs */}
-            <div className="px-3 py-2 border-b bg-white">
-              <div className="flex gap-2 overflow-x-auto">
-                {menuCategories.map(cat => (
-                  <Button
-                    key={typeof cat === 'string' ? cat : cat.id}
-                    variant={selectedCategory === (typeof cat === 'string' ? cat : cat.name) ? "default" : "outline"}
-                    onClick={() => setSelectedCategory(typeof cat === 'string' ? cat : cat.name)}
-                    size="sm"
-                    className={`flex-shrink-0 ${selectedCategory === (typeof cat === 'string' ? cat : cat.name) ? "bg-orange-500 hover:bg-orange-600" : ""}`}
-                  >
-                    {typeof cat === 'string' ? (cat === 'all' ? 'Semua' : cat) : cat.name}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* Products Grid */}
-            <div className="flex-1 overflow-y-auto p-3">
-              <div className="grid grid-cols-4 gap-3">
-                {filteredProducts.map(product => (
-                  <Card
-                    key={product.id}
-                    className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200 overflow-hidden group"
-                    onClick={() => handlePosShowProductDialog(product)}
-                  >
-                    <div className="relative">
-                      <div className="bg-gradient-to-br from-orange-50 to-amber-50 h-20 flex items-center justify-center overflow-hidden">
-                        {product.image?.startsWith('data:') ? (
-                          <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                        ) : (
-                          <span className="text-3xl">{product.image || '🍗'}</span>
-                        )}
-                      </div>
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="absolute top-1 right-1 z-10 bg-white/90 hover:bg-white shadow-sm h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          handlePosAddToCart(product)
-                          toast({
-                            title: 'Ditambahkan',
-                            description: `${product.name} ditambahkan ke keranjang`,
-                          })
-                        }}
-                      >
-                        <Plus className="w-3 h-3" />
-                      </Button>
-                    </div>
-                    <CardContent className="p-2">
-                      <p className="text-xs font-semibold line-clamp-2 mb-1">{product.name}</p>
-                      <p className="text-xs text-orange-600 font-bold">Rp {product.price.toLocaleString()}</p>
-                      <p className="text-xs text-gray-500">Stok: {product.stock}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-
             {/* Cart Section */}
-            <div className="border-t bg-gray-50 max-h-[35%] flex flex-col">
-              <div className="px-3 py-2 border-b bg-gray-100 flex items-center justify-between">
-                <h3 className="font-bold text-sm text-gray-700">Keranjang ({posCart.reduce((sum, item) => sum + item.qty, 0)} item)</h3>
-                {posCart.length > 0 && (
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => setPosCart([])}
-                    className="text-red-600 hover:text-red-700 h-7 text-xs"
-                  >
-                    <Trash2 className="w-3 h-3 mr-1" />
-                    Hapus Semua
-                  </Button>
-                )}
+            <div className="flex-1 bg-gray-50 flex flex-col">
+              <div className="px-4 py-3 border-b bg-white flex items-center justify-between">
+                <h3 className="font-bold text-gray-700">Keranjang Belanja</h3>
+                <span className="text-sm text-gray-500">
+                  {posCart.reduce((sum, item) => sum + item.qty, 0)} item
+                </span>
               </div>
               <ScrollArea className="flex-1">
                 {posCart.length === 0 ? (
-                  <div className="flex flex-col items-center justify-center h-32 text-gray-400">
-                    <ShoppingCart className="w-12 h-12 mb-2" />
-                    <p className="text-sm">Keranjang kosong</p>
+                  <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                    <ShoppingCart className="w-24 h-24 mb-4 text-gray-300" />
+                    <p className="text-lg font-medium">Keranjang kosong</p>
+                    <p className="text-sm mt-2">Scan barcode atau cari produk untuk memulai</p>
                   </div>
                 ) : (
-                  <div className="p-2 space-y-2">
+                  <div className="p-4 space-y-3">
                     {posCart.map((item) => (
-                      <Card key={item.product.id} className="p-2">
-                        <div className="flex gap-2">
-                          <div className="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                      <Card key={item.product.id} className="p-4 hover:shadow-md transition-shadow">
+                        <div className="flex gap-4">
+                          <div className="w-16 h-16 bg-orange-50 rounded-lg flex items-center justify-center flex-shrink-0">
                             {item.product.image?.startsWith('data:') ? (
                               <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover rounded-lg" />
                             ) : (
-                              <span className="text-xl">{item.product.image || '🍗'}</span>
+                              <span className="text-3xl">{item.product.image || '🍗'}</span>
                             )}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium truncate">{item.product.name}</p>
-                            <p className="text-xs text-orange-600 font-bold">Rp {(item.product.price * item.qty).toLocaleString()}</p>
+                            <p className="text-base font-semibold truncate">{item.product.name}</p>
+                            <p className="text-orange-600 font-bold text-lg">Rp {(item.product.price * item.qty).toLocaleString()}</p>
+                            <p className="text-xs text-gray-500">Rp {item.product.price.toLocaleString()} / item</p>
                           </div>
-                          <div className="flex items-center gap-1">
+                          <div className="flex flex-col gap-2 items-end">
+                            <div className="flex items-center gap-2 bg-white rounded-lg border p-1">
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handlePosUpdateQty(item.product.id, -1)}
+                                className="h-7 w-7 hover:bg-gray-100"
+                              >
+                                <Minus className="w-4 h-4" />
+                              </Button>
+                              <span className="w-10 text-center text-lg font-bold">{item.qty}</span>
+                              <Button
+                                size="icon"
+                                variant="ghost"
+                                onClick={() => handlePosUpdateQty(item.product.id, 1)}
+                                className="h-7 w-7 hover:bg-gray-100"
+                              >
+                                <Plus className="w-4 h-4" />
+                              </Button>
+                            </div>
                             <Button
+                              variant="ghost"
                               size="icon"
-                              variant="outline"
-                              onClick={() => handlePosUpdateQty(item.product.id, -1)}
-                              className="h-6 w-6"
+                              onClick={() => handlePosRemoveFromCart(item.product.id)}
+                              className="h-8 w-8 text-red-500 hover:text-red-600 hover:bg-red-50"
                             >
-                              <Minus className="w-3 h-3" />
-                            </Button>
-                            <span className="w-6 text-center text-sm font-medium">{item.qty}</span>
-                            <Button
-                              size="icon"
-                              variant="outline"
-                              onClick={() => handlePosUpdateQty(item.product.id, 1)}
-                              className="h-6 w-6"
-                            >
-                              <Plus className="w-3 h-3" />
+                              <Trash2 className="w-4 h-4" />
                             </Button>
                           </div>
                         </div>
@@ -5521,6 +5458,24 @@ export default function RestaurantApp() {
                   </div>
                 )}
               </ScrollArea>
+
+              {/* Clear Cart Button */}
+              {posCart.length > 0 && (
+                <div className="p-4 border-t bg-white">
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      if (confirm('Hapus semua item dari keranjang?')) {
+                        setPosCart([])
+                      }
+                    }}
+                    className="w-full text-red-600 hover:text-red-700 hover:bg-red-50 border-red-200"
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />
+                    Hapus Semua Item
+                  </Button>
+                </div>
+              )}
             </div>
           </div>
 
@@ -5692,50 +5647,6 @@ export default function RestaurantApp() {
             </div>
           </div>
         </div>
-
-        {/* Product Dialog */}
-        <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
-          <DialogContent className="max-w-sm">
-            <DialogHeader>
-              <DialogTitle>Detail Produk</DialogTitle>
-            </DialogHeader>
-            {selectedProductForDialog && (
-              <div className="space-y-4">
-                <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg h-40 flex items-center justify-center overflow-hidden">
-                  {selectedProductForDialog.image?.startsWith('data:') ? (
-                    <img src={selectedProductForDialog.image} alt={selectedProductForDialog.name} className="w-full h-full object-cover" />
-                  ) : (
-                    <span className="text-6xl">{selectedProductForDialog.image || '🍗'}</span>
-                  )}
-                </div>
-                <div>
-                  <h3 className="text-lg font-bold">{selectedProductForDialog.name}</h3>
-                  <p className="text-sm text-gray-600 mt-1">{selectedProductForDialog.description}</p>
-                </div>
-                <div className="flex justify-between items-center">
-                  <div>
-                    <p className="text-2xl font-bold text-orange-600">Rp {selectedProductForDialog.price.toLocaleString()}</p>
-                    <p className="text-sm text-gray-500">Stok: {selectedProductForDialog.stock}</p>
-                  </div>
-                  <Button
-                    onClick={() => {
-                      handlePosAddToCart(selectedProductForDialog)
-                      setShowProductDialog(false)
-                      toast({
-                        title: 'Ditambahkan',
-                        description: `${selectedProductForDialog.name} ditambahkan ke keranjang`,
-                      })
-                    }}
-                    className="bg-orange-500 hover:bg-orange-600"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Tambah
-                  </Button>
-                </div>
-              </div>
-            )}
-          </DialogContent>
-        </Dialog>
       </div>
     )
   }
