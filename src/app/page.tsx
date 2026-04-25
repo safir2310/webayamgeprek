@@ -1886,14 +1886,14 @@ export default function RestaurantApp() {
         {/* Categories */}
         <div className="p-4">
           <div className="flex gap-2 overflow-x-auto pb-2">
-            {categories.map(cat => (
+            {menuCategories.map(cat => (
               <Button
-                key={cat}
-                variant={selectedCategory === cat ? "default" : "outline"}
-                onClick={() => setSelectedCategory(cat)}
-                className={selectedCategory === cat ? "bg-orange-500 hover:bg-orange-600" : "whitespace-nowrap"}
+                key={typeof cat === 'string' ? cat : cat.id}
+                variant={selectedCategory === (typeof cat === 'string' ? cat : cat.name) ? "default" : "outline"}
+                onClick={() => setSelectedCategory(typeof cat === 'string' ? cat : cat.name)}
+                className={selectedCategory === (typeof cat === 'string' ? cat : cat.name) ? "bg-orange-500 hover:bg-orange-600" : "whitespace-nowrap"}
               >
-                {cat === 'all' ? 'Semua' : cat}
+                {typeof cat === 'string' ? (cat === 'all' ? 'Semua' : cat) : cat.name}
               </Button>
             ))}
           </div>
@@ -4885,15 +4885,15 @@ export default function RestaurantApp() {
 
         <div className="p-4">
           <div className="grid grid-cols-4 gap-3 mb-4">
-            {categories.map(cat => (
+            {menuCategories.map(cat => (
               <Button
-                key={cat}
-                variant={selectedCategory === cat ? "default" : "outline"}
-                onClick={() => setSelectedCategory(cat)}
+                key={typeof cat === 'string' ? cat : cat.id}
+                variant={selectedCategory === (typeof cat === 'string' ? cat : cat.name) ? "default" : "outline"}
+                onClick={() => setSelectedCategory(typeof cat === 'string' ? cat : cat.name)}
                 size="sm"
-                className={selectedCategory === cat ? "bg-orange-500" : ""}
+                className={selectedCategory === (typeof cat === 'string' ? cat : cat.name) ? "bg-orange-500" : ""}
               >
-                {cat === 'all' ? 'Semua' : cat}
+                {typeof cat === 'string' ? (cat === 'all' ? 'Semua' : cat) : cat.name}
               </Button>
             ))}
           </div>
