@@ -473,6 +473,7 @@ export default function RestaurantApp() {
 
   // Login role selection
   const [loginRole, setLoginRole] = useState<'customer' | 'cashier' | 'admin'>('customer')
+  const [activeTab, setActiveTab] = useState<'customer' | 'cashier' | 'admin'>('customer')
 
   // Payment methods and redeem products state
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
@@ -656,8 +657,8 @@ export default function RestaurantApp() {
           return
         }
 
-        // Validate that the user role matches the selected login role
-        if (loginRole === 'cashier' && data.user.role !== 'cashier') {
+        // Validate that the user role matches the selected tab role
+        if (activeTab === 'cashier' && data.user.role !== 'cashier') {
           toast({
             title: 'Login Gagal',
             description: 'Akun ini bukan akun kasir. Silakan gunakan akun kasir yang valid.',
@@ -666,7 +667,7 @@ export default function RestaurantApp() {
           return
         }
 
-        if (loginRole === 'admin' && data.user.role !== 'admin') {
+        if (activeTab === 'admin' && data.user.role !== 'admin') {
           toast({
             title: 'Login Gagal',
             description: 'Akun ini bukan akun admin. Silakan gunakan akun admin yang valid.',
@@ -675,10 +676,10 @@ export default function RestaurantApp() {
           return
         }
 
-        if (loginRole === 'customer' && (data.user.role === 'cashier' || data.user.role === 'admin')) {
+        if (activeTab === 'customer' && (data.user.role === 'cashier' || data.user.role === 'admin')) {
           toast({
             title: 'Perhatian',
-            description: 'Akun ini memiliki akses staff. Silakan pilih role yang sesuai.',
+            description: 'Akun ini memiliki akses staff. Silakan pilih tab yang sesuai.',
             variant: 'destructive'
           })
           return
@@ -1269,104 +1270,131 @@ export default function RestaurantApp() {
               <p className="text-muted-foreground">Login untuk memesan makanan</p>
             </div>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    placeholder={loginRole === 'cashier' ? 'cashier@example.com' : loginRole === 'admin' ? 'admin@example.com' : 'email@example.com'}
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-            </div>
+            <Tabs defaultValue="customer" value={activeTab} onValueChange={(value) => {
+              setActiveTab(value as 'customer' | 'cashier' | 'admin')
+              setLoginRole(value as 'customer' | 'cashier' | 'admin')
+            }}>
+              <TabsList className="grid w-full grid-cols-3 h-12">
+                <TabsTrigger value="customer" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                  <User className="mr-2 h-4 w-4" />
+                  Pelanggan
+                </TabsTrigger>
+                <TabsTrigger value="cashier" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                  <Utensils className="mr-2 h-4 w-4" />
+                  Kasir
+                </TabsTrigger>
+                <TabsTrigger value="admin" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                  <ShieldCheck className="mr-2 h-4 w-4" />
+                  Admin
+                </TabsTrigger>
+              </TabsList>
 
-            <div className="flex justify-center gap-3">
-              <Button
-                variant={loginRole === 'customer' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  setLoginRole('customer')
-                  toast({
-                    title: 'Mode Pelanggan',
-                    description: 'Login sebagai pelanggan untuk memesan',
-                  })
-                }}
-                className={loginRole === 'customer' ? 'bg-orange-500 hover:bg-orange-600' : ''}
-              >
-                <User className="mr-2 h-4 w-4" />
-                Pelanggan
-              </Button>
-              <Button
-                variant={loginRole === 'cashier' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  setLoginRole('cashier')
-                  toast({
-                    title: 'Mode Kasir',
-                    description: 'Silakan login menggunakan akun kasir',
-                  })
-                }}
-                className={loginRole === 'cashier' ? 'bg-orange-500 hover:bg-orange-600' : ''}
-              >
-                <Utensils className="mr-2 h-4 w-4" />
-                POS Kasir
-              </Button>
-              <Button
-                variant={loginRole === 'admin' ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => {
-                  setLoginRole('admin')
-                  toast({
-                    title: 'Mode Admin',
-                    description: 'Silakan login menggunakan akun admin',
-                  })
-                }}
-                className={loginRole === 'admin' ? 'bg-orange-500 hover:bg-orange-600' : ''}
-              >
-                <ShieldCheck className="mr-2 h-4 w-4" />
-                Admin Panel
-              </Button>
-            </div>
+              <TabsContent value="customer" className="space-y-4 mt-6">
+                <div className="space-y-2">
+                  <Label>Email Pelanggan</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="pelanggan@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+              </TabsContent>
 
-            <Separator />
+              <TabsContent value="cashier" className="space-y-4 mt-6">
+                <div className="space-y-2">
+                  <Label>Email Kasir</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="cashier@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="admin" className="space-y-4 mt-6">
+                <div className="space-y-2">
+                  <Label>Email Admin</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="admin@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+            </Tabs>
 
             <Button onClick={handleLogin} className="w-full bg-orange-500 hover:bg-orange-600">
               <LogIn className="w-4 h-4 mr-2" />
-              Masuk sebagai {loginRole === 'cashier' ? 'Kasir' : loginRole === 'admin' ? 'Admin' : 'Pelanggan'}
+              Masuk sebagai {activeTab === 'cashier' ? 'Kasir' : activeTab === 'admin' ? 'Admin' : 'Pelanggan'}
             </Button>
 
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Belum punya akun pelanggan?{' '}
-                <button
-                  onClick={() => {
-                    setLoginRole('customer')
-                    setScreen('register')
-                  }}
-                  className="text-orange-500 hover:underline font-medium"
-                >
-                  Daftar
-                </button>
-              </p>
-            </div>
+            {activeTab === 'customer' && (
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  Belum punya akun pelanggan?{' '}
+                  <button
+                    onClick={() => setScreen('register')}
+                    className="text-orange-500 hover:underline font-medium"
+                  >
+                    Daftar
+                  </button>
+                </p>
+              </div>
+            )}
           </CardContent>
         </Card>
       </div>
