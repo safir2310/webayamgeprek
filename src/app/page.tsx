@@ -466,6 +466,17 @@ export default function RestaurantApp() {
   const [regPhone, setRegPhone] = useState('')
   const [regPassword, setRegPassword] = useState('')
 
+  // Forgot password form state
+  const [resetEmail, setResetEmail] = useState('')
+  const [resetPhone, setResetPhone] = useState('')
+  const [resetOtp, setResetOtp] = useState('')
+  const [resetNewPassword, setResetNewPassword] = useState('')
+  const [resetConfirmPassword, setResetConfirmPassword] = useState('')
+  const [resetStep, setResetStep] = useState<'phone-email' | 'verify' | 'new-password' | 'success'>('phone-email')
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [isSendingOtp, setIsSendingOtp] = useState(false)
+  const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
+
   // POS state
   const [posCart, setPosCart] = useState<CartItem[]>([])
   const [isShiftOpen, setIsShiftOpen] = useState(false)
@@ -742,6 +753,161 @@ export default function RestaurantApp() {
       toast({
         title: 'Registrasi Gagal',
         description: 'Mohon isi semua field',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleSendOtp = async () => {
+    if (!resetEmail || !resetPhone) {
+      toast({
+        title: 'Data Tidak Lengkap',
+        description: 'Mohon isi email dan nomor HP',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      setIsSendingOtp(true)
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resetEmail, phone: resetPhone }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        toast({
+          title: 'Gagal Mengirim OTP',
+          description: data.error || 'Email atau nomor HP tidak terdaftar',
+          variant: 'destructive'
+        })
+        setIsSendingOtp(false)
+        return
+      }
+
+      setResetStep('verify')
+      toast({
+        title: 'OTP Terkirim',
+        description: `Kode OTP telah dikirim ke ${resetPhone} dan ${resetEmail}`,
+      })
+    } catch (error) {
+      console.error('Send OTP error:', error)
+      toast({
+        title: 'Gagal Mengirim OTP',
+        description: 'Terjadi kesalahan koneksi',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsSendingOtp(false)
+    }
+  }
+
+  const handleVerifyOtp = async () => {
+    if (!resetOtp || resetOtp.length !== 4) {
+      toast({
+        title: 'OTP Tidak Valid',
+        description: 'Mohon masukkan 4 digit kode OTP',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      setIsVerifyingOtp(true)
+      const response = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resetEmail, phone: resetPhone, otp: resetOtp }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        toast({
+          title: 'OTP Tidak Valid',
+          description: data.error || 'Kode OTP salah atau kadaluarsa',
+          variant: 'destructive'
+        })
+        setIsVerifyingOtp(false)
+        return
+      }
+
+      setResetStep('new-password')
+      toast({
+        title: 'OTP Valid',
+        description: 'Silakan masukkan password baru',
+      })
+    } catch (error) {
+      console.error('Verify OTP error:', error)
+      toast({
+        title: 'Gagal Verifikasi OTP',
+        description: 'Terjadi kesalahan koneksi',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsVerifyingOtp(false)
+    }
+  }
+
+  const handleResetPassword = async () => {
+    if (!resetNewPassword || !resetConfirmPassword) {
+      toast({
+        title: 'Password Tidak Lengkap',
+        description: 'Mohon isi password baru dan konfirmasi',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    if (resetNewPassword !== resetConfirmPassword) {
+      toast({
+        title: 'Password Tidak Cocok',
+        description: 'Password baru dan konfirmasi tidak sama',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    if (resetNewPassword.length < 6) {
+      toast({
+        title: 'Password Terlalu Pendek',
+        description: 'Password minimal 6 karakter',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    try {
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: resetEmail, phone: resetPhone, newPassword: resetNewPassword }),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        toast({
+          title: 'Reset Password Gagal',
+          description: data.error || 'Terjadi kesalahan',
+          variant: 'destructive'
+        })
+        return
+      }
+
+      setResetStep('success')
+      toast({
+        title: 'Password Berhasil Diubah',
+        description: 'Silakan login dengan password baru Anda',
+      })
+    } catch (error) {
+      console.error('Reset password error:', error)
+      toast({
+        title: 'Reset Password Gagal',
+        description: 'Terjadi kesalahan koneksi',
         variant: 'destructive'
       })
     }
@@ -1244,51 +1410,227 @@ export default function RestaurantApp() {
               <p className="text-muted-foreground">Login untuk melanjutkan</p>
             </div>
 
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label>Email</Label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="email"
-                    placeholder="email@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-              <div className="space-y-2">
-                <Label>Password</Label>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                  />
-                </div>
-              </div>
-            </div>
+            <Tabs defaultValue="login" value={showForgotPassword ? 'forgot' : 'login'} onValueChange={(value) => {
+              setShowForgotPassword(value === 'forgot')
+              if (value === 'login') {
+                setResetStep('phone-email')
+                setResetEmail('')
+                setResetPhone('')
+                setResetOtp('')
+                setResetNewPassword('')
+                setResetConfirmPassword('')
+              }
+            }}>
+              <TabsList className="grid w-full grid-cols-2 h-10">
+                <TabsTrigger value="login" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                  <LogIn className="mr-2 h-4 w-4" />
+                  Login
+                </TabsTrigger>
+                <TabsTrigger value="forgot" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                  <Lock className="mr-2 h-4 w-4" />
+                  Lupa Password
+                </TabsTrigger>
+              </TabsList>
 
-            <Button onClick={handleLogin} className="w-full bg-orange-500 hover:bg-orange-600">
-              <LogIn className="w-4 h-4 mr-2" />
-              Masuk
-            </Button>
+              {/* Login Tab */}
+              <TabsContent value="login" className="space-y-4 mt-6">
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="email@example.com"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Password</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="password"
+                      placeholder="••••••••"
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
 
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Belum punya akun?{' '}
-                <button
-                  onClick={() => setScreen('register')}
-                  className="text-orange-500 hover:underline font-medium"
-                >
-                  Daftar
-                </button>
-              </p>
-            </div>
+                <Button onClick={handleLogin} className="w-full bg-orange-500 hover:bg-orange-600">
+                  <LogIn className="w-4 h-4 mr-2" />
+                  Masuk
+                </Button>
+
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground">
+                    Belum punya akun?{' '}
+                    <button
+                      onClick={() => setScreen('register')}
+                      className="text-orange-500 hover:underline font-medium"
+                    >
+                      Daftar
+                    </button>
+                  </p>
+                </div>
+              </TabsContent>
+
+              {/* Forgot Password Tab */}
+              <TabsContent value="forgot" className="space-y-4 mt-6">
+                {resetStep === 'phone-email' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Email</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                        <Input
+                          type="email"
+                          placeholder="email@example.com"
+                          value={resetEmail}
+                          onChange={(e) => setResetEmail(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Nomor HP</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                        <Input
+                          type="tel"
+                          placeholder="08123456789"
+                          value={resetPhone}
+                          onChange={(e) => setResetPhone(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={handleSendOtp}
+                      disabled={isSendingOtp}
+                      className="w-full bg-orange-500 hover:bg-orange-600"
+                    >
+                      {isSendingOtp ? 'Mengirim...' : 'Kirim OTP'}
+                    </Button>
+                  </>
+                )}
+
+                {resetStep === 'verify' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Kode OTP (4 Digit)</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                        <Input
+                          type="text"
+                          placeholder="••••"
+                          value={resetOtp}
+                          onChange={(e) => setResetOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                          className="pl-10 text-center text-2xl tracking-widest"
+                          maxLength={4}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground text-center">
+                        Kode OTP telah dikirim ke {resetPhone} dan {resetEmail}
+                      </p>
+                    </div>
+
+                    <Button
+                      onClick={handleVerifyOtp}
+                      disabled={isVerifyingOtp}
+                      className="w-full bg-orange-500 hover:bg-orange-600"
+                    >
+                      {isVerifyingOtp ? 'Memverifikasi...' : 'Verifikasi OTP'}
+                    </Button>
+
+                    <Button
+                      onClick={() => setResetStep('phone-email')}
+                      variant="ghost"
+                      className="w-full"
+                    >
+                      Kembali
+                    </Button>
+                  </>
+                )}
+
+                {resetStep === 'new-password' && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>Password Baru</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          value={resetNewPassword}
+                          onChange={(e) => setResetNewPassword(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Konfirmasi Password Baru</Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                        <Input
+                          type="password"
+                          placeholder="••••••••"
+                          value={resetConfirmPassword}
+                          onChange={(e) => setResetConfirmPassword(e.target.value)}
+                          className="pl-10"
+                        />
+                      </div>
+                    </div>
+
+                    <Button
+                      onClick={handleResetPassword}
+                      className="w-full bg-orange-500 hover:bg-orange-600"
+                    >
+                      Reset Password
+                    </Button>
+
+                    <Button
+                      onClick={() => setResetStep('phone-email')}
+                      variant="ghost"
+                      className="w-full"
+                    >
+                      Kembali
+                    </Button>
+                  </>
+                )}
+
+                {resetStep === 'success' && (
+                  <div className="text-center space-y-4">
+                    <CheckCircle className="w-20 h-20 text-green-500 mx-auto" />
+                    <div>
+                      <h3 className="text-xl font-bold mb-2">Password Berhasil Diubah!</h3>
+                      <p className="text-muted-foreground">
+                        Anda sekarang dapat login dengan password baru Anda
+                      </p>
+                    </div>
+                    <Button
+                      onClick={() => {
+                        setShowForgotPassword(false)
+                        setResetStep('phone-email')
+                        setResetEmail('')
+                        setResetPhone('')
+                        setResetOtp('')
+                        setResetNewPassword('')
+                        setResetConfirmPassword('')
+                      }}
+                      className="w-full bg-orange-500 hover:bg-orange-600"
+                    >
+                      Kembali ke Login
+                    </Button>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </CardContent>
         </Card>
       </div>
