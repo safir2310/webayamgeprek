@@ -19,6 +19,57 @@ const createUserSchema = z.object({
   role: z.enum(['user', 'cashier', 'admin']),
 })
 
+// GET all users
+export async function GET(req: NextRequest) {
+  try {
+    const authHeader = req.headers.get('authorization')
+    const token = authHeader?.replace('Bearer ', '')
+
+    if (!token) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const decoded = decodeToken(token)
+    if (!decoded || !decoded.userId) {
+      return NextResponse.json(
+        { error: 'Invalid token' },
+        { status: 401 }
+      )
+    }
+
+    // Verify user is admin
+    const currentUser = await db.user.findUnique({
+      where: { id: decoded.userId },
+      select: { role: true },
+    })
+
+    if (!currentUser || currentUser.role !== 'admin') {
+      return NextResponse.json(
+        { error: 'Forbidden' },
+        { status: 403 }
+      )
+    }
+
+    const users = await db.user.findMany({
+      orderBy: {
+        createdAt: 'desc'
+      }
+    })
+
+    return NextResponse.json({ users })
+  } catch (error) {
+    console.error('Users API error:', error)
+    return NextResponse.json(
+      { error: 'Failed to fetch users' },
+      { status: 500 }
+    )
+  }
+}
+
+// POST create user
 export async function POST(req: NextRequest) {
   try {
     const authHeader = req.headers.get('authorization')

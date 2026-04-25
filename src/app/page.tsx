@@ -6478,23 +6478,69 @@ export default function RestaurantApp() {
                   Batalkan Transaksi
                 </Button>
                 <Button
-                  onClick={() => {
-                    toast({
-                      title: 'Pembayaran Berhasil',
-                      description: 'Transaksi telah selesai',
-                    })
-                    // Clear all states after payment
-                    setPosCart([])
-                    setPosOrderData(null)
-                    setPosCustomerName('')
-                    setPosCustomerPhone('')
-                    setPosSelectedMember(null)
-                    setPosSelectedMemberUser(null)
-                    setPosAppliedVoucher(null)
-                    setPosDiscount(0)
-                    setPosSelectedPaymentMethod('qris')
-                    // Go back to POS screen
-                    setScreen('pos')
+                  onClick={async () => {
+                    try {
+                      toast({
+                        title: 'Memproses Pembayaran',
+                        description: 'Mohon tunggu sebentar...',
+                      })
+
+                      // Get user token
+                      const token = localStorage.getItem('auth_token')
+
+                      // Create transaction in database
+                      const response = await fetch('/api/pos/transactions', {
+                        method: 'POST',
+                        headers: {
+                          'Content-Type': 'application/json',
+                          ...(token && { 'Authorization': `Bearer ${token}` })
+                        },
+                        body: JSON.stringify({
+                          items: posOrderData.items,
+                          subtotal: posOrderData.subtotal,
+                          discount: posOrderData.discount,
+                          total: posOrderData.total,
+                          paymentMethod: posOrderData.paymentMethod,
+                          customerName: posOrderData.customerName,
+                          customerPhone: posOrderData.customerPhone,
+                          memberId: posSelectedMember?.memberId,
+                          cashierId: user?.id,
+                          note: posOrderData.note
+                        })
+                      })
+
+                      const data = await response.json()
+
+                      if (!response.ok) {
+                        throw new Error(data.error || 'Gagal menyimpan transaksi')
+                      }
+
+                      toast({
+                        title: 'Pembayaran Berhasil',
+                        description: `Transaksi ${data.transaction.transactionNumber} telah selesai`,
+                      })
+
+                      // Clear all states after payment
+                      setPosCart([])
+                      setPosOrderData(null)
+                      setPosCustomerName('')
+                      setPosCustomerPhone('')
+                      setPosSelectedMember(null)
+                      setPosSelectedMemberUser(null)
+                      setPosAppliedVoucher(null)
+                      setPosDiscount(0)
+                      setPosSelectedPaymentMethod('qris')
+
+                      // Go back to POS screen
+                      setScreen('pos')
+                    } catch (error) {
+                      console.error('Payment error:', error)
+                      toast({
+                        title: 'Gagal Memproses Pembayaran',
+                        description: error instanceof Error ? error.message : 'Terjadi kesalahan koneksi',
+                        variant: 'destructive'
+                      })
+                    }
                   }}
                   className="w-full h-14 text-lg font-bold bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700 text-white shadow-lg"
                 >
