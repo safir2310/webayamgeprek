@@ -36,48 +36,23 @@ export async function GET(request: NextRequest) {
 
       return NextResponse.json({ messages })
     } else {
-      // Get all users with chat messages
-      const chats = await db.chatMessage.groupBy({
-        by: ['userId'],
-        _count: {
-          id: true
+      // Get all chat messages for admin view
+      const messages = await db.chatMessage.findMany({
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              phone: true
+            }
+          }
         },
-        _max: {
-          createdAt: true
+        orderBy: {
+          createdAt: 'desc'
         }
       })
 
-      const chatData = await Promise.all(
-        chats.map(async (chat) => {
-          const user = await db.user.findUnique({
-            where: { id: chat.userId }
-          })
-
-          const unreadCount = await db.chatMessage.count({
-            where: {
-              userId: chat.userId,
-              senderRole: 'user',
-              isRead: false
-            }
-          })
-
-          return {
-            userId: chat.userId,
-            user,
-            unreadCount,
-            lastMessage: chat._max.createdAt
-          }
-        })
-      )
-
-      // Sort by last message
-      chatData.sort((a, b) => {
-        const aTime = a.lastMessage ? new Date(a.lastMessage).getTime() : 0
-        const bTime = b.lastMessage ? new Date(b.lastMessage).getTime() : 0
-        return bTime - aTime
-      })
-
-      return NextResponse.json({ chats: chatData })
+      return NextResponse.json({ chats: messages })
     }
   } catch (error) {
     console.error('Chats API error:', error)

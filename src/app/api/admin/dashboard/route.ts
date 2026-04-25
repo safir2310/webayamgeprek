@@ -47,22 +47,35 @@ export async function GET() {
       where: { status: 'pending' }
     })
 
-    // Get total cashiers
-    const totalCashiers = await db.user.count({
-      where: { role: 'cashier' }
+    // Get processing orders
+    const processingOrders = await db.order.count({
+      where: { status: 'processing' }
+    })
+
+    // Get completed orders
+    const completedOrders = await db.order.count({
+      where: { status: 'completed' }
+    })
+
+    // Get low stock products (stock < 20)
+    const lowStockProducts = await db.product.findMany({
+      where: {
+        isActive: true,
+        stock: { lt: 20 }
+      }
     })
 
     return NextResponse.json({
-      stats: {
-        totalOrders,
-        todayOrders,
-        revenue,
-        todayRevenue,
-        totalProducts,
-        totalCustomers,
-        pendingOrders,
-        totalCashiers
-      }
+      totalSales: revenue,
+      totalOrders,
+      totalProducts,
+      totalCustomers,
+      todaySales: todayRevenue,
+      todayOrders,
+      pendingOrders,
+      processingOrders,
+      completedOrders,
+      lowStock: lowStockProducts.length
     })
   } catch (error) {
     console.error('Dashboard API error:', error)

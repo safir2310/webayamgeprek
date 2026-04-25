@@ -4,36 +4,45 @@ import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { ScrollArea } from '@/components/ui/scroll-area'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import { Badge } from '@/components/ui/badge'
-import { Separator } from '@/components/ui/separator'
+import { Switch } from '@/components/ui/switch'
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { toast } from '@/hooks/use-toast'
+import AdminLayout from '@/components/admin/AdminLayout'
 import {
-  Home,
   Package,
   ShoppingCart,
   Users,
-  BarChart3,
   DollarSign,
-  Bell,
-  MessageCircle,
-  LogOut,
-  Utensils,
-  Settings,
-  TrendingUp,
-  Eye,
-  AlertTriangle,
   CheckCircle,
-  XCircle,
   Clock,
-  Plus,
-  Minus,
+  XCircle,
   Search,
-  Filter
+  Filter,
+  Plus,
+  Edit2,
+  Trash2,
+  Eye,
+  TrendingUp,
+  AlertTriangle,
+  ArrowUpRight,
+  ArrowDownRight,
+  Send,
+  Phone,
+  Mail,
+  User,
+  RefreshCw,
+  UserCog,
+  Gift,
+  Bell,
+  MessageCircle
 } from 'lucide-react'
 
-type TabType = 'dashboard' | 'orders' | 'products' | 'stock' | 'customers' | 'notifications' | 'chat'
+type TabType = 'dashboard' | 'orders' | 'products' | 'categories' | 'stock' | 'users' | 'cashiers' | 'payments' | 'redeem' | 'reports' | 'notifications' | 'chat'
 
 interface DashboardStats {
   totalSales: number
@@ -45,93 +54,220 @@ interface DashboardStats {
   pendingOrders: number
   processingOrders: number
   completedOrders: number
+  lowStock: number
 }
 
-export default function AdminDashboard() {
+export default function AdminPage() {
   const [activeTab, setActiveTab] = useState<TabType>('dashboard')
   const [isLoading, setIsLoading] = useState(true)
   const [stats, setStats] = useState<DashboardStats | null>(null)
-  const [user, setUser] = useState<any>(null)
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [chatMessages, setChatMessages] = useState<any[]>([])
+  const [chatInput, setChatInput] = useState('')
+
+  // Orders state
+  const [orders, setOrders] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
-  // Mock data
-  const [mockOrders, setMockOrders] = useState([
-    {
-      id: '1',
-      orderNumber: 'ORD001',
-      customerName: 'Budi Santoso',
-      total: 53000,
-      status: 'completed',
-      items: 3,
-      createdAt: new Date(Date.now() - 3600000)
-    },
-    {
-      id: '2',
-      orderNumber: 'ORD002',
-      customerName: 'Siti Aminah',
-      total: 76000,
-      status: 'processing',
-      items: 5,
-      createdAt: new Date(Date.now() - 1800000)
-    },
-    {
-      id: '3',
-      orderNumber: 'ORD003',
-      customerName: 'Joko Widodo',
-      total: 42000,
-      status: 'pending',
-      items: 2,
-      createdAt: new Date(Date.now() - 900000)
-    }
-  ])
+  // Products state
+  const [products, setProducts] = useState<any[]>([])
+  const [showProductDialog, setShowProductDialog] = useState(false)
+  const [editingProduct, setEditingProduct] = useState<any>(null)
+  const [newProduct, setNewProduct] = useState({
+    name: '',
+    description: '',
+    price: 0,
+    stock: 0,
+    categoryId: '',
+    image: '',
+    barcode: ''
+  })
 
-  const [mockProducts, setMockProducts] = useState([
-    { id: '1', name: 'Ayam Geprek Original', price: 25000, stock: 50, category: 'Main' },
-    { id: '2', name: 'Ayam Geprek Keju', price: 30000, stock: 35, category: 'Main' },
-    { id: '3', name: 'Ayam Geprek Telur', price: 28000, stock: 40, category: 'Main' },
-    { id: '4', name: 'Nasi Geprek', price: 22000, stock: 45, category: 'Main' },
-    { id: '5', name: 'Es Teh Manis', price: 8000, stock: 100, category: 'Drink' },
-    { id: '6', name: 'Es Jeruk', price: 10000, stock: 80, category: 'Drink' }
-  ])
+  // Categories state
+  const [categories, setCategories] = useState<any[]>([])
+  const [showCategoryDialog, setShowCategoryDialog] = useState(false)
+  const [editingCategory, setEditingCategory] = useState<any>(null)
+  const [newCategory, setNewCategory] = useState({
+    name: '',
+    description: '',
+    image: ''
+  })
 
-  const [mockCustomers, setMockCustomers] = useState([
-    { id: '1', name: 'Budi Santoso', email: 'budi@example.com', phone: '08123456789', totalOrders: 12, totalSpent: 650000 },
-    { id: '2', name: 'Siti Aminah', email: 'siti@example.com', phone: '08129876543', totalOrders: 8, totalSpent: 420000 },
-    { id: '3', name: 'Joko Widodo', email: 'joko@example.com', phone: '08125678901', totalOrders: 15, totalSpent: 780000 }
-  ])
+  // Users state
+  const [users, setUsers] = useState<any[]>([])
 
-  const [notifications, setNotifications] = useState([
-    { id: '1', type: 'order', title: 'Pesanan Baru', message: 'ORD003 dari Joko Widodo', time: '5 menit lalu', isRead: false },
-    { id: '2', type: 'warning', title: 'Stok Menipis', message: 'Es Teh Manis sisa 10', time: '15 menit lalu', isRead: false },
-    { id: '3', type: 'info', title: 'Pembayaran QRIS', message: 'Invoice #12345 berhasil', time: '30 menit lalu', isRead: true }
-  ])
+  // Cashiers state
+  const [cashiers, setCashiers] = useState<any[]>([])
+  const [showCashierDialog, setShowCashierDialog] = useState(false)
+  const [editingCashier, setEditingCashier] = useState<any>(null)
+  const [newCashier, setNewCashier] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    password: ''
+  })
 
-  const [chatMessages, setChatMessages] = useState([
-    { id: '1', sender: 'customer', message: 'Apakah Ayam Geprek Original tersedia?', time: '10:30', isAdmin: false },
-    { id: '2', sender: 'admin', message: 'Ya, masih ada stok 50 porsi', time: '10:32', isAdmin: true },
-    { id: '3', sender: 'customer', message: 'Baik, saya pesan 2 ya', time: '10:33', isAdmin: false },
-    { id: '4', sender: 'admin', message: 'Siap, pesanan sedang diproses', time: '10:34', isAdmin: true }
-  ])
+  // Payment methods state
+  const [paymentMethods, setPaymentMethods] = useState<any[]>([])
+  const [showPaymentDialog, setShowPaymentDialog] = useState(false)
+  const [editingPayment, setEditingPayment] = useState<any>(null)
+  const [newPayment, setNewPayment] = useState({
+    name: '',
+    displayName: '',
+    description: '',
+    icon: ''
+  })
 
-  const [chatInput, setChatInput] = useState('')
+  // Redeem products state
+  const [redeemProducts, setRedeemProducts] = useState<any[]>([])
+  const [showRedeemDialog, setShowRedeemDialog] = useState(false)
+  const [editingRedeem, setEditingRedeem] = useState<any>(null)
+  const [newRedeemProduct, setNewRedeemProduct] = useState({
+    name: '',
+    description: '',
+    points: 0,
+    image: '',
+    stock: -1
+  })
 
   useEffect(() => {
-    // Check if user is logged in
-    const userData = localStorage.getItem('adminUser')
-    if (userData) {
-      setUser(JSON.parse(userData))
-    }
-    setIsLoading(false)
+    loadDashboardStats()
+    loadNotifications()
+    loadOrders()
+    loadProducts()
+    loadCategories()
+    loadUsers()
+    loadCashiers()
+    loadPaymentMethods()
+    loadRedeemProducts()
+    loadChatMessages()
   }, [])
 
-  const handleLogout = () => {
-    localStorage.removeItem('adminUser')
-    setUser(null)
-    toast({
-      title: 'Logout Berhasil',
-      description: 'Anda telah keluar dari dashboard',
-    })
+  const loadDashboardStats = async () => {
+    try {
+      const response = await fetch('/api/admin/dashboard')
+      const data = await response.json()
+      if (response.ok) {
+        setStats(data)
+      }
+    } catch (error) {
+      console.error('Failed to load stats:', error)
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
+  const loadNotifications = async () => {
+    try {
+      const response = await fetch('/api/admin/notifications')
+      const data = await response.json()
+      if (response.ok && data.notifications) {
+        setNotifications(data.notifications)
+      }
+    } catch (error) {
+      console.error('Failed to load notifications:', error)
+    }
+  }
+
+  const loadOrders = async () => {
+    try {
+      const response = await fetch('/api/admin/orders')
+      const data = await response.json()
+      if (response.ok && data.orders) {
+        setOrders(data.orders)
+      }
+    } catch (error) {
+      console.error('Failed to load orders:', error)
+    }
+  }
+
+  const loadProducts = async () => {
+    try {
+      const response = await fetch('/api/products')
+      const data = await response.json()
+      if (response.ok && data.products) {
+        setProducts(data.products)
+      }
+    } catch (error) {
+      console.error('Failed to load products:', error)
+    }
+  }
+
+  const loadCategories = async () => {
+    try {
+      const response = await fetch('/api/categories')
+      const data = await response.json()
+      if (response.ok && data.categories) {
+        setCategories(data.categories)
+      }
+    } catch (error) {
+      console.error('Failed to load categories:', error)
+    }
+  }
+
+  const loadUsers = async () => {
+    try {
+      const response = await fetch('/api/admin/customers')
+      const data = await response.json()
+      if (response.ok && data.customers) {
+        setUsers(data.customers)
+      }
+    } catch (error) {
+      console.error('Failed to load users:', error)
+    }
+  }
+
+  const loadCashiers = async () => {
+    try {
+      const response = await fetch('/api/admin/cashiers')
+      const data = await response.json()
+      if (response.ok && data.cashiers) {
+        setCashiers(data.cashiers)
+      }
+    } catch (error) {
+      console.error('Failed to load cashiers:', error)
+    }
+  }
+
+  const loadPaymentMethods = async () => {
+    try {
+      const response = await fetch('/api/payment-methods')
+      const data = await response.json()
+      if (response.ok && data.paymentMethods) {
+        setPaymentMethods(data.paymentMethods)
+      }
+    } catch (error) {
+      console.error('Failed to load payment methods:', error)
+    }
+  }
+
+  const loadRedeemProducts = async () => {
+    try {
+      const response = await fetch('/api/redeem-products')
+      const data = await response.json()
+      if (response.ok && data.redeemProducts) {
+        setRedeemProducts(data.redeemProducts)
+      }
+    } catch (error) {
+      console.error('Failed to load redeem products:', error)
+    }
+  }
+
+  const loadChatMessages = async () => {
+    try {
+      const response = await fetch('/api/admin/chats')
+      const data = await response.json()
+      if (response.ok && data.chats) {
+        // Sort by createdAt ascending for chat display
+        const sortedMessages = [...data.chats].sort((a, b) =>
+          new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+        )
+        setChatMessages(sortedMessages)
+      }
+    } catch (error) {
+      console.error('Failed to load chat messages:', error)
+    }
   }
 
   const formatCurrency = (amount: number) => {
@@ -145,15 +281,17 @@ export default function AdminDashboard() {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'completed':
-        return 'bg-green-100 text-green-700'
+        return 'bg-green-100 text-green-700 border-green-200'
+      case 'paid':
+        return 'bg-blue-100 text-blue-700 border-blue-200'
       case 'processing':
-        return 'bg-blue-100 text-blue-700'
+        return 'bg-blue-100 text-blue-700 border-blue-200'
       case 'pending':
-        return 'bg-yellow-100 text-yellow-700'
+        return 'bg-yellow-100 text-yellow-700 border-yellow-200'
       case 'cancelled':
-        return 'bg-red-100 text-red-700'
+        return 'bg-red-100 text-red-700 border-red-200'
       default:
-        return 'bg-gray-100 text-gray-700'
+        return 'bg-gray-100 text-gray-700 border-gray-200'
     }
   }
 
@@ -161,6 +299,8 @@ export default function AdminDashboard() {
     switch (status) {
       case 'completed':
         return 'Selesai'
+      case 'paid':
+        return 'Dibayar'
       case 'processing':
         return 'Diproses'
       case 'pending':
@@ -172,712 +312,1872 @@ export default function AdminDashboard() {
     }
   }
 
-  const filteredOrders = mockOrders.filter(order => {
-    const matchesSearch = order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                         order.orderNumber.toLowerCase().includes(searchQuery.toLowerCase())
-    const matchesStatus = statusFilter === 'all' || order.status === statusFilter
-    return matchesSearch && matchesStatus
-  })
-
-  const filteredProducts = mockProducts.filter(product =>
-    product.name.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const unreadNotificationCount = notifications.filter(n => !n.isRead).length
 
   const sendChatMessage = () => {
     if (!chatInput.trim()) return
 
     setChatMessages(prev => [...prev, {
       id: String(Date.now()),
-      sender: 'admin',
+      senderRole: 'admin',
       message: chatInput,
-      time: new Date().toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' }),
-      isAdmin: true
+      isRead: false,
+      createdAt: new Date()
     }])
     setChatInput('')
 
     toast({
       title: 'Pesan Terkirim',
-      description: 'Pesan Anda telah terkirim ke customer',
+      description: 'Pesan Anda telah terkirim',
     })
   }
 
-  const markNotificationAsRead = (id: string) => {
-    setNotifications(prev => prev.map(notif =>
-      notif.id === id ? { ...notif, isRead: true } : notif
-    ))
+  // Order status handlers
+  const handleUpdateOrderStatus = async (orderId: string, newStatus: string) => {
+    try {
+      const response = await fetch('/api/admin/order/status', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, status: newStatus })
+      })
+
+      if (response.ok) {
+        setOrders(orders.map(order =>
+          order.id === orderId ? { ...order, status: newStatus } : order
+        ))
+        toast({
+          title: 'Berhasil',
+          description: `Status pesanan telah diubah menjadi ${getStatusLabel(newStatus)}`,
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat mengubah status',
+        variant: 'destructive'
+      })
+    }
   }
 
-  const unreadNotificationCount = notifications.filter(n => !n.isRead).length
+  // Product handlers
+  const handleSaveProduct = async () => {
+    try {
+      if (editingProduct) {
+        const response = await fetch(`/api/admin/products/${editingProduct.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newProduct)
+        })
+
+        if (response.ok) {
+          setProducts(products.map(p =>
+            p.id === editingProduct.id ? { ...p, ...newProduct } : p
+          ))
+          setShowProductDialog(false)
+          setEditingProduct(null)
+          toast({
+            title: 'Berhasil',
+            description: 'Produk telah diperbarui',
+          })
+        }
+      } else {
+        const response = await fetch('/api/admin/products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...newProduct, isActive: true })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setProducts([...products, data.product])
+          setShowProductDialog(false)
+          toast({
+            title: 'Berhasil',
+            description: 'Produk baru telah ditambahkan',
+          })
+        }
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menyimpan produk',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleDeleteProduct = async (id: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus produk ini?')) return
+
+    try {
+      const response = await fetch(`/api/admin/products/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setProducts(products.filter(p => p.id !== id))
+        toast({
+          title: 'Berhasil',
+          description: 'Produk telah dihapus',
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menghapus produk',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  // Category handlers
+  const handleSaveCategory = async () => {
+    try {
+      if (editingCategory) {
+        const response = await fetch(`/api/admin/categories/${editingCategory.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newCategory)
+        })
+
+        if (response.ok) {
+          setCategories(categories.map(c =>
+            c.id === editingCategory.id ? { ...c, ...newCategory } : c
+          ))
+          setShowCategoryDialog(false)
+          setEditingCategory(null)
+          toast({
+            title: 'Berhasil',
+            description: 'Kategori telah diperbarui',
+          })
+        }
+      } else {
+        const response = await fetch('/api/admin/categories', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newCategory)
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setCategories([...categories, data.category])
+          setShowCategoryDialog(false)
+          toast({
+            title: 'Berhasil',
+            description: 'Kategori baru telah ditambahkan',
+          })
+        }
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menyimpan kategori',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleDeleteCategory = async (id: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus kategori ini?')) return
+
+    try {
+      const response = await fetch(`/api/admin/categories/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setCategories(categories.filter(c => c.id !== id))
+        toast({
+          title: 'Berhasil',
+          description: 'Kategori telah dihapus',
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menghapus kategori',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  // Cashier handlers
+  const handleSaveCashier = async () => {
+    try {
+      if (editingCashier) {
+        const response = await fetch(`/api/admin/cashiers/${editingCashier.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newCashier)
+        })
+
+        if (response.ok) {
+          setCashiers(cashiers.map(c =>
+            c.id === editingCashier.id ? { ...c, ...newCashier } : c
+          ))
+          setShowCashierDialog(false)
+          setEditingCashier(null)
+          toast({
+            title: 'Berhasil',
+            description: 'Kasir telah diperbarui',
+          })
+        }
+      } else {
+        const response = await fetch('/api/admin/cashiers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...newCashier, role: 'cashier' })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setCashiers([...cashiers, data.cashier])
+          setShowCashierDialog(false)
+          toast({
+            title: 'Berhasil',
+            description: 'Kasir baru telah ditambahkan',
+          })
+        }
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menyimpan kasir',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleDeleteCashier = async (id: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus kasir ini?')) return
+
+    try {
+      const response = await fetch(`/api/admin/cashiers/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setCashiers(cashiers.filter(c => c.id !== id))
+        toast({
+          title: 'Berhasil',
+          description: 'Kasir telah dihapus',
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menghapus kasir',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  // Payment method handlers
+  const handleTogglePaymentMethod = async (id: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch(`/api/payment-methods/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !currentStatus })
+      })
+
+      if (response.ok) {
+        setPaymentMethods(paymentMethods.map(pm =>
+          pm.id === id ? { ...pm, isActive: !currentStatus } : pm
+        ))
+        toast({
+          title: 'Berhasil',
+          description: `Metode pembayaran telah ${!currentStatus ? 'diaktifkan' : 'dinonaktifkan'}`,
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat mengubah status metode pembayaran',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleSavePaymentMethod = async () => {
+    try {
+      const response = await fetch('/api/payment-methods', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...newPayment,
+          isActive: true,
+          sortOrder: paymentMethods.length + 1
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setPaymentMethods([...paymentMethods, data.paymentMethod])
+        setShowPaymentDialog(false)
+        setNewPayment({ name: '', displayName: '', description: '', icon: '' })
+        toast({
+          title: 'Berhasil',
+          description: 'Metode pembayaran baru telah ditambahkan',
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menambahkan metode pembayaran',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleDeletePaymentMethod = async (id: string) => {
+    try {
+      const response = await fetch(`/api/payment-methods/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setPaymentMethods(paymentMethods.filter((pm) => pm.id !== id))
+        toast({
+          title: 'Berhasil',
+          description: 'Metode pembayaran telah dihapus',
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menghapus metode pembayaran',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  // Redeem product handlers
+  const handleToggleRedeemProduct = async (id: string, currentStatus: boolean) => {
+    try {
+      const response = await fetch(`/api/redeem-products/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isActive: !currentStatus })
+      })
+
+      if (response.ok) {
+        setRedeemProducts(redeemProducts.map((rp) =>
+          rp.id === id ? { ...rp, isActive: !currentStatus } : rp
+        ))
+        toast({
+          title: 'Berhasil',
+          description: `Produk telah ${!currentStatus ? 'diaktifkan' : 'dinonaktifkan'}`,
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat mengubah status produk',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleSaveRedeemProduct = async () => {
+    try {
+      if (editingRedeem) {
+        const response = await fetch(`/api/redeem-products/${editingRedeem.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newRedeemProduct)
+        })
+
+        if (response.ok) {
+          setRedeemProducts(redeemProducts.map((rp) =>
+            rp.id === editingRedeem.id ? { ...rp, ...newRedeemProduct } : rp
+          ))
+          setShowRedeemDialog(false)
+          setEditingRedeem(null)
+          setNewRedeemProduct({ name: '', description: '', points: 0, image: '', stock: -1 })
+          toast({
+            title: 'Berhasil',
+            description: 'Produk telah diperbarui',
+          })
+        }
+      } else {
+        const response = await fetch('/api/redeem-products', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            ...newRedeemProduct,
+            isActive: true,
+            sortOrder: redeemProducts.length + 1
+          })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setRedeemProducts([...redeemProducts, data.redeemProduct])
+          setShowRedeemDialog(false)
+          setNewRedeemProduct({ name: '', description: '', points: 0, image: '', stock: -1 })
+          toast({
+            title: 'Berhasil',
+            description: 'Produk baru telah ditambahkan',
+          })
+        }
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menyimpan produk',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleEditRedeemProduct = (product: any) => {
+    setEditingRedeem(product)
+    setNewRedeemProduct({
+      name: product.name,
+      description: product.description,
+      points: product.points,
+      image: product.image,
+      stock: product.stock
+    })
+    setShowRedeemDialog(true)
+  }
+
+  const handleDeleteRedeemProduct = async (id: string) => {
+    try {
+      const response = await fetch(`/api/redeem-products/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setRedeemProducts(redeemProducts.filter((rp) => rp.id !== id))
+        toast({
+          title: 'Berhasil',
+          description: 'Produk telah dihapus',
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menghapus produk',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = order.user?.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         order.orderNumber?.toLowerCase().includes(searchQuery.toLowerCase())
+    const matchesStatus = statusFilter === 'all' || order.status === statusFilter
+    return matchesSearch && matchesStatus
+  })
+
+  const filteredProducts = products.filter(product =>
+    product.name?.toLowerCase().includes(searchQuery.toLowerCase())
+  )
 
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-100">
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-16 w-16 border-b-4 border-orange-500"></div>
-          <p className="mt-4 text-gray-600">Loading...</p>
+          <RefreshCw className="h-12 w-12 animate-spin text-orange-500 mx-auto mb-4" />
+          <p className="text-gray-600">Loading...</p>
         </div>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-orange-500 via-orange-400 to-yellow-400 flex items-center justify-center p-4">
-        <Card className="w-full max-w-md">
-          <CardHeader>
-            <CardTitle className="text-center">
-              <div className="flex justify-center mb-4">
-                <Utensils className="h-12 w-12 text-orange-500" />
-              </div>
-              <div className="text-2xl font-bold">Admin Dashboard</div>
-              <p className="text-sm text-gray-600 mt-2">Login untuk melanjutkan</p>
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="space-y-2">
-              <Input placeholder="Email" type="email" />
-              <Input placeholder="Password" type="password" />
-            </div>
-            <Button className="w-full bg-orange-500 hover:bg-orange-600">
-              Login
-            </Button>
-            <div className="text-center">
-              <Dialog>
-                <DialogTrigger asChild>
-                  <Button variant="link" size="sm">
-                    <Settings className="h-4 w-4 mr-1" />
-                    Setup Admin Data
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle>Setup Admin Data</DialogTitle>
-                  </DialogHeader>
-                  <div className="space-y-4 py-4">
-                    <Button
-                      className="w-full"
-                      onClick={async () => {
-                        try {
-                          const response = await fetch('/api/seed-data/admin', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ action: 'seed' })
-                          })
-                          const data = await response.json()
-
-                          if (response.ok) {
-                            toast({
-                              title: 'Data Admin Berhasil Dibuat',
-                              description: 'Silakan login dengan akun admin',
-                            })
-                            alert(`
-Admin Login:
-Email: admin@ayamgeprek.com
-Password: admin123
-
-Cashier Login:
-Email: kasir@ayamgeprek.com
-Password: kasir123
-                            `)
-                          } else {
-                            toast({
-                              title: 'Gagal',
-                              description: data.error || 'Terjadi kesalahan',
-                              variant: 'destructive'
-                            })
-                          }
-                        } catch (error) {
-                          toast({
-                            title: 'Gagal',
-                            description: 'Terjadi kesalahan koneksi',
-                            variant: 'destructive'
-                          })
-                        }
-                      }}
-                    >
-                      <Plus className="h-4 w-4 mr-2" />
-                      Buat Admin & Kasir Baru
-                    </Button>
-                    <Button
-                      variant="outline"
-                      className="w-full"
-                      onClick={async () => {
-                        try {
-                          const response = await fetch('/api/seed-data/admin', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ action: 'reset' })
-                          })
-                          const data = await response.json()
-
-                          if (response.ok) {
-                            toast({
-                              title: 'Data Admin Direset',
-                              description: 'Silakan login ulang',
-                            })
-                          } else {
-                            toast({
-                              title: 'Gagal',
-                              description: data.error || 'Terjadi kesalahan',
-                              variant: 'destructive'
-                            })
-                          }
-                        } catch (error) {
-                          toast({
-                            title: 'Gagal',
-                            description: 'Terjadi kesalahan koneksi',
-                            variant: 'destructive'
-                          })
-                        }
-                      }}
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Reset Admin Data
-                    </Button>
-                  </div>
-                </DialogContent>
-              </Dialog>
-            </div>
-          </CardContent>
-        </Card>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-100">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-orange-500 to-orange-400 text-white px-6 py-4 shadow-lg">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Utensils className="h-8 w-8" />
+    <AdminLayout
+      currentTab={activeTab}
+      onTabChange={setActiveTab}
+      notifications={notifications}
+      unreadNotificationCount={unreadNotificationCount}
+    >
+      {/* Dashboard Tab */}
+      {activeTab === 'dashboard' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-xl font-bold">Admin Dashboard</h1>
-              <p className="text-sm text-white/80">Ayam Geprek Sambal Ijo</p>
+              <h2 className="text-3xl font-bold text-gray-900">Dashboard</h2>
+              <p className="text-gray-600 mt-1">Ringkasan aktivitas restoran Anda</p>
             </div>
+            <Button onClick={loadDashboardStats} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
           </div>
-          <div className="flex items-center gap-3">
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20 relative">
-                  <Bell className="h-5 w-5" />
-                  {unreadNotificationCount > 0 && (
-                    <Badge className="absolute -top-1 -right-1 bg-red-500 text-xs h-5 w-5 flex items-center justify-center p-0">
-                      {unreadNotificationCount}
+
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <Card className="border-l-4 border-l-orange-500">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Total Penjualan</p>
+                    <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats?.totalSales || 0)}</p>
+                    <p className="text-xs text-green-600 mt-1 flex items-center">
+                      <ArrowUpRight className="h-3 w-3 mr-1" />
+                      Hari ini: {formatCurrency(stats?.todaySales || 0)}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                    <DollarSign className="h-6 w-6 text-orange-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-green-500">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Total Pesanan</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats?.totalOrders || 0}</p>
+                    <p className="text-xs text-green-600 mt-1 flex items-center">
+                      <ArrowUpRight className="h-3 w-3 mr-1" />
+                      Hari ini: {stats?.todayOrders || 0}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <ShoppingCart className="h-6 w-6 text-green-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-blue-500">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Total Produk</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats?.totalProducts || 0}</p>
+                    <p className="text-xs text-yellow-600 mt-1 flex items-center">
+                      <AlertTriangle className="h-3 w-3 mr-1" />
+                      Stok menipis: {stats?.lowStock || 0}
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <Package className="h-6 w-6 text-blue-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-purple-500">
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm text-gray-600 mb-1">Total Pelanggan</p>
+                    <p className="text-2xl font-bold text-gray-900">{stats?.totalCustomers || 0}</p>
+                    <p className="text-xs text-blue-600 mt-1">
+                      Pengguna aktif
+                    </p>
+                  </div>
+                  <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <Users className="h-6 w-6 text-purple-600" />
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* Order Status & Recent Orders */}
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Order Status */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Status Pesanan</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
+                      <span className="text-sm text-gray-600">Menunggu</span>
+                    </div>
+                    <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200">
+                      {stats?.pendingOrders || 0}
                     </Badge>
-                  )}
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md">
-                <DialogHeader>
-                  <DialogTitle>Notifikasi</DialogTitle>
-                </DialogHeader>
-                <ScrollArea className="max-h-96">
-                  <div className="space-y-3">
-                    {notifications.map(notif => (
-                      <Card
-                        key={notif.id}
-                        className={notif.isRead ? 'opacity-60' : ''}
-                        onClick={() => markNotificationAsRead(notif.id)}
-                      >
-                        <CardContent className="p-4">
-                          <div className="flex items-start gap-3">
-                            <div className={`flex-shrink-0 ${
-                              notif.type === 'order' ? 'bg-green-100' :
-                              notif.type === 'warning' ? 'bg-yellow-100' :
-                              'bg-blue-100'
-                            } rounded-full p-2`}>
-                              {notif.type === 'order' ? <CheckCircle className="h-5 w-5 text-green-600" /> :
-                               notif.type === 'warning' ? <AlertTriangle className="h-5 w-5 text-yellow-600" /> :
-                               <Bell className="h-5 w-5 text-blue-600" />}
-                            </div>
-                            <div className="flex-1">
-                              <p className="font-medium text-sm">{notif.title}</p>
-                              <p className="text-sm text-gray-600">{notif.message}</p>
-                              <p className="text-xs text-gray-400 mt-1">{notif.time}</p>
-                            </div>
-                          </div>
-                        </CardContent>
-                      </Card>
-                    ))}
-                    {notifications.length === 0 && (
-                      <div className="text-center py-8 text-gray-500">
-                        <p>Tidak ada notifikasi</p>
-                      </div>
-                    )}
                   </div>
-                </ScrollArea>
-              </DialogContent>
-            </Dialog>
-            <Dialog>
-              <DialogTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-white hover:bg-white/20">
-                  <MessageCircle className="h-5 w-5" />
-                </Button>
-              </DialogTrigger>
-              <DialogContent className="max-w-md h-[600px] flex flex-col p-0">
-                <DialogHeader className="bg-gradient-to-r from-orange-500 to-orange-400 text-white p-4">
-                  <DialogTitle className="text-white">Chat Customer Service</DialogTitle>
-                </DialogHeader>
-                <ScrollArea className="flex-1 p-4">
-                  <div className="space-y-4">
-                    {chatMessages.map(msg => (
-                      <div key={msg.id} className={`flex gap-3 ${msg.isAdmin ? '' : 'justify-end'}`}>
-                        {msg.isAdmin ? (
-                          <>
-                            <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
-                              <span className="text-lg">👨‍💼</span>
-                            </div>
-                            <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%]">
-                              <p className="text-sm">{msg.message}</p>
-                              <p className="text-xs text-gray-400 mt-1">{msg.time}</p>
-                            </div>
-                          </>
-                        ) : (
-                          <>
-                            <div className="bg-orange-500 text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-[80%]">
-                              <p className="text-sm">{msg.message}</p>
-                              <p className="text-xs text-white/80 mt-1">{msg.time}</p>
-                            </div>
-                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
-                              <span className="text-lg">👤</span>
-                            </div>
-                          </>
-                        )}
-                      </div>
-                    ))}
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
+                      <span className="text-sm text-gray-600">Diproses</span>
+                    </div>
+                    <Badge className="bg-blue-100 text-blue-700 border-blue-200">
+                      {stats?.processingOrders || 0}
+                    </Badge>
                   </div>
-                </ScrollArea>
-                <div className="p-4 border-t bg-gray-50">
-                  <div className="flex gap-2">
-                    <Input
-                      placeholder="Tulis pesan..."
-                      value={chatInput}
-                      onChange={(e) => setChatInput(e.target.value)}
-                      onKeyPress={(e) => {
-                        if (e.key === 'Enter') {
-                          sendChatMessage()
-                        }
-                      }}
-                      className="flex-1"
-                    />
-                    <Button
-                      size="icon"
-                      onClick={sendChatMessage}
-                      className="bg-orange-500 hover:bg-orange-600"
-                      disabled={!chatInput.trim()}
-                    >
-                      <Plus className="h-4 w-4" />
-                    </Button>
+                  <div className="flex justify-between items-center">
+                    <div className="flex items-center gap-2">
+                      <div className="w-3 h-3 bg-green-400 rounded-full"></div>
+                      <span className="text-sm text-gray-600">Selesai</span>
+                    </div>
+                    <Badge className="bg-green-100 text-green-700 border-green-200">
+                      {stats?.completedOrders || 0}
+                    </Badge>
                   </div>
                 </div>
-              </DialogContent>
-            </Dialog>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={handleLogout}
-              className="text-white hover:bg-white/20"
-            >
-              <LogOut className="h-5 w-5" />
-            </Button>
-          </div>
-        </div>
-      </div>
+              </CardContent>
+            </Card>
 
-      {/* Main Content */}
-      <div className="flex">
-        {/* Sidebar */}
-        <div className="w-64 bg-white shadow-lg min-h-screen p-4">
-          <div className="space-y-2">
-            <Button
-              variant={activeTab === 'dashboard' ? 'default' : 'ghost'}
-              className={`w-full justify-start ${activeTab === 'dashboard' ? 'bg-orange-500 hover:bg-orange-600' : ''}`}
-              onClick={() => setActiveTab('dashboard')}
-            >
-              <Home className="h-4 w-4 mr-3" />
-              Dashboard
-            </Button>
-            <Button
-              variant={activeTab === 'orders' ? 'default' : 'ghost'}
-              className={`w-full justify-start ${activeTab === 'orders' ? 'bg-orange-500 hover:bg-orange-600' : ''}`}
-              onClick={() => setActiveTab('orders')}
-            >
-              <ShoppingCart className="h-4 w-4 mr-3" />
-              Pesanan
-            </Button>
-            <Button
-              variant={activeTab === 'products' ? 'default' : 'ghost'}
-              className={`w-full justify-start ${activeTab === 'products' ? 'bg-orange-500 hover:bg-orange-600' : ''}`}
-              onClick={() => setActiveTab('products')}
-            >
-              <Package className="h-4 w-4 mr-3" />
-              Produk
-            </Button>
-            <Button
-              variant={activeTab === 'stock' ? 'default' : 'ghost'}
-              className={`w-full justify-start ${activeTab === 'stock' ? 'bg-orange-500 hover:bg-orange-600' : ''}`}
-              onClick={() => setActiveTab('stock')}
-            >
-              <Settings className="h-4 w-4 mr-3" />
-              Stok
-            </Button>
-            <Button
-              variant={activeTab === 'customers' ? 'default' : 'ghost'}
-              className={`w-full justify-start ${activeTab === 'customers' ? 'bg-orange-500 hover:bg-orange-600' : ''}`}
-              onClick={() => setActiveTab('customers')}
-            >
-              <Users className="h-4 w-4 mr-3" />
-              Pelanggan
-            </Button>
-          </div>
-        </div>
-
-        {/* Content Area */}
-        <div className="flex-1 p-6">
-          {/* Dashboard Tab */}
-          {activeTab === 'dashboard' && (
-            <div className="space-y-6">
-              <div>
-                <h2 className="text-2xl font-bold mb-4">Dashboard Overview</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-600">Total Penjualan</p>
-                          <p className="text-2xl font-bold text-orange-600">{formatCurrency(stats?.totalSales || 0)}</p>
-                        </div>
-                        <DollarSign className="h-10 w-10 text-orange-500" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-600">Total Pesanan</p>
-                          <p className="text-2xl font-bold text-green-600">{stats?.totalOrders || 0}</p>
-                        </div>
-                        <ShoppingCart className="h-10 w-10 text-green-500" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-600">Total Produk</p>
-                          <p className="text-2xl font-bold text-blue-600">{stats?.totalProducts || 0}</p>
-                        </div>
-                        <Package className="h-10 w-10 text-blue-500" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                  <Card>
-                    <CardContent className="p-6">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <p className="text-sm text-gray-600">Total Pelanggan</p>
-                          <p className="text-2xl font-bold text-purple-600">{stats?.totalCustomers || 0}</p>
-                        </div>
-                        <Users className="h-10 w-10 text-purple-500" />
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Statistik Hari Ini</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Penjualan Hari Ini</span>
-                        <span className="text-xl font-bold text-green-600">{formatCurrency(stats?.todaySales || 0)}</span>
-                      </div>
-                      <Separator />
-                      <div className="flex justify-between items-center">
-                        <span className="text-gray-600">Pesanan Hari Ini</span>
-                        <span className="text-xl font-bold">{stats?.todayOrders || 0}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Status Pesanan</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-4">
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-yellow-400 rounded-full"></div>
-                          <span>Menunggu</span>
-                        </div>
-                        <span className="text-xl font-bold text-yellow-600">{stats?.pendingOrders || 0}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-blue-400 rounded-full"></div>
-                          <span>Diproses</span>
-                        </div>
-                        <span className="text-xl font-bold text-blue-600">{stats?.processingOrders || 0}</span>
-                      </div>
-                      <div className="flex justify-between items-center">
-                        <div className="flex items-center gap-2">
-                          <div className="w-3 h-3 bg-green-400 rounded-full"></div>
-                          <span>Selesai</span>
-                        </div>
-                        <span className="text-xl font-bold text-green-600">{stats?.completedOrders || 0}</span>
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Pesanan Terbaru</CardTitle>
-                </CardHeader>
-                <CardContent>
+            {/* Recent Orders */}
+            <Card className="lg:col-span-2">
+              <CardHeader>
+                <CardTitle>Pesanan Terbaru</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <ScrollArea className="h-64">
                   <div className="space-y-3">
-                    {mockOrders.slice(0, 5).map(order => (
-                      <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex-1">
-                          <div className="flex items-center gap-2">
-                            <span className="font-medium">{order.orderNumber}</span>
+                    {orders.slice(0, 10).map((order) => (
+                      <div key={order.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-gray-50">
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 mb-1">
+                            <span className="font-medium text-sm truncate">{order.orderNumber}</span>
                             <Badge className={getStatusColor(order.status)}>
                               {getStatusLabel(order.status)}
                             </Badge>
-                            <span className="text-gray-600">{order.customerName}</span>
                           </div>
-                          <p className="text-sm text-gray-500">{order.items} item • {formatCurrency(order.total)}</p>
+                          <p className="text-sm text-gray-600 truncate">{order.user?.name || 'Guest'}</p>
                         </div>
-                        <Clock className="h-5 w-5 text-gray-400" />
-                      </div>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Orders Tab */}
-          {activeTab === 'orders' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Kelola Pesanan</h2>
-                <div className="flex gap-2">
-                  <Input
-                    placeholder="Cari pesanan..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-64"
-                  />
-                  <Button
-                    variant="outline"
-                    onClick={() => setStatusFilter(statusFilter === 'all' ? 'pending' : 'all')}
-                  >
-                    <Filter className="h-4 w-4 mr-2" />
-                    {statusFilter === 'all' ? 'Semua' : 'Pending'}
-                  </Button>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredOrders.map(order => (
-                  <Card key={order.id}>
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        <div className="flex justify-between items-start">
-                          <Badge className={getStatusColor(order.status)}>
-                            {getStatusLabel(order.status)}
-                          </Badge>
-                          <span className="text-xs text-gray-500">{order.orderNumber}</span>
-                        </div>
-                        <div>
-                          <p className="font-medium">{order.customerName}</p>
-                          <p className="text-sm text-gray-600">{order.items} item</p>
-                        </div>
-                        <div className="flex justify-between items-center">
-                          <span className="text-xl font-bold text-orange-600">{formatCurrency(order.total)}</span>
+                        <div className="text-right ml-4">
+                          <p className="font-semibold text-sm">{formatCurrency(order.total)}</p>
                           <p className="text-xs text-gray-400">
                             {new Date(order.createdAt).toLocaleDateString('id-ID')}
                           </p>
                         </div>
                       </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Products Tab */}
-          {activeTab === 'products' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Kelola Produk</h2>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Tambah Produk
-                </Button>
-              </div>
-
-              <div className="mb-4">
-                <Input
-                  placeholder="Cari produk..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-
-              <Card>
-                <CardContent className="p-0">
-                  <ScrollArea className="h-[600px]">
-                    <table className="w-full">
-                      <thead className="bg-gray-50 sticky top-0">
-                        <tr>
-                          <th className="text-left p-4 font-semibold">Nama Produk</th>
-                          <th className="text-left p-4 font-semibold">Kategori</th>
-                          <th className="text-left p-4 font-semibold">Harga</th>
-                          <th className="text-left p-4 font-semibold">Stok</th>
-                          <th className="text-left p-4 font-semibold">Aksi</th>
-                        </tr>
-                      </thead>
-                      <tbody>
-                        {filteredProducts.map(product => (
-                          <tr key={product.id} className="border-b">
-                            <td className="p-4">{product.name}</td>
-                            <td className="p-4">
-                              <Badge variant="outline">{product.category}</Badge>
-                            </td>
-                            <td className="p-4">{formatCurrency(product.price)}</td>
-                            <td className="p-4">
-                              <Badge
-                                variant={product.stock < 20 ? 'destructive' : 'default'}
-                              className={product.stock < 20 ? 'bg-red-100 text-red-700' : ''}
-                              >
-                                {product.stock}
-                              </Badge>
-                            </td>
-                            <td className="p-4">
-                              <div className="flex gap-2">
-                                <Button size="icon" variant="outline">
-                                  <Eye className="h-4 w-4" />
-                                </Button>
-                                <Button size="icon" variant="outline">
-                                  <Settings className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </ScrollArea>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Stock Tab */}
-          {activeTab === 'stock' && (
-            <div className="space-y-6">
-              <div className="flex items-center justify-between">
-                <h2 className="text-2xl font-bold">Kelola Stok</h2>
-                <Button>
-                  <Plus className="h-4 w-4 mr-2" />
-                  Restock
-                </Button>
-              </div>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="text-center space-y-2">
-                      <Package className="h-12 w-12 mx-auto text-orange-500" />
-                      <p className="text-3xl font-bold text-orange-600">1,120</p>
-                      <p className="text-sm text-gray-600">Total Stok Produk</p>
-                    </div>
-                  </CardContent>
-                </Card>
-                <Card>
-                  <CardContent className="p-6">
-                    <div className="text-center space-y-2">
-                      <AlertTriangle className="h-12 w-12 mx-auto text-red-500" />
-                      <p className="text-3xl font-bold text-red-600">8</p>
-                      <p className="text-sm text-gray-600">Produk Menipis</p>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Produk Menipis</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-3">
-                    {mockProducts.filter(p => p.stock < 30).map(product => (
-                      <div key={product.id} className="flex items-center justify-between p-3 border rounded-lg">
-                        <div className="flex-1">
-                          <p className="font-medium">{product.name}</p>
-                          <p className="text-sm text-gray-600">Kategori: {product.category}</p>
-                        </div>
-                        <div className="text-right">
-                          <Badge variant="destructive" className="mb-2">
-                            Stok: {product.stock}
-                          </Badge>
-                        </div>
-                      </div>
                     ))}
+                    {orders.length === 0 && (
+                      <div className="text-center py-8 text-gray-500">
+                        <ShoppingCart className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+                        <p>Belum ada pesanan</p>
+                      </div>
+                    )}
+                  </div>
+                </ScrollArea>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Orders Tab */}
+      {activeTab === 'orders' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Pesanan</h2>
+              <p className="text-gray-600 mt-1">Kelola semua pesanan masuk</p>
+            </div>
+            <Button onClick={loadOrders} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="flex flex-col sm:flex-row gap-4 mb-6">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Cari pesanan..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <Select value={statusFilter} onValueChange={setStatusFilter}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Filter Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Status</SelectItem>
+                    <SelectItem value="pending">Menunggu</SelectItem>
+                    <SelectItem value="paid">Dibayar</SelectItem>
+                    <SelectItem value="processing">Diproses</SelectItem>
+                    <SelectItem value="completed">Selesai</SelectItem>
+                    <SelectItem value="cancelled">Dibatalkan</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <ScrollArea className="h-[calc(100vh-400px)]">
+                <div className="space-y-3">
+                  {filteredOrders.map((order) => (
+                    <Card key={order.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <span className="font-semibold">{order.orderNumber}</span>
+                              <Badge className={getStatusColor(order.status)}>
+                                {getStatusLabel(order.status)}
+                              </Badge>
+                            </div>
+                            <div className="grid grid-cols-2 gap-2 text-sm">
+                              <div>
+                                <p className="text-gray-500">Pelanggan</p>
+                                <p className="font-medium">{order.user?.name || 'Guest'}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500">Tanggal</p>
+                                <p className="font-medium">
+                                  {new Date(order.createdAt).toLocaleDateString('id-ID')}
+                                </p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500">Pembayaran</p>
+                                <p className="font-medium capitalize">{order.paymentMethod}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500">Total</p>
+                                <p className="font-bold text-orange-600">{formatCurrency(order.total)}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            {order.status !== 'completed' && order.status !== 'cancelled' && (
+                              <>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleUpdateOrderStatus(order.id, 'processing')}
+                                  disabled={order.status === 'processing'}
+                                  variant="outline"
+                                >
+                                  <Clock className="h-3 w-3 mr-1" />
+                                  Proses
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  onClick={() => handleUpdateOrderStatus(order.id, 'completed')}
+                                  className="bg-green-600 hover:bg-green-700"
+                                >
+                                  <CheckCircle className="h-3 w-3 mr-1" />
+                                  Selesai
+                                </Button>
+                              </>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => {
+                                // View order details
+                              }}
+                            >
+                              <Eye className="h-3 w-3 mr-1" />
+                              Detail
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {filteredOrders.length === 0 && (
+                    <div className="text-center py-12 text-gray-500">
+                      <ShoppingCart className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg">Tidak ada pesanan ditemukan</p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Products Tab */}
+      {activeTab === 'products' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Produk</h2>
+              <p className="text-gray-600 mt-1">Kelola semua produk menu</p>
+            </div>
+            <Button
+              onClick={() => {
+                setEditingProduct(null)
+                setNewProduct({
+                  name: '',
+                  description: '',
+                  price: 0,
+                  stock: 0,
+                  categoryId: '',
+                  image: '',
+                  barcode: ''
+                })
+                setShowProductDialog(true)
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Tambah Produk
+            </Button>
+          </div>
+
+          <Card>
+            <CardContent className="p-4">
+              <div className="mb-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <Input
+                    placeholder="Cari produk..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+              </div>
+
+              <ScrollArea className="h-[calc(100vh-350px)]">
+                <div className="space-y-3">
+                  {filteredProducts.map((product) => (
+                    <Card key={product.id} className="hover:shadow-md transition-shadow">
+                      <CardContent className="p-4">
+                        <div className="flex items-start gap-4">
+                          <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                            {product.image ? (
+                              <img src={product.image} alt={product.name} className="w-full h-full object-cover rounded-lg" />
+                            ) : (
+                              <Package className="h-8 w-8 text-gray-400" />
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-start justify-between gap-2 mb-2">
+                              <div>
+                                <h3 className="font-semibold text-lg">{product.name}</h3>
+                                <p className="text-sm text-gray-600 line-clamp-1">{product.description || 'Tidak ada deskripsi'}</p>
+                              </div>
+                              <Badge variant={product.isActive ? 'default' : 'secondary'}>
+                                {product.isActive ? 'Aktif' : 'Nonaktif'}
+                              </Badge>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
+                              <div>
+                                <p className="text-gray-500">Kategori</p>
+                                <p className="font-medium">{categories.find(c => c.id === product.categoryId)?.name || '-'}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500">Harga</p>
+                                <p className="font-bold text-orange-600">{formatCurrency(product.price)}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500">Stok</p>
+                                <Badge variant={product.stock < 20 ? 'destructive' : 'default'}>
+                                  {product.stock}
+                                </Badge>
+                              </div>
+                              <div>
+                                <p className="text-gray-500">Barcode</p>
+                                <p className="font-medium">{product.barcode || '-'}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={() => {
+                                setEditingProduct(product)
+                                setNewProduct({
+                                  name: product.name,
+                                  description: product.description || '',
+                                  price: product.price,
+                                  stock: product.stock,
+                                  categoryId: product.categoryId,
+                                  image: product.image || '',
+                                  barcode: product.barcode || ''
+                                })
+                                setShowProductDialog(true)
+                              }}
+                            >
+                              <Edit2 className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={() => handleDeleteProduct(product.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {filteredProducts.length === 0 && (
+                    <div className="text-center py-12 text-gray-500">
+                      <Package className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg">Tidak ada produk ditemukan</p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Categories Tab */}
+      {activeTab === 'categories' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Kategori</h2>
+              <p className="text-gray-600 mt-1">Kelola kategori produk</p>
+            </div>
+            <Button
+              onClick={() => {
+                setEditingCategory(null)
+                setNewCategory({ name: '', description: '', image: '' })
+                setShowCategoryDialog(true)
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Tambah Kategori
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {categories.map((category) => (
+              <Card key={category.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      {category.image ? (
+                        <span className="text-2xl">{category.image}</span>
+                      ) : (
+                        <Package className="h-6 w-6 text-orange-600" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-lg truncate">{category.name}</h3>
+                      <p className="text-sm text-gray-600 line-clamp-2">{category.description || 'Tidak ada deskripsi'}</p>
+                      <p className="text-xs text-gray-500 mt-2">
+                        {products.filter(p => p.categoryId === category.id).length} produk
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setEditingCategory(category)
+                        setNewCategory({
+                          name: category.name,
+                          description: category.description || '',
+                          image: category.image || ''
+                        })
+                        setShowCategoryDialog(true)
+                      }}
+                    >
+                      <Edit2 className="h-3 w-3 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDeleteCategory(category.id)}
+                    >
+                      <Trash2 className="h-3 w-3 text-red-500" />
+                    </Button>
                   </div>
                 </CardContent>
               </Card>
-            </div>
-          )}
-
-          {/* Customers Tab */}
-          {activeTab === 'customers' && (
-            <div className="space-y-6">
-              <h2 className="text-2xl font-bold">Kelola Pelanggan</h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {mockCustomers.map(customer => (
-                  <Card key={customer.id}>
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        <div>
-                          <p className="font-semibold text-lg">{customer.name}</p>
-                          <p className="text-sm text-gray-600">{customer.email}</p>
-                          <p className="text-sm text-gray-600">{customer.phone}</p>
-                        </div>
-                        <Separator />
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                          <div>
-                            <p className="text-gray-600">Total Pesanan</p>
-                            <p className="text-xl font-bold text-orange-600">{customer.totalOrders}</p>
-                          </div>
-                          <div>
-                            <p className="text-gray-600">Total Belanja</p>
-                            <p className="text-xl font-bold text-green-600">{formatCurrency(customer.totalSpent)}</p>
-                          </div>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
+            ))}
+            {categories.length === 0 && (
+              <div className="col-span-full text-center py-12 text-gray-500">
+                <Package className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg">Belum ada kategori</p>
               </div>
-            </div>
-          )}
+            )}
+          </div>
         </div>
-      </div>
-    </div>
+      )}
+
+      {/* Stock Tab */}
+      {activeTab === 'stock' && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">Stok</h2>
+            <p className="text-gray-600 mt-1">Pantau dan kelola stok produk</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <Card className="border-l-4 border-l-orange-500">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <Package className="h-12 w-12 mx-auto text-orange-500 mb-3" />
+                  <p className="text-3xl font-bold text-gray-900">
+                    {products.reduce((sum, p) => sum + p.stock, 0)}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">Total Stok Produk</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border-l-4 border-l-red-500">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <AlertTriangle className="h-12 w-12 mx-auto text-red-500 mb-3" />
+                  <p className="text-3xl font-bold text-red-600">
+                    {products.filter(p => p.stock < 20).length}
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">Produk Menipis</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Produk dengan Stok Menipis</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {products.filter(p => p.stock < 20).map((product) => (
+                  <div key={product.id} className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50">
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <Package className="h-5 w-5 text-orange-600" />
+                      </div>
+                      <div>
+                        <p className="font-medium">{product.name}</p>
+                        <p className="text-sm text-gray-600">{categories.find(c => c.id === product.categoryId)?.name || '-'}</p>
+                      </div>
+                    </div>
+                    <Badge variant="destructive" className="bg-red-100 text-red-700 border-red-200">
+                      Stok: {product.stock}
+                    </Badge>
+                  </div>
+                ))}
+                {products.filter(p => p.stock < 20).length === 0 && (
+                  <div className="text-center py-8 text-gray-500">
+                    <CheckCircle className="h-12 w-12 mx-auto mb-3 text-green-300" />
+                    <p>Semua stok dalam kondisi baik</p>
+                  </div>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Users Tab */}
+      {activeTab === 'users' && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">Pelanggan</h2>
+            <p className="text-gray-600 mt-1">Kelola data pelanggan</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {users.map((user) => (
+              <Card key={user.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <User className="h-6 w-6 text-purple-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-lg truncate">{user.name}</h3>
+                      <p className="text-sm text-gray-600 truncate">{user.email}</p>
+                      <p className="text-sm text-gray-600 truncate flex items-center">
+                        <Phone className="h-3 w-3 mr-1" />
+                        {user.phone}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mt-4 pt-4 border-t text-center">
+                    <div>
+                      <p className="text-2xl font-bold text-orange-600">
+                        {orders.filter(o => o.userId === user.id).length}
+                      </p>
+                      <p className="text-xs text-gray-600">Pesanan</p>
+                    </div>
+                    <div>
+                      <p className="text-2xl font-bold text-green-600">
+                        {formatCurrency(orders.filter(o => o.userId === user.id).reduce((sum, o) => sum + o.total, 0))}
+                      </p>
+                      <p className="text-xs text-gray-600">Total Belanja</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {users.length === 0 && (
+              <div className="col-span-full text-center py-12 text-gray-500">
+                <Users className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg">Belum ada pelanggan</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Cashiers Tab */}
+      {activeTab === 'cashiers' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Kasir</h2>
+              <p className="text-gray-600 mt-1">Kelola akun kasir</p>
+            </div>
+            <Button
+              onClick={() => {
+                setEditingCashier(null)
+                setNewCashier({ name: '', email: '', phone: '', password: '' })
+                setShowCashierDialog(true)
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Tambah Kasir
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {cashiers.map((cashier) => (
+              <Card key={cashier.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                      <User className="h-6 w-6 text-blue-600" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-semibold text-lg truncate">{cashier.name}</h3>
+                      <p className="text-sm text-gray-600 truncate">{cashier.email}</p>
+                      <p className="text-sm text-gray-600 truncate flex items-center">
+                        <Phone className="h-3 w-3 mr-1" />
+                        {cashier.phone}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => {
+                        setEditingCashier(cashier)
+                        setNewCashier({
+                          name: cashier.name,
+                          email: cashier.email,
+                          phone: cashier.phone,
+                          password: ''
+                        })
+                        setShowCashierDialog(true)
+                      }}
+                    >
+                      <Edit2 className="h-3 w-3 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDeleteCashier(cashier.id)}
+                    >
+                      <Trash2 className="h-3 w-3 text-red-500" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {cashiers.length === 0 && (
+              <div className="col-span-full text-center py-12 text-gray-500">
+                <UserCog className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg">Belum ada kasir</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Payments Tab */}
+      {activeTab === 'payments' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Metode Pembayaran</h2>
+              <p className="text-gray-600 mt-1">Kelola metode pembayaran yang tersedia</p>
+            </div>
+            <Button
+              onClick={() => {
+                setEditingPayment(null)
+                setNewPayment({ name: '', displayName: '', description: '', icon: '' })
+                setShowPaymentDialog(true)
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Tambah Metode
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {paymentMethods.map((pm) => (
+              <Card key={pm.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between mb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
+                        {pm.icon ? (
+                          <span className="text-2xl">{pm.icon}</span>
+                        ) : (
+                          <DollarSign className="h-6 w-6 text-gray-600" />
+                        )}
+                      </div>
+                      <div>
+                        <p className="font-semibold text-lg">{pm.displayName}</p>
+                        <Badge variant={pm.isActive ? 'default' : 'secondary'}>
+                          {pm.isActive ? 'Aktif' : 'Nonaktif'}
+                        </Badge>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-4">{pm.description || 'Tidak ada deskripsi'}</p>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => handleTogglePaymentMethod(pm.id, pm.isActive)}
+                    >
+                      {pm.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDeletePaymentMethod(pm.id)}
+                    >
+                      <Trash2 className="h-3 w-3 text-red-500" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {paymentMethods.length === 0 && (
+              <div className="col-span-full text-center py-12 text-gray-500">
+                <DollarSign className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg">Belum ada metode pembayaran</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Redeem Tab */}
+      {activeTab === 'redeem' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Produk Tukar Poin</h2>
+              <p className="text-gray-600 mt-1">Kelola produk yang dapat ditukar dengan poin</p>
+            </div>
+            <Button
+              onClick={() => {
+                setEditingRedeem(null)
+                setNewRedeemProduct({ name: '', description: '', points: 0, image: '', stock: -1 })
+                setShowRedeemDialog(true)
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Tambah Produk
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {redeemProducts.map((rp) => (
+              <Card key={rp.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3 mb-3">
+                    <div className="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center flex-shrink-0">
+                      {rp.image ? (
+                        <span className="text-2xl">{rp.image}</span>
+                      ) : (
+                        <Gift className="h-6 w-6 text-orange-600" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1">
+                        <h3 className="font-semibold text-lg truncate">{rp.name}</h3>
+                        <Badge variant={rp.isActive ? 'default' : 'secondary'}>
+                          {rp.isActive ? 'Aktif' : 'Nonaktif'}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-gray-600 line-clamp-2">{rp.description || 'Tidak ada deskripsi'}</p>
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-orange-600">{rp.points}</p>
+                      <p className="text-xs text-gray-600">Poin</p>
+                    </div>
+                    <div className="text-center">
+                      <p className="text-2xl font-bold text-gray-900">
+                        {rp.stock === -1 ? '∞' : rp.stock}
+                      </p>
+                      <p className="text-xs text-gray-600">Stok</p>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => handleToggleRedeemProduct(rp.id, rp.isActive)}
+                    >
+                      {rp.isActive ? 'Nonaktifkan' : 'Aktifkan'}
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEditRedeemProduct(rp)}
+                    >
+                      <Edit2 className="h-3 w-3" />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDeleteRedeemProduct(rp.id)}
+                    >
+                      <Trash2 className="h-3 w-3 text-red-500" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {redeemProducts.length === 0 && (
+              <div className="col-span-full text-center py-12 text-gray-500">
+                <Gift className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg">Belum ada produk tukar poin</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Reports Tab */}
+      {activeTab === 'reports' && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">Laporan</h2>
+            <p className="text-gray-600 mt-1">Analisis dan laporan penjualan</p>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <TrendingUp className="h-12 w-12 mx-auto text-orange-500 mb-3" />
+                  <h3 className="font-semibold text-lg mb-2">Laporan Penjualan</h3>
+                  <p className="text-sm text-gray-600">Analisis penjualan harian, mingguan, dan bulanan</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <ShoppingCart className="h-12 w-12 mx-auto text-green-500 mb-3" />
+                  <h3 className="font-semibold text-lg mb-2">Laporan Pesanan</h3>
+                  <p className="text-sm text-gray-600">Detail dan status pesanan</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <Package className="h-12 w-12 mx-auto text-blue-500 mb-3" />
+                  <h3 className="font-semibold text-lg mb-2">Laporan Produk</h3>
+                  <p className="text-sm text-gray-600">Analisis performa produk</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <Users className="h-12 w-12 mx-auto text-purple-500 mb-3" />
+                  <h3 className="font-semibold text-lg mb-2">Laporan Pelanggan</h3>
+                  <p className="text-sm text-gray-600">Demografi dan perilaku pelanggan</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <DollarSign className="h-12 w-12 mx-auto text-yellow-500 mb-3" />
+                  <h3 className="font-semibold text-lg mb-2">Laporan Pendapatan</h3>
+                  <p className="text-sm text-gray-600">Ringkasan pendapatan dan profit</p>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="hover:shadow-md transition-shadow cursor-pointer">
+              <CardContent className="p-6">
+                <div className="text-center">
+                  <AlertTriangle className="h-12 w-12 mx-auto text-red-500 mb-3" />
+                  <h3 className="font-semibold text-lg mb-2">Laporan Stok</h3>
+                  <p className="text-sm text-gray-600">Laporan pergerakan stok</p>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+
+      {/* Notifications Tab */}
+      {activeTab === 'notifications' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Notifikasi</h2>
+              <p className="text-gray-600 mt-1">Riwayat notifikasi sistem</p>
+            </div>
+            <Button onClick={loadNotifications} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+
+          <div className="space-y-3">
+            {notifications.map((notif) => (
+              <Card key={notif.id} className={`hover:shadow-md transition-shadow ${!notif.isRead ? 'border-l-4 border-l-orange-500' : ''}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className={`flex-shrink-0 w-10 h-10 rounded-full flex items-center justify-center ${
+                      notif.type === 'order' ? 'bg-green-100' :
+                      notif.type === 'warning' ? 'bg-yellow-100' :
+                      notif.type === 'error' ? 'bg-red-100' :
+                      'bg-blue-100'
+                    }`}>
+                      {notif.type === 'order' ? <ShoppingCart className="h-5 w-5 text-green-600" /> :
+                       notif.type === 'warning' ? <AlertTriangle className="h-5 w-5 text-yellow-600" /> :
+                       notif.type === 'error' ? <XCircle className="h-5 w-5 text-red-600" /> :
+                       <Bell className="h-5 w-5 text-blue-600" />}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between gap-2">
+                        <div>
+                          <p className="font-semibold">{notif.title}</p>
+                          <p className="text-sm text-gray-600 mt-1">{notif.message}</p>
+                        </div>
+                        {!notif.isRead && (
+                          <Badge variant="default" className="flex-shrink-0">Baru</Badge>
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400 mt-2">
+                        {new Date(notif.createdAt).toLocaleString('id-ID')}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {notifications.length === 0 && (
+              <div className="text-center py-12 text-gray-500">
+                <Bell className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg">Belum ada notifikasi</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Chat Tab */}
+      {activeTab === 'chat' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Chat</h2>
+              <p className="text-gray-600 mt-1">Komunikasi dengan pelanggan</p>
+            </div>
+            <Button onClick={loadChatMessages} variant="outline">
+              <RefreshCw className="h-4 w-4 mr-2" />
+              Refresh
+            </Button>
+          </div>
+
+          <Card className="h-[calc(100vh-300px)] flex flex-col">
+            <CardContent className="flex-1 p-0">
+              <ScrollArea className="flex-1 p-4">
+                <div className="space-y-4">
+                  {chatMessages.map((msg) => (
+                    <div key={msg.id} className={`flex gap-3 ${msg.senderRole === 'admin' ? '' : 'justify-end'}`}>
+                      {msg.senderRole === 'admin' ? (
+                        <>
+                          <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-lg">👨‍💼</span>
+                          </div>
+                          <div className="bg-gray-100 rounded-2xl rounded-tl-none px-4 py-2 max-w-[80%]">
+                            <p className="text-sm">{msg.message}</p>
+                            <p className="text-xs text-gray-400 mt-1">
+                              {new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                        </>
+                      ) : (
+                        <>
+                          <div className="bg-orange-500 text-white rounded-2xl rounded-tr-none px-4 py-2 max-w-[80%]">
+                            <p className="text-sm">{msg.message}</p>
+                            <p className="text-xs text-white/80 mt-1">
+                              {new Date(msg.createdAt).toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
+                          <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-lg">👤</span>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  ))}
+                  {chatMessages.length === 0 && (
+                    <div className="text-center py-12 text-gray-500">
+                      <MessageCircle className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg">Belum ada pesan</p>
+                    </div>
+                  )}
+                </div>
+              </ScrollArea>
+              <div className="p-4 border-t bg-gray-50">
+                <div className="flex gap-2">
+                  <Input
+                    placeholder="Tulis pesan..."
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        sendChatMessage()
+                      }
+                    }}
+                    className="flex-1"
+                  />
+                  <Button
+                    size="icon"
+                    onClick={sendChatMessage}
+                    className="bg-orange-500 hover:bg-orange-600"
+                    disabled={!chatInput.trim()}
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      {/* Product Dialog */}
+      <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingProduct ? 'Edit Produk' : 'Tambah Produk Baru'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Nama Produk</Label>
+              <Input
+                value={newProduct.name}
+                onChange={(e) => setNewProduct({ ...newProduct, name: e.target.value })}
+                placeholder="Nama produk"
+              />
+            </div>
+            <div>
+              <Label>Deskripsi</Label>
+              <Textarea
+                value={newProduct.description}
+                onChange={(e) => setNewProduct({ ...newProduct, description: e.target.value })}
+                placeholder="Deskripsi produk"
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label>Kategori</Label>
+              <Select value={newProduct.categoryId} onValueChange={(value) => setNewProduct({ ...newProduct, categoryId: value })}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Pilih kategori" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((cat) => (
+                    <SelectItem key={cat.id} value={cat.id}>{cat.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Harga</Label>
+              <Input
+                type="number"
+                value={newProduct.price}
+                onChange={(e) => setNewProduct({ ...newProduct, price: parseInt(e.target.value) || 0 })}
+                placeholder="Harga produk"
+              />
+            </div>
+            <div>
+              <Label>Stok</Label>
+              <Input
+                type="number"
+                value={newProduct.stock}
+                onChange={(e) => setNewProduct({ ...newProduct, stock: parseInt(e.target.value) || 0 })}
+                placeholder="Jumlah stok"
+              />
+            </div>
+            <div>
+              <Label>Barcode</Label>
+              <Input
+                value={newProduct.barcode}
+                onChange={(e) => setNewProduct({ ...newProduct, barcode: e.target.value })}
+                placeholder="Barcode (opsional)"
+              />
+            </div>
+            <div>
+              <Label>URL Gambar</Label>
+              <Input
+                value={newProduct.image}
+                onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
+                placeholder="URL gambar produk (opsional)"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowProductDialog(false)
+              setEditingProduct(null)
+            }}>
+              Batal
+            </Button>
+            <Button onClick={handleSaveProduct}>
+              {editingProduct ? 'Update' : 'Simpan'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Category Dialog */}
+      <Dialog open={showCategoryDialog} onOpenChange={setShowCategoryDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingCategory ? 'Edit Kategori' : 'Tambah Kategori Baru'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Nama Kategori</Label>
+              <Input
+                value={newCategory.name}
+                onChange={(e) => setNewCategory({ ...newCategory, name: e.target.value })}
+                placeholder="Nama kategori"
+              />
+            </div>
+            <div>
+              <Label>Deskripsi</Label>
+              <Textarea
+                value={newCategory.description}
+                onChange={(e) => setNewCategory({ ...newCategory, description: e.target.value })}
+                placeholder="Deskripsi kategori"
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label>Icon/Emoji</Label>
+              <Input
+                value={newCategory.image}
+                onChange={(e) => setNewCategory({ ...newCategory, image: e.target.value })}
+                placeholder="🍗 atau biarkan kosong"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowCategoryDialog(false)
+              setEditingCategory(null)
+            }}>
+              Batal
+            </Button>
+            <Button onClick={handleSaveCategory}>
+              {editingCategory ? 'Update' : 'Simpan'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Cashier Dialog */}
+      <Dialog open={showCashierDialog} onOpenChange={setShowCashierDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingCashier ? 'Edit Kasir' : 'Tambah Kasir Baru'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Nama</Label>
+              <Input
+                value={newCashier.name}
+                onChange={(e) => setNewCashier({ ...newCashier, name: e.target.value })}
+                placeholder="Nama kasir"
+              />
+            </div>
+            <div>
+              <Label>Email</Label>
+              <Input
+                type="email"
+                value={newCashier.email}
+                onChange={(e) => setNewCashier({ ...newCashier, email: e.target.value })}
+                placeholder="Email kasir"
+              />
+            </div>
+            <div>
+              <Label>Nomor HP</Label>
+              <Input
+                value={newCashier.phone}
+                onChange={(e) => setNewCashier({ ...newCashier, phone: e.target.value })}
+                placeholder="Nomor HP kasir"
+              />
+            </div>
+            <div>
+              <Label>Password</Label>
+              <Input
+                type="password"
+                value={newCashier.password}
+                onChange={(e) => setNewCashier({ ...newCashier, password: e.target.value })}
+                placeholder={editingCashier ? 'Biarkan kosong jika tidak ingin mengubah' : 'Password kasir'}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowCashierDialog(false)
+              setEditingCashier(null)
+            }}>
+              Batal
+            </Button>
+            <Button onClick={handleSaveCashier}>
+              {editingCashier ? 'Update' : 'Simpan'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Payment Method Dialog */}
+      <Dialog open={showPaymentDialog} onOpenChange={setShowPaymentDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Tambah Metode Pembayaran</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Nama (unik)</Label>
+              <Input
+                value={newPayment.name}
+                onChange={(e) => setNewPayment({ ...newPayment, name: e.target.value })}
+                placeholder="Contoh: cash, qris, transfer"
+              />
+            </div>
+            <div>
+              <Label>Nama Tampilan</Label>
+              <Input
+                value={newPayment.displayName}
+                onChange={(e) => setNewPayment({ ...newPayment, displayName: e.target.value })}
+                placeholder="Contoh: Cash, QRIS, Transfer Bank"
+              />
+            </div>
+            <div>
+              <Label>Deskripsi</Label>
+              <Input
+                value={newPayment.description}
+                onChange={(e) => setNewPayment({ ...newPayment, description: e.target.value })}
+                placeholder="Deskripsi singkat metode pembayaran"
+              />
+            </div>
+            <div>
+              <Label>Icon (emoji)</Label>
+              <Input
+                value={newPayment.icon}
+                onChange={(e) => setNewPayment({ ...newPayment, icon: e.target.value })}
+                placeholder="💵 atau biarkan kosong"
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPaymentDialog(false)}>
+              Batal
+            </Button>
+            <Button onClick={handleSavePaymentMethod}>
+              Simpan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Redeem Product Dialog */}
+      <Dialog open={showRedeemDialog} onOpenChange={setShowRedeemDialog}>
+        <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>{editingRedeem ? 'Edit Produk' : 'Tambah Produk Baru'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Nama Produk</Label>
+              <Input
+                value={newRedeemProduct.name}
+                onChange={(e) => setNewRedeemProduct({ ...newRedeemProduct, name: e.target.value })}
+                placeholder="Nama produk tukar poin"
+              />
+            </div>
+            <div>
+              <Label>Deskripsi</Label>
+              <Textarea
+                value={newRedeemProduct.description}
+                onChange={(e) => setNewRedeemProduct({ ...newRedeemProduct, description: e.target.value })}
+                placeholder="Deskripsi produk"
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label>Poin yang Dibutuhkan</Label>
+              <Input
+                type="number"
+                value={newRedeemProduct.points}
+                onChange={(e) => setNewRedeemProduct({ ...newRedeemProduct, points: parseInt(e.target.value) || 0 })}
+                placeholder="Jumlah poin"
+                min={0}
+              />
+            </div>
+            <div>
+              <Label>Icon/Emoji (opsional)</Label>
+              <Input
+                value={newRedeemProduct.image}
+                onChange={(e) => setNewRedeemProduct({ ...newRedeemProduct, image: e.target.value })}
+                placeholder="🎟️ atau biarkan kosong"
+              />
+            </div>
+            <div>
+              <Label>Stock (-1 untuk unlimited)</Label>
+              <Input
+                type="number"
+                value={newRedeemProduct.stock}
+                onChange={(e) => setNewRedeemProduct({ ...newRedeemProduct, stock: parseInt(e.target.value) || -1 })}
+                placeholder="-1 untuk unlimited"
+                min={-1}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => {
+              setShowRedeemDialog(false)
+              setEditingRedeem(null)
+              setNewRedeemProduct({ name: '', description: '', points: 0, image: '', stock: -1 })
+            }}>
+              Batal
+            </Button>
+            <Button onClick={handleSaveRedeemProduct}>
+              {editingRedeem ? 'Update' : 'Simpan'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </AdminLayout>
   )
 }
