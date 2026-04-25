@@ -74,7 +74,7 @@ import {
   Trash2
 } from 'lucide-react'
 
-type ScreenType = 'splash' | 'login' | 'register' | 'home' | 'menu' | 'cart' | 'checkout' | 'orderStatus' | 'account' | 'pos' | 'shift'
+type ScreenType = 'splash' | 'login' | 'register' | 'home' | 'menu' | 'cart' | 'checkout' | 'orderStatus' | 'account' | 'pos' | 'shift' | 'posPayment'
 
 interface Product {
   id: string
@@ -290,6 +290,14 @@ const getStatusBadgeColor = (status: string): string => {
   return colors[status] || 'bg-gray-100 text-gray-700'
 }
 
+// Helper function to calculate POS totals
+const calculatePOSTotals = (cart: CartItem[], taxRate: number, discount: number) => {
+  const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.qty, 0)
+  const taxAmount = subtotal * taxRate
+  const total = subtotal + taxAmount - discount
+  return { subtotal, taxAmount, total }
+}
+
 // Header Component with Notification and Chat
 interface HeaderProps {
   notificationCount?: number
@@ -482,6 +490,16 @@ export default function RestaurantApp() {
   const [posCart, setPosCart] = useState<CartItem[]>([])
   const [isShiftOpen, setIsShiftOpen] = useState(false)
   const [shiftAmount, setShiftAmount] = useState(0)
+  const [posSelectedPaymentMethod, setPosSelectedPaymentMethod] = useState<string>('qris')
+  const [posAppliedVoucher, setPosAppliedVoucher] = useState<any>(null)
+  const [posTax] = useState(0.1) // 10% tax
+  const [posDiscount, setPosDiscount] = useState(0)
+  const [posCustomerName, setPosCustomerName] = useState('')
+  const [posCustomerPhone, setPosCustomerPhone] = useState('')
+  const [posOrderData, setPosOrderData] = useState<any>(null)
+  const [showProductDialog, setShowProductDialog] = useState(false)
+  const [selectedProductForDialog, setSelectedProductForDialog] = useState<Product | null>(null)
+  const [posBarcodeInput, setPosBarcodeInput] = useState('')
 
   // Payment methods and redeem products state
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
@@ -1332,6 +1350,137 @@ export default function RestaurantApp() {
 
   const getCartTotal = () => {
     return cart.reduce((sum, item) => sum + item.product.price * item.qty, 0)
+  }
+
+  // POS Handlers
+  const handlePosAddToCart = (product: Product) => {
+    setPosCart(prev => {
+      const existing = prev.find(item => item.product.id === product.id)
+      if (existing) {
+        return prev.map(item =>
+          item.product.id === product.id
+            ? { ...item, qty: item.qty + 1 }
+            : item
+        )
+      }
+      return [...prev, { product, qty: 1 }]
+    })
+  }
+
+  const handlePosUpdateQty = (productId: string, delta: number) => {
+    setPosCart(prev => {
+      return prev
+        .map(item =>
+          item.product.id === productId
+            ? { ...item, qty: Math.max(0, item.qty + delta) }
+            : item
+        )
+        .filter(item => item.qty > 0)
+    })
+  }
+
+  const handlePosRemoveFromCart = (productId: string) => {
+    setPosCart(prev => prev.filter(item => item.product.id !== productId))
+  }
+
+  const handlePosBarcodeScan = (barcode: string) => {
+    const product = allProducts.find(p => p.barcode === barcode)
+    if (product) {
+      handlePosAddToCart(product)
+      setPosBarcodeInput('')
+      toast({
+        title: 'Produk Ditambahkan',
+        description: `${product.name} telah ditambahkan ke keranjang`,
+      })
+    } else {
+      toast({
+        title: 'Produk Tidak Ditemukan',
+        description: 'Barcode tidak cocok dengan produk manapun',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handlePosShowProductDialog = (product: Product) => {
+    setSelectedProductForDialog(product)
+    setShowProductDialog(true)
+  }
+
+  const handlePosApplyVoucher = async () => {
+    if (!posAppliedVoucher?.code) {
+      toast({
+        title: 'Voucher Belum Dipilih',
+        description: 'Silakan pilih voucher terlebih dahulu',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    const { subtotal } = calculatePOSTotals(posCart, posTax, posDiscount)
+
+    try {
+      const response = await fetch('/api/vouchers/validate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          code: posAppliedVoucher.code,
+          orderAmount: subtotal
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        toast({
+          title: 'Voucher Tidak Valid',
+          description: data.error || 'Voucher tidak dapat digunakan',
+          variant: 'destructive'
+        })
+        return
+      }
+
+      if (data.valid && data.discount > 0) {
+        setPosDiscount(data.discount)
+        toast({
+          title: 'Voucher Berhasil',
+          description: `Diskon Rp ${data.discount.toLocaleString()} diterapkan`,
+        })
+      }
+    } catch (error) {
+      console.error('Voucher validation error:', error)
+      toast({
+        title: 'Gagal Memvalidasi Voucher',
+        description: 'Terjadi kesalahan koneksi',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handlePosCheckout = () => {
+    if (posCart.length === 0) {
+      toast({
+        title: 'Keranjang Kosong',
+        description: 'Silakan tambahkan produk ke keranjang terlebih dahulu',
+        variant: 'destructive'
+      })
+      return
+    }
+
+    const { subtotal, taxAmount, total } = calculatePOSTotals(posCart, posTax, posDiscount)
+
+    setPosOrderData({
+      items: posCart,
+      subtotal,
+      tax: taxAmount,
+      discount: posDiscount,
+      total,
+      customerName: posCustomerName,
+      customerPhone: posCustomerPhone,
+      paymentMethod: posSelectedPaymentMethod,
+      voucher: posAppliedVoucher
+    })
+
+    setScreen('posPayment')
   }
 
   const filteredProducts = allProducts.filter(product => {
@@ -5182,11 +5331,13 @@ export default function RestaurantApp() {
 
   // ========== POS SCREEN ==========
   if (screen === 'pos') {
+    const { subtotal, taxAmount, total } = calculatePOSTotals(posCart, posTax, posDiscount)
+
     return (
       <div className="min-h-screen bg-gray-100">
         {/* Header */}
-        <div className="bg-gradient-to-r from-red-600 to-red-500 p-4 pt-8">
-          <div className="flex justify-between items-center mb-4">
+        <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-3 pt-8 shadow-md">
+          <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-3">
               <Button
                 variant="ghost"
@@ -5194,180 +5345,397 @@ export default function RestaurantApp() {
                 onClick={() => setScreen('login')}
                 className="text-white hover:bg-white/20"
               >
-                <X className="w-6 h-6" />
+                <X className="w-5 h-5" />
               </Button>
-              <h1 className="text-white text-xl font-bold">POS Kasir</h1>
+              <div>
+                <h1 className="text-white text-lg font-bold">POS Kasir</h1>
+                <p className="text-white/80 text-xs">Ayam Geprek Sambal Ijo</p>
+              </div>
             </div>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => setScreen('shift')}
                 className="text-white hover:bg-white/20"
               >
-                <ClockIcon className="w-6 h-6" />
+                <ClockIcon className="w-5 h-5" />
               </Button>
+              <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+                <span className="text-white text-sm">👤</span>
+              </div>
             </div>
-          </div>
-
-          {/* Barcode Scanner */}
-          <div className="bg-white/20 rounded-xl p-4 flex items-center gap-3">
-            <Scan className="w-6 h-6 text-white" />
-            <Input
-              placeholder="Scan barcode produk..."
-              className="bg-white/90 border-none"
-            />
           </div>
         </div>
 
-        <div className="p-4">
-          <div className="grid grid-cols-4 gap-3 mb-4">
-            {menuCategories.map(cat => (
-              <Button
-                key={typeof cat === 'string' ? cat : cat.id}
-                variant={selectedCategory === (typeof cat === 'string' ? cat : cat.name) ? "default" : "outline"}
-                onClick={() => setSelectedCategory(typeof cat === 'string' ? cat : cat.name)}
-                size="sm"
-                className={selectedCategory === (typeof cat === 'string' ? cat : cat.name) ? "bg-orange-500" : ""}
-              >
-                {typeof cat === 'string' ? (cat === 'all' ? 'Semua' : cat) : cat.name}
-              </Button>
-            ))}
-          </div>
-
-          <ScrollArea className="h-[calc(100vh-400px)]">
-            <div className="grid grid-cols-3 gap-2">
-              {filteredProducts.map(product => (
-                <Card
-                  key={product.id}
-                  className="cursor-pointer hover:shadow-md transition-shadow relative"
-                  onClick={() => {
-                    setPosCart(prev => {
-                      const existing = prev.find(item => item.product.id === product.id)
-                      if (existing) {
-                        return prev.map(item =>
-                          item.product.id === product.id
-                            ? { ...item, qty: item.qty + 1 }
-                            : item
-                        )
+        {/* 2-Panel Layout */}
+        <div className="flex h-[calc(100vh-100px)]">
+          {/* LEFT PANEL - Scanner, Products, Cart */}
+          <div className="w-2/3 flex flex-col border-r bg-white">
+            {/* Barcode Scanner */}
+            <div className="p-3 border-b bg-gradient-to-r from-orange-50 to-amber-50">
+              <div className="flex gap-2">
+                <div className="flex-1 flex items-center gap-2 bg-white border rounded-lg px-3 py-2">
+                  <Scan className="w-5 h-5 text-orange-500 flex-shrink-0" />
+                  <Input
+                    placeholder="Scan barcode atau cari produk..."
+                    value={posBarcodeInput}
+                    onChange={(e) => setPosBarcodeInput(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        handlePosBarcodeScan(posBarcodeInput)
                       }
-                      return [...prev, { product, qty: 1 }]
-                    })
-                  }}
+                    }}
+                    className="border-none focus-visible:ring-0 px-2 py-1"
+                  />
+                </div>
+                <Button
+                  onClick={() => handlePosBarcodeScan(posBarcodeInput)}
+                  className="bg-orange-500 hover:bg-orange-600"
                 >
+                  <Search className="w-5 h-5" />
+                </Button>
+              </div>
+            </div>
+
+            {/* Category Tabs */}
+            <div className="px-3 py-2 border-b bg-white">
+              <div className="flex gap-2 overflow-x-auto">
+                {menuCategories.map(cat => (
+                  <Button
+                    key={typeof cat === 'string' ? cat : cat.id}
+                    variant={selectedCategory === (typeof cat === 'string' ? cat : cat.name) ? "default" : "outline"}
+                    onClick={() => setSelectedCategory(typeof cat === 'string' ? cat : cat.name)}
+                    size="sm"
+                    className={`flex-shrink-0 ${selectedCategory === (typeof cat === 'string' ? cat : cat.name) ? "bg-orange-500 hover:bg-orange-600" : ""}`}
+                  >
+                    {typeof cat === 'string' ? (cat === 'all' ? 'Semua' : cat) : cat.name}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Products Grid */}
+            <div className="flex-1 overflow-y-auto p-3">
+              <div className="grid grid-cols-4 gap-3">
+                {filteredProducts.map(product => (
+                  <Card
+                    key={product.id}
+                    className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200 overflow-hidden group"
+                    onClick={() => handlePosShowProductDialog(product)}
+                  >
+                    <div className="relative">
+                      <div className="bg-gradient-to-br from-orange-50 to-amber-50 h-20 flex items-center justify-center overflow-hidden">
+                        {product.image?.startsWith('data:') ? (
+                          <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                        ) : (
+                          <span className="text-3xl">{product.image || '🍗'}</span>
+                        )}
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="absolute top-1 right-1 z-10 bg-white/90 hover:bg-white shadow-sm h-6 w-6 opacity-0 group-hover:opacity-100 transition-opacity"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          handlePosAddToCart(product)
+                          toast({
+                            title: 'Ditambahkan',
+                            description: `${product.name} ditambahkan ke keranjang`,
+                          })
+                        }}
+                      >
+                        <Plus className="w-3 h-3" />
+                      </Button>
+                    </div>
+                    <CardContent className="p-2">
+                      <p className="text-xs font-semibold line-clamp-2 mb-1">{product.name}</p>
+                      <p className="text-xs text-orange-600 font-bold">Rp {product.price.toLocaleString()}</p>
+                      <p className="text-xs text-gray-500">Stok: {product.stock}</p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+
+            {/* Cart Section */}
+            <div className="border-t bg-gray-50 max-h-[35%] flex flex-col">
+              <div className="px-3 py-2 border-b bg-gray-100 flex items-center justify-between">
+                <h3 className="font-bold text-sm text-gray-700">Keranjang ({posCart.reduce((sum, item) => sum + item.qty, 0)} item)</h3>
+                {posCart.length > 0 && (
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="absolute top-1 right-1 z-10 bg-white/90 hover:bg-white shadow-sm h-6 w-6"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      toggleFavorite(product.id);
-                    }}
+                    size="sm"
+                    onClick={() => setPosCart([])}
+                    className="text-red-600 hover:text-red-700 h-7 text-xs"
                   >
-                    <Heart
-                      className={`w-4 h-4 ${
-                        favorites.includes(product.id)
-                          ? 'fill-red-500 text-red-500'
-                          : 'text-gray-400'
-                      }`}
-                    />
+                    <Trash2 className="w-3 h-3 mr-1" />
+                    Hapus Semua
                   </Button>
-                  <CardContent className="p-2">
-                    <div className="bg-orange-50 h-16 rounded-lg flex items-center justify-center text-2xl mb-2 overflow-hidden">
-                      {product.image?.startsWith('data:') ? (
-                        <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                      ) : (
-                        <span>{product.image || '🍗'}</span>
-                      )}
-                    </div>
-                    <p className="text-xs font-medium line-clamp-1">{product.name}</p>
-                    <p className="text-xs text-orange-600 font-bold">
-                      Rp {product.price.toLocaleString()}
-                    </p>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          </ScrollArea>
-        </div>
-
-        {/* POS Cart Panel */}
-        {posCart.length > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg">
-            <div className="max-h-48 overflow-y-auto p-4">
-              {posCart.map((item) => (
-                <div key={item.product.id} className="flex justify-between items-center mb-2">
-                  <span className="flex-1 text-sm">{item.product.name}</span>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setPosCart(prev => prev.map(i =>
-                          i.product.id === item.product.id
-                            ? { ...i, qty: Math.max(0, i.qty - 1) }
-                            : i
-                        ).filter(i => i.qty > 0))
-                      }}
-                      className="h-7 w-7 p-0"
-                    >
-                      <Minus className="w-3 h-3" />
-                    </Button>
-                    <span className="w-8 text-center text-sm">{item.qty}</span>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        setPosCart(prev => prev.map(i =>
-                          i.product.id === item.product.id
-                            ? { ...i, qty: i.qty + 1 }
-                            : i
-                        ))
-                      }}
-                      className="h-7 w-7 p-0"
-                    >
-                      <Plus className="w-3 h-3" />
-                    </Button>
-                    <span className="w-24 text-right text-sm font-medium">
-                      Rp {(item.product.price * item.qty).toLocaleString()}
-                    </span>
-                  </div>
-                </div>
-              ))}
-            </div>
-            <div className="border-t p-4 bg-gray-50">
-              <div className="flex justify-between items-center mb-3">
-                <span className="text-lg font-bold">Total</span>
-                <span className="text-2xl font-bold text-orange-600">
-                  Rp {posCart.reduce((sum, item) => sum + item.product.price * item.qty, 0).toLocaleString()}
-                </span>
+                )}
               </div>
+              <ScrollArea className="flex-1">
+                {posCart.length === 0 ? (
+                  <div className="flex flex-col items-center justify-center h-32 text-gray-400">
+                    <ShoppingCart className="w-12 h-12 mb-2" />
+                    <p className="text-sm">Keranjang kosong</p>
+                  </div>
+                ) : (
+                  <div className="p-2 space-y-2">
+                    {posCart.map((item) => (
+                      <Card key={item.product.id} className="p-2">
+                        <div className="flex gap-2">
+                          <div className="w-12 h-12 bg-orange-50 rounded-lg flex items-center justify-center flex-shrink-0">
+                            {item.product.image?.startsWith('data:') ? (
+                              <img src={item.product.image} alt={item.product.name} className="w-full h-full object-cover rounded-lg" />
+                            ) : (
+                              <span className="text-xl">{item.product.image || '🍗'}</span>
+                            )}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-sm font-medium truncate">{item.product.name}</p>
+                            <p className="text-xs text-orange-600 font-bold">Rp {(item.product.price * item.qty).toLocaleString()}</p>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={() => handlePosUpdateQty(item.product.id, -1)}
+                              className="h-6 w-6"
+                            >
+                              <Minus className="w-3 h-3" />
+                            </Button>
+                            <span className="w-6 text-center text-sm font-medium">{item.qty}</span>
+                            <Button
+                              size="icon"
+                              variant="outline"
+                              onClick={() => handlePosUpdateQty(item.product.id, 1)}
+                              className="h-6 w-6"
+                            >
+                              <Plus className="w-3 h-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
+          </div>
+
+          {/* RIGHT PANEL - Total, Voucher, Payment */}
+          <div className="w-1/3 flex flex-col bg-gray-50">
+            {/* Customer Info */}
+            <div className="p-4 border-b bg-white">
+              <h3 className="font-bold text-sm text-gray-700 mb-2">Informasi Pelanggan</h3>
+              <Input
+                placeholder="Nama pelanggan (opsional)"
+                value={posCustomerName}
+                onChange={(e) => setPosCustomerName(e.target.value)}
+                className="mb-2"
+              />
+              <Input
+                placeholder="No. telepon (opsional)"
+                value={posCustomerPhone}
+                onChange={(e) => setPosCustomerPhone(e.target.value)}
+              />
+            </div>
+
+            {/* Voucher Section */}
+            <div className="p-4 border-b bg-white">
+              <h3 className="font-bold text-sm text-gray-700 mb-2">Voucher</h3>
               <div className="flex gap-2">
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button className="flex-1 h-12 bg-orange-500 hover:bg-orange-600">
-                      <QrCode className="w-5 h-5 mr-2" />
-                      QRIS
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-md">
-                    <div className="text-center p-6">
-                      <QrCode className="w-48 h-48 mx-auto mb-4 text-gray-800" />
-                      <h3 className="text-xl font-bold mb-2">Scan QRIS</h3>
-                      <p className="text-muted-foreground mb-4">
-                        Rp {posCart.reduce((sum, item) => sum + item.product.price * item.qty, 0).toLocaleString()}
-                      </p>
-                    </div>
-                  </DialogContent>
-                </Dialog>
-                <Button className="flex-1 h-12 bg-green-600 hover:bg-green-700">
+                <Select onValueChange={(value) => {
+                  const voucher = vouchers.find(v => v.code === value)
+                  setPosAppliedVoucher(voucher || null)
+                }}>
+                  <SelectTrigger className="flex-1">
+                    <SelectValue placeholder="Pilih voucher" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {vouchers.filter(v => !v.isUsed).map((voucher) => (
+                      <SelectItem key={voucher.id} value={voucher.code}>
+                        {voucher.code} - {voucher.discount}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <Button
+                  onClick={handlePosApplyVoucher}
+                  disabled={!posAppliedVoucher}
+                  size="sm"
+                  className="bg-orange-500 hover:bg-orange-600"
+                >
+                  Terapkan
+                </Button>
+              </div>
+              {posDiscount > 0 && (
+                <p className="text-xs text-green-600 mt-2">✓ Diskon Rp {posDiscount.toLocaleString()} diterapkan</p>
+              )}
+            </div>
+
+            {/* Totals */}
+            <div className="p-4 border-b bg-white space-y-2">
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Subtotal</span>
+                <span className="font-medium">Rp {subtotal.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between text-sm">
+                <span className="text-gray-600">Pajak (10%)</span>
+                <span className="font-medium">Rp {taxAmount.toLocaleString()}</span>
+              </div>
+              {posDiscount > 0 && (
+                <div className="flex justify-between text-sm text-green-600">
+                  <span>Diskon</span>
+                  <span className="font-medium">-Rp {posDiscount.toLocaleString()}</span>
+                </div>
+              )}
+              <Separator />
+              <div className="flex justify-between items-center">
+                <span className="text-lg font-bold text-gray-700">Total Bayar</span>
+                <span className="text-2xl font-bold text-orange-600">Rp {total.toLocaleString()}</span>
+              </div>
+            </div>
+
+            {/* Payment Methods Tabs */}
+            <div className="flex-1 flex flex-col p-4">
+              <h3 className="font-bold text-sm text-gray-700 mb-3">Metode Pembayaran</h3>
+              <Tabs value={posSelectedPaymentMethod} onValueChange={setPosSelectedPaymentMethod} className="flex-1 flex flex-col">
+                <TabsList className="w-full grid grid-cols-3 mb-3">
+                  <TabsTrigger value="qris">QRIS</TabsTrigger>
+                  <TabsTrigger value="cash">Tunai</TabsTrigger>
+                  <TabsTrigger value="transfer">Transfer</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="qris" className="flex-1 flex flex-col">
+                  <Card className="flex-1 flex flex-col">
+                    <CardContent className="flex-1 flex flex-col items-center justify-center p-6">
+                      <QrCode className="w-32 h-32 text-gray-800 mb-4" />
+                      <p className="text-sm text-gray-600 mb-2">Scan QRIS untuk pembayaran</p>
+                      <p className="text-2xl font-bold text-orange-600 mb-4">Rp {total.toLocaleString()}</p>
+                      <p className="text-xs text-gray-500">Akan muncul setelah klik "Bayar"</p>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="cash" className="flex-1 flex flex-col">
+                  <Card className="flex-1">
+                    <CardContent className="p-4 space-y-4">
+                      <div>
+                        <Label className="text-sm text-gray-600">Uang Diterima</Label>
+                        <Input
+                          type="number"
+                          placeholder="Rp 0"
+                          className="mt-1 text-lg font-semibold"
+                        />
+                      </div>
+                      <div>
+                        <Label className="text-sm text-gray-600">Kembalian</Label>
+                        <div className="mt-1 text-2xl font-bold text-green-600">Rp 0</div>
+                      </div>
+                      <div className="space-y-2">
+                        <p className="text-xs text-gray-500">Uang cepat:</p>
+                        <div className="grid grid-cols-3 gap-2">
+                          {[10000, 20000, 50000, 100000].map((amount) => (
+                            <Button
+                              key={amount}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {}}
+                              className="text-xs"
+                            >
+                              {amount >= 10000 ? `${amount/1000}rb` : amount}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                <TabsContent value="transfer" className="flex-1 flex flex-col">
+                  <Card className="flex-1">
+                    <CardContent className="p-4">
+                      <div className="space-y-3">
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <p className="text-xs text-gray-500">Bank BCA</p>
+                          <p className="font-bold text-lg">123-456-7890</p>
+                          <p className="text-xs text-gray-600">a/n Ayam Geprek Sambal Ijo</p>
+                        </div>
+                        <div className="bg-gray-50 rounded-lg p-3">
+                          <p className="text-xs text-gray-500">Bank Mandiri</p>
+                          <p className="font-bold text-lg">123-000-456-789</p>
+                          <p className="text-xs text-gray-600">a/n Ayam Geprek Sambal Ijo</p>
+                        </div>
+                        <Button variant="outline" className="w-full" onClick={() => {}}>
+                          <Copy className="w-4 h-4 mr-2" />
+                          Salin Nomor Rekening
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+
+              {/* Pay Button */}
+              <div className="mt-4">
+                <Button
+                  onClick={handlePosCheckout}
+                  disabled={posCart.length === 0}
+                  className="w-full h-14 bg-green-600 hover:bg-green-700 text-lg font-bold"
+                >
                   <Wallet className="w-5 h-5 mr-2" />
-                  Tunai
+                  BAYAR
                 </Button>
               </div>
             </div>
           </div>
-        )}
+        </div>
+
+        {/* Product Dialog */}
+        <Dialog open={showProductDialog} onOpenChange={setShowProductDialog}>
+          <DialogContent className="max-w-sm">
+            <DialogHeader>
+              <DialogTitle>Detail Produk</DialogTitle>
+            </DialogHeader>
+            {selectedProductForDialog && (
+              <div className="space-y-4">
+                <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg h-40 flex items-center justify-center overflow-hidden">
+                  {selectedProductForDialog.image?.startsWith('data:') ? (
+                    <img src={selectedProductForDialog.image} alt={selectedProductForDialog.name} className="w-full h-full object-cover" />
+                  ) : (
+                    <span className="text-6xl">{selectedProductForDialog.image || '🍗'}</span>
+                  )}
+                </div>
+                <div>
+                  <h3 className="text-lg font-bold">{selectedProductForDialog.name}</h3>
+                  <p className="text-sm text-gray-600 mt-1">{selectedProductForDialog.description}</p>
+                </div>
+                <div className="flex justify-between items-center">
+                  <div>
+                    <p className="text-2xl font-bold text-orange-600">Rp {selectedProductForDialog.price.toLocaleString()}</p>
+                    <p className="text-sm text-gray-500">Stok: {selectedProductForDialog.stock}</p>
+                  </div>
+                  <Button
+                    onClick={() => {
+                      handlePosAddToCart(selectedProductForDialog)
+                      setShowProductDialog(false)
+                      toast({
+                        title: 'Ditambahkan',
+                        description: `${selectedProductForDialog.name} ditambahkan ke keranjang`,
+                      })
+                    }}
+                    className="bg-orange-500 hover:bg-orange-600"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Tambah
+                  </Button>
+                </div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     )
   }
@@ -5482,6 +5850,439 @@ export default function RestaurantApp() {
               </CardContent>
             </Card>
           )}
+        </div>
+      </div>
+    )
+  }
+
+  // ========== POS PAYMENT SCREEN ==========
+  if (screen === 'posPayment') {
+    const generateOrderNumber = () => {
+      const date = new Date()
+      const prefix = `ORD${date.getFullYear().toString().slice(-2)}${(date.getMonth() + 1).toString().padStart(2, '0')}${date.getDate().toString().padStart(2, '0')}`
+      const random = Math.floor(Math.random() * 9000) + 1000
+      return `${prefix}-${random}`
+    }
+
+    const orderNumber = generateOrderNumber()
+    const orderDate = new Date().toLocaleString('id-ID', {
+      weekday: 'long',
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+
+    return (
+      <div className="min-h-screen bg-gray-100">
+        {/* Header */}
+        <div className="bg-gradient-to-r from-orange-500 to-orange-400 px-4 py-3 pt-8 shadow-md">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setScreen('pos')}
+                className="text-white hover:bg-white/20"
+              >
+                <X className="w-5 h-5" />
+              </Button>
+              <div>
+                <h1 className="text-white text-lg font-bold">Pembayaran</h1>
+                <p className="text-white/80 text-xs">Ayam Geprek Sambal Ijo</p>
+              </div>
+            </div>
+            <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center">
+              <span className="text-white text-sm">👤</span>
+            </div>
+          </div>
+        </div>
+
+        {/* 2-Panel Layout */}
+        <div className="flex h-[calc(100vh-100px)]">
+          {/* LEFT PANEL - Receipt */}
+          <div className="w-1/2 bg-white p-6 overflow-y-auto">
+            <Card className="max-w-md mx-auto">
+              <CardContent className="p-6">
+                {/* Receipt Header */}
+                <div className="text-center mb-6 pb-4 border-b-2 border-dashed">
+                  <div className="text-4xl mb-2">🍗</div>
+                  <h2 className="text-2xl font-bold text-gray-800">Ayam Geprek</h2>
+                  <p className="text-gray-600">Sambal Ijo</p>
+                  <p className="text-xs text-gray-500 mt-1">Jl. Raya Utama No. 123, Jakarta</p>
+                  <p className="text-xs text-gray-500">Telp: 0812-3456-7890</p>
+                </div>
+
+                {/* Order Info */}
+                <div className="mb-6 pb-4 border-b-2 border-dashed">
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600">No. Pesanan:</span>
+                    <span className="font-medium">{orderNumber}</span>
+                  </div>
+                  <div className="flex justify-between text-sm mb-1">
+                    <span className="text-gray-600">Tanggal:</span>
+                    <span className="font-medium">{orderDate}</span>
+                  </div>
+                  {posCustomerName && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Pelanggan:</span>
+                      <span className="font-medium">{posCustomerName}</span>
+                    </div>
+                  )}
+                  {posCustomerPhone && (
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Telepon:</span>
+                      <span className="font-medium">{posCustomerPhone}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Order Items */}
+                <div className="mb-6 pb-4 border-b-2 border-dashed">
+                  <table className="w-full text-sm">
+                    <thead>
+                      <tr className="text-gray-600 text-xs">
+                        <th className="text-left pb-2">Item</th>
+                        <th className="text-center pb-2">Qty</th>
+                        <th className="text-right pb-2">Harga</th>
+                        <th className="text-right pb-2">Total</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {posOrderData?.items.map((item: any) => (
+                        <tr key={item.product.id} className="border-b border-gray-100">
+                          <td className="py-2 text-xs">
+                            <div className="font-medium">{item.product.name}</div>
+                          </td>
+                          <td className="py-2 text-center">x{item.qty}</td>
+                          <td className="py-2 text-right">
+                            Rp {item.product.price.toLocaleString()}
+                          </td>
+                          <td className="py-2 text-right font-medium">
+                            Rp {(item.product.price * item.qty).toLocaleString()}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Totals */}
+                <div className="space-y-2 mb-6 pb-4 border-b-2 border-dashed">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Subtotal</span>
+                    <span>Rp {posOrderData?.subtotal.toLocaleString()}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Pajak (10%)</span>
+                    <span>Rp {posOrderData?.tax.toLocaleString()}</span>
+                  </div>
+                  {posOrderData?.discount && posOrderData.discount > 0 && (
+                    <div className="flex justify-between text-sm text-green-600">
+                      <span>Diskon</span>
+                      <span>-Rp {posOrderData.discount.toLocaleString()}</span>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-lg font-bold pt-2 border-t">
+                    <span>Total</span>
+                    <span className="text-orange-600">Rp {posOrderData?.total.toLocaleString()}</span>
+                  </div>
+                </div>
+
+                {/* Payment Info */}
+                <div className="mb-6 pb-4 border-b-2 border-dashed">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Metode Pembayaran:</span>
+                    <span className="font-medium uppercase">
+                      {posOrderData?.paymentMethod === 'qris' ? 'QRIS' :
+                       posOrderData?.paymentMethod === 'cash' ? 'Tunai' :
+                       posOrderData?.paymentMethod === 'transfer' ? 'Transfer' : posOrderData?.paymentMethod}
+                    </span>
+                  </div>
+                  {posOrderData?.voucher && (
+                    <div className="flex justify-between text-sm mt-1">
+                      <span className="text-gray-600">Voucher:</span>
+                      <span className="font-medium text-green-600">{posOrderData.voucher.code}</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="text-center space-y-2">
+                  <p className="text-xs text-gray-500">Terima kasih atas kunjungan Anda!</p>
+                  <p className="text-xs text-gray-500">Simpan struk ini sebagai bukti pembayaran</p>
+                  <div className="pt-4 border-t border-dashed mt-4">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => {
+                        toast({
+                          title: 'Struk Dapat Dicetak',
+                          description: 'Struk akan dikirim ke printer',
+                        })
+                      }}
+                    >
+                      <Printer className="w-4 h-4 mr-2" />
+                      Cetak Struk
+                    </Button>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+
+          {/* RIGHT PANEL - Payment Methods */}
+          <div className="w-1/2 bg-gray-50 p-6 overflow-y-auto">
+            <div className="max-w-md mx-auto">
+              <h2 className="text-xl font-bold text-gray-800 mb-6">Metode Pembayaran</h2>
+
+              <Tabs value={posSelectedPaymentMethod} onValueChange={setPosSelectedPaymentMethod} className="w-full">
+                <TabsList className="w-full grid grid-cols-3 mb-6">
+                  <TabsTrigger value="qris">QRIS</TabsTrigger>
+                  <TabsTrigger value="cash">Tunai</TabsTrigger>
+                  <TabsTrigger value="transfer">Transfer</TabsTrigger>
+                </TabsList>
+
+                {/* QRIS Tab */}
+                <TabsContent value="qris">
+                  <Card>
+                    <CardContent className="p-6 space-y-4">
+                      <div className="text-center">
+                        <div className="bg-white border-2 border-dashed border-gray-300 rounded-lg p-6 mb-4">
+                          <QrCode className="w-48 h-48 mx-auto text-gray-800" />
+                        </div>
+                        <p className="text-sm text-gray-600 mb-2">Scan QRIS untuk pembayaran</p>
+                        <p className="text-3xl font-bold text-orange-600">
+                          Rp {posOrderData?.total.toLocaleString()}
+                        </p>
+                      </div>
+
+                      <div className="bg-blue-50 rounded-lg p-4 space-y-2">
+                        <p className="text-sm text-blue-800 font-medium">Instruksi:</p>
+                        <ol className="text-sm text-blue-700 space-y-1 list-decimal list-inside">
+                          <li>Buka aplikasi e-wallet (GoPay, OVO, Dana, dll)</li>
+                          <li>Pilih menu Scan QRIS</li>
+                          <li>Arahkan kamera ke QR code di atas</li>
+                          <li>Konfirmasi pembayaran</li>
+                        </ol>
+                      </div>
+
+                      <Button
+                        onClick={() => {
+                          toast({
+                            title: 'Menunggu Pembayaran',
+                            description: 'Menunggu pembayaran QRIS...',
+                          })
+                        }}
+                        className="w-full bg-orange-500 hover:bg-orange-600"
+                      >
+                        <CheckCircle className="w-4 h-4 mr-2" />
+                        Saya Sudah Bayar
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* Cash Tab */}
+                <TabsContent value="cash">
+                  <Card>
+                    <CardContent className="p-6 space-y-4">
+                      <div>
+                        <Label className="text-sm text-gray-600 font-medium">Total Bayar</Label>
+                        <div className="text-3xl font-bold text-orange-600 mt-1">
+                          Rp {posOrderData?.total.toLocaleString()}
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div>
+                        <Label className="text-sm text-gray-600 font-medium">Uang Diterima</Label>
+                        <Input
+                          type="number"
+                          placeholder="Rp 0"
+                          className="mt-1 text-lg font-semibold"
+                          defaultValue={posOrderData?.total}
+                        />
+                      </div>
+
+                      <div>
+                        <Label className="text-sm text-gray-600 font-medium">Kembalian</Label>
+                        <div className="mt-1 text-3xl font-bold text-green-600">
+                          Rp 0
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="text-sm text-gray-600 font-medium">Uang Cepat:</p>
+                        <div className="grid grid-cols-2 gap-2">
+                          {[10000, 20000, 50000, 100000].map((amount) => (
+                            <Button
+                              key={amount}
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                toast({
+                                  title: 'Jumlah Diisi',
+                                  description: `Rp ${amount.toLocaleString()}`,
+                                })
+                              }}
+                              className="text-sm"
+                            >
+                              {amount >= 10000 ? `${amount/1000}rb` : amount}
+                            </Button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <Button
+                        onClick={() => {
+                          toast({
+                            title: 'Pembayaran Berhasil',
+                            description: 'Transaksi telah selesai',
+                          })
+                          setPosCart([])
+                          setPosOrderData(null)
+                          setScreen('pos')
+                        }}
+                        className="w-full bg-green-600 hover:bg-green-700 h-12 text-lg font-bold"
+                      >
+                        <CheckCircle className="w-5 h-5 mr-2" />
+                        Selesaikan Transaksi
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+
+                {/* Transfer Tab */}
+                <TabsContent value="transfer">
+                  <Card>
+                    <CardContent className="p-6 space-y-4">
+                      <div>
+                        <Label className="text-sm text-gray-600 font-medium">Total Transfer</Label>
+                        <div className="text-3xl font-bold text-orange-600 mt-1">
+                          Rp {posOrderData?.total.toLocaleString()}
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="space-y-3">
+                        <p className="text-sm text-gray-600 font-medium">Pilih Bank:</p>
+
+                        <div className="space-y-3">
+                          <div className="bg-gray-50 rounded-lg p-4 border-2 border-transparent hover:border-orange-300 cursor-pointer transition-colors">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-bold text-blue-600">Bank BCA</p>
+                                <p className="text-lg font-bold mt-1">123-456-7890</p>
+                                <p className="text-xs text-gray-600 mt-1">a/n Ayam Geprek Sambal Ijo</p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  toast({
+                                    title: 'Nomor Disalin',
+                                    description: '123-456-7890',
+                                  })
+                                }}
+                              >
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="bg-gray-50 rounded-lg p-4 border-2 border-transparent hover:border-orange-300 cursor-pointer transition-colors">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-bold text-yellow-600">Bank Mandiri</p>
+                                <p className="text-lg font-bold mt-1">123-000-456-789</p>
+                                <p className="text-xs text-gray-600 mt-1">a/n Ayam Geprek Sambal Ijo</p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  toast({
+                                    title: 'Nomor Disalin',
+                                    description: '123-000-456-789',
+                                  })
+                                }}
+                              >
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+
+                          <div className="bg-gray-50 rounded-lg p-4 border-2 border-transparent hover:border-orange-300 cursor-pointer transition-colors">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-sm font-bold text-red-600">Bank BRI</p>
+                                <p className="text-lg font-bold mt-1">0123-0100-5678-501</p>
+                                <p className="text-xs text-gray-600 mt-1">a/n Ayam Geprek Sambal Ijo</p>
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => {
+                                  toast({
+                                    title: 'Nomor Disalin',
+                                    description: '0123-0100-5678-501',
+                                  })
+                                }}
+                              >
+                                <Copy className="w-4 h-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      <Separator />
+
+                      <div className="bg-orange-50 rounded-lg p-4">
+                        <p className="text-sm text-orange-800 font-medium mb-2">Catatan:</p>
+                        <ul className="text-sm text-orange-700 space-y-1 list-disc list-inside">
+                          <li>Transfer sesuai total bayar</li>
+                          <li>Konfirmasi transfer ke kasir</li>
+                          <li>Simpan bukti transfer</li>
+                        </ul>
+                      </div>
+
+                      <Button
+                        onClick={() => {
+                          toast({
+                            title: 'Menunggu Konfirmasi',
+                            description: 'Menunggu konfirmasi transfer...',
+                          })
+                        }}
+                        className="w-full bg-orange-500 hover:bg-orange-600"
+                      >
+                        <MessageCircle className="w-4 h-4 mr-2" />
+                        Hubungi Kasir
+                      </Button>
+                    </CardContent>
+                  </Card>
+                </TabsContent>
+              </Tabs>
+
+              {/* Action Buttons */}
+              <div className="mt-6 space-y-2">
+                <Button
+                  variant="outline"
+                  onClick={() => setScreen('pos')}
+                  className="w-full"
+                >
+                  <XCircle className="w-4 h-4 mr-2" />
+                  Batalkan Transaksi
+                </Button>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     )
