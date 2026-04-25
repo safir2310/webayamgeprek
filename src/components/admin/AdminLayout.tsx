@@ -7,27 +7,30 @@ import { Badge } from '@/components/ui/badge'
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog'
 import { toast } from '@/hooks/use-toast'
 import {
-  Home,
-  Package,
-  ShoppingCart,
-  Users,
-  BarChart3,
   Bell,
   MessageCircle,
   LogOut,
   Utensils,
+  Menu,
+  X,
+  XCircle,
+  ShoppingCart,
+  Home,
+  Package,
+  Users,
+  BarChart3,
   Tag,
   CreditCard,
   Gift,
-  TrendingUp,
   Warehouse,
   UserCog,
-  Menu,
-  X,
-  XCircle
+  Settings,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { getToken, logout } from '@/lib/auth'
+import AdminSidebar from './AdminSidebar'
 
 interface AdminLayoutProps {
   children: ReactNode
@@ -157,7 +160,7 @@ export default function AdminLayout({
                                   'bg-blue-100'
                                 }`}>
                                   {notif.type === 'order' ? <ShoppingCart className="h-4 w-4 text-green-600" /> :
-                                   notif.type === 'warning' ? <TrendingUp className="h-4 w-4 text-yellow-600" /> :
+                                   notif.type === 'warning' ? <Settings className="h-4 w-4 text-yellow-600" /> :
                                    notif.type === 'error' ? <XCircle className="h-4 w-4 text-red-600" /> :
                                    <Bell className="h-4 w-4 text-blue-600" />}
                                 </div>
@@ -198,27 +201,15 @@ export default function AdminLayout({
 
       {/* Main Content */}
       <div className="flex">
-        {/* Sidebar - Desktop */}
-        <aside className="hidden lg:block w-64 bg-white border-r min-h-[calc(100vh-4rem)] sticky top-16">
-          <ScrollArea className="h-[calc(100vh-4rem)]">
-            <nav className="p-4 space-y-1">
-              {tabs.map((tab) => {
-                const Icon = tab.icon
-                return (
-                  <Button
-                    key={tab.id}
-                    variant={currentTab === tab.id ? 'default' : 'ghost'}
-                    className={`w-full justify-start ${currentTab === tab.id ? 'bg-orange-500 hover:bg-orange-600' : ''}`}
-                    onClick={() => onTabChange(tab.id)}
-                  >
-                    <Icon className="h-4 w-4 mr-3" />
-                    {tab.label}
-                  </Button>
-                )
-              })}
-            </nav>
-          </ScrollArea>
-        </aside>
+        {/* Desktop Sidebar */}
+        <AdminSidebar
+          currentTab={currentTab}
+          onTabChange={onTabChange}
+          user={user}
+          onLogout={handleLogout}
+          unreadNotificationCount={unreadNotificationCount}
+          unreadChatCount={0}
+        />
 
         {/* Mobile Menu */}
         {mobileMenuOpen && (
@@ -242,6 +233,19 @@ export default function AdminLayout({
                     </Button>
                   )
                 })}
+                {user && (
+                  <Button
+                    variant="ghost"
+                    className="w-full justify-start text-red-600 hover:text-red-700 hover:bg-red-50 mt-4"
+                    onClick={() => {
+                      handleLogout()
+                      setMobileMenuOpen(false)
+                    }}
+                  >
+                    <LogOut className="h-4 w-4 mr-3" />
+                    Keluar
+                  </Button>
+                )}
               </nav>
             </ScrollArea>
           </div>
