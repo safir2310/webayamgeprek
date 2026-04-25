@@ -3582,7 +3582,13 @@ export default function RestaurantApp() {
                       <Card key={product.id}>
                         <CardContent className="p-4">
                           <div className="flex items-center gap-3">
-                            <div className="text-3xl">{product.image}</div>
+                            <div className="w-16 h-16 bg-gray-100 rounded-lg overflow-hidden flex items-center justify-center">
+                              {product.image?.startsWith('data:') ? (
+                                <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                              ) : (
+                                <span className="text-3xl">{product.image || '🍗'}</span>
+                              )}
+                            </div>
                             <div className="flex-1">
                               <p className="font-semibold">{product.name}</p>
                               <p className="text-sm text-muted-foreground">{product.description}</p>
