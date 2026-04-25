@@ -22,6 +22,7 @@ import {
   Phone,
   Mail,
   Lock,
+  LogIn,
   LogOut,
   CreditCard,
   QrCode,
@@ -469,6 +470,9 @@ export default function RestaurantApp() {
   const [posCart, setPosCart] = useState<CartItem[]>([])
   const [isShiftOpen, setIsShiftOpen] = useState(false)
   const [shiftAmount, setShiftAmount] = useState(0)
+
+  // Login role selection
+  const [loginRole, setLoginRole] = useState<'customer' | 'cashier' | 'admin'>('customer')
 
   // Payment methods and redeem products state
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
@@ -1231,8 +1235,51 @@ export default function RestaurantApp() {
             <div className="text-center">
               <div className="text-6xl mb-4">🍗</div>
               <h1 className="text-3xl font-bold mb-2">Selamat Datang</h1>
-              <p className="text-muted-foreground">Login untuk memesan makanan</p>
+              <p className="text-muted-foreground">
+                {loginRole === 'customer' ? 'Login untuk memesan makanan' :
+                 loginRole === 'cashier' ? 'Login untuk kasir POS' :
+                 'Login untuk admin panel'}
+              </p>
             </div>
+
+            {/* Role Selection Tabs */}
+            <Tabs value={loginRole} onValueChange={(v: any) => setLoginRole(v)} className="w-full">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="customer" className="text-sm">
+                  <User className="w-4 h-4 mr-1" />
+                  Customer
+                </TabsTrigger>
+                <TabsTrigger value="cashier" className="text-sm">
+                  <Utensils className="w-4 h-4 mr-1" />
+                  Kasir
+                </TabsTrigger>
+                <TabsTrigger value="admin" className="text-sm">
+                  <ShieldCheck className="w-4 h-4 mr-1" />
+                  Admin
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="customer" className="mt-4">
+                <div className="bg-blue-50 rounded-lg p-3">
+                  <p className="text-sm text-blue-800 font-medium">👤 Customer Login</p>
+                  <p className="text-xs text-blue-600 mt-1">Login sebagai pelanggan untuk memesan makanan</p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="cashier" className="mt-4">
+                <div className="bg-green-50 rounded-lg p-3">
+                  <p className="text-sm text-green-800 font-medium">💰 Cashier Login</p>
+                  <p className="text-xs text-green-600 mt-1">Login sebagai kasir untuk menggunakan sistem POS</p>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="admin" className="mt-4">
+                <div className="bg-purple-50 rounded-lg p-3">
+                  <p className="text-sm text-purple-800 font-medium">🔐 Admin Login</p>
+                  <p className="text-xs text-purple-600 mt-1">Login sebagai admin untuk mengelola sistem</p>
+                </div>
+              </TabsContent>
+            </Tabs>
 
             <div className="space-y-4">
               <div className="space-y-2">
@@ -1263,37 +1310,49 @@ export default function RestaurantApp() {
               </div>
             </div>
 
-            <Button onClick={handleLogin} className="w-full bg-orange-500 hover:bg-orange-600">
-              Masuk
+            <Button
+              onClick={handleLogin}
+              className={`w-full ${
+                loginRole === 'customer' ? 'bg-orange-500 hover:bg-orange-600' :
+                loginRole === 'cashier' ? 'bg-green-600 hover:bg-green-700' :
+                'bg-purple-600 hover:bg-purple-700'
+              }`}
+            >
+              <LogIn className="w-4 h-4 mr-2" />
+              Masuk {loginRole === 'customer' ? '' : `sebagai ${loginRole === 'cashier' ? 'Kasir' : 'Admin'}`}
             </Button>
 
-            <div className="text-center">
-              <p className="text-sm text-muted-foreground">
-                Belum punya akun?{' '}
-                <button
-                  onClick={() => setScreen('register')}
-                  className="text-orange-500 hover:underline font-medium"
-                >
-                  Daftar
-                </button>
-              </p>
-            </div>
+            {loginRole === 'customer' && (
+              <div className="text-center">
+                <p className="text-sm text-muted-foreground">
+                  Belum punya akun?{' '}
+                  <button
+                    onClick={() => setScreen('register')}
+                    className="text-orange-500 hover:underline font-medium"
+                  >
+                    Daftar
+                  </button>
+                </p>
+              </div>
+            )}
 
             <Separator />
 
             <div className="flex justify-center gap-3">
               <Button
-                variant="outline"
+                variant={loginRole === 'cashier' ? 'default' : 'outline'}
                 size="lg"
-                onClick={() => setScreen('pos')}
+                onClick={() => setLoginRole('cashier')}
+                className={loginRole === 'cashier' ? 'bg-green-600 hover:bg-green-700' : ''}
               >
                 <Utensils className="mr-2 h-5 w-5" />
                 POS Kasir
               </Button>
               <Button
-                variant="outline"
+                variant={loginRole === 'admin' ? 'default' : 'outline'}
                 size="lg"
-                onClick={() => window.location.href = '/admin/login'}
+                onClick={() => setLoginRole('admin')}
+                className={loginRole === 'admin' ? 'bg-purple-600 hover:bg-purple-700' : ''}
               >
                 <ShieldCheck className="mr-2 h-5 w-5" />
                 Admin Panel
