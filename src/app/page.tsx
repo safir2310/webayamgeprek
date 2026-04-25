@@ -5428,13 +5428,6 @@ export default function RestaurantApp() {
                   <Package className="w-4 h-4 mr-2" />
                   Daftar Produk
                 </Button>
-
-                <Button
-                  onClick={() => handlePosBarcodeScan(posBarcodeInput)}
-                  className="bg-orange-500 hover:bg-orange-600 px-6"
-                >
-                  <Search className="w-5 h-5" />
-                </Button>
               </div>
             </div>
 
@@ -5531,39 +5524,6 @@ export default function RestaurantApp() {
               />
             </div>
 
-            {/* Voucher Section */}
-            <div className="p-4 border-b bg-white">
-              <h3 className="font-bold text-sm text-gray-700 mb-2">Voucher</h3>
-              <div className="flex gap-2">
-                <Select onValueChange={(value) => {
-                  const voucher = vouchers.find(v => v.code === value)
-                  setPosAppliedVoucher(voucher || null)
-                }}>
-                  <SelectTrigger className="flex-1">
-                    <SelectValue placeholder="Pilih voucher" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {vouchers.filter(v => !v.isUsed).map((voucher) => (
-                      <SelectItem key={voucher.id} value={voucher.code}>
-                        {voucher.code} - {voucher.discount}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                <Button
-                  onClick={handlePosApplyVoucher}
-                  disabled={!posAppliedVoucher}
-                  size="sm"
-                  className="bg-orange-500 hover:bg-orange-600"
-                >
-                  Terapkan
-                </Button>
-              </div>
-              {posDiscount > 0 && (
-                <p className="text-xs text-green-600 mt-2">✓ Diskon Rp {posDiscount.toLocaleString()} diterapkan</p>
-              )}
-            </div>
-
             {/* Totals */}
             <div className="p-4 border-b bg-white space-y-2">
               <div className="flex justify-between text-sm">
@@ -5587,97 +5547,16 @@ export default function RestaurantApp() {
               </div>
             </div>
 
-            {/* Payment Methods Tabs */}
-            <div className="flex-1 flex flex-col p-4">
-              <h3 className="font-bold text-sm text-gray-700 mb-3">Metode Pembayaran</h3>
-              <Tabs value={posSelectedPaymentMethod} onValueChange={setPosSelectedPaymentMethod} className="flex-1 flex flex-col">
-                <TabsList className="w-full grid grid-cols-3 mb-3">
-                  <TabsTrigger value="qris">QRIS</TabsTrigger>
-                  <TabsTrigger value="cash">Tunai</TabsTrigger>
-                  <TabsTrigger value="transfer">Transfer</TabsTrigger>
-                </TabsList>
-
-                <TabsContent value="qris" className="flex-1 flex flex-col">
-                  <Card className="flex-1 flex flex-col">
-                    <CardContent className="flex-1 flex flex-col items-center justify-center p-6">
-                      <QrCode className="w-32 h-32 text-gray-800 mb-4" />
-                      <p className="text-sm text-gray-600 mb-2">Scan QRIS untuk pembayaran</p>
-                      <p className="text-2xl font-bold text-orange-600 mb-4">Rp {total.toLocaleString()}</p>
-                      <p className="text-xs text-gray-500">Akan muncul setelah klik "Bayar"</p>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent value="cash" className="flex-1 flex flex-col">
-                  <Card className="flex-1">
-                    <CardContent className="p-4 space-y-4">
-                      <div>
-                        <Label className="text-sm text-gray-600">Uang Diterima</Label>
-                        <Input
-                          type="number"
-                          placeholder="Rp 0"
-                          className="mt-1 text-lg font-semibold"
-                        />
-                      </div>
-                      <div>
-                        <Label className="text-sm text-gray-600">Kembalian</Label>
-                        <div className="mt-1 text-2xl font-bold text-green-600">Rp 0</div>
-                      </div>
-                      <div className="space-y-2">
-                        <p className="text-xs text-gray-500">Uang cepat:</p>
-                        <div className="grid grid-cols-3 gap-2">
-                          {[10000, 20000, 50000, 100000].map((amount) => (
-                            <Button
-                              key={amount}
-                              variant="outline"
-                              size="sm"
-                              onClick={() => {}}
-                              className="text-xs"
-                            >
-                              {amount >= 10000 ? `${amount/1000}rb` : amount}
-                            </Button>
-                          ))}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-
-                <TabsContent value="transfer" className="flex-1 flex flex-col">
-                  <Card className="flex-1">
-                    <CardContent className="p-4">
-                      <div className="space-y-3">
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <p className="text-xs text-gray-500">Bank BCA</p>
-                          <p className="font-bold text-lg">123-456-7890</p>
-                          <p className="text-xs text-gray-600">a/n Ayam Geprek Sambal Ijo</p>
-                        </div>
-                        <div className="bg-gray-50 rounded-lg p-3">
-                          <p className="text-xs text-gray-500">Bank Mandiri</p>
-                          <p className="font-bold text-lg">123-000-456-789</p>
-                          <p className="text-xs text-gray-600">a/n Ayam Geprek Sambal Ijo</p>
-                        </div>
-                        <Button variant="outline" className="w-full" onClick={() => {}}>
-                          <Copy className="w-4 h-4 mr-2" />
-                          Salin Nomor Rekening
-                        </Button>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </TabsContent>
-              </Tabs>
-
-              {/* Pay Button */}
-              <div className="mt-4">
-                <Button
-                  onClick={handlePosCheckout}
-                  disabled={posCart.length === 0}
-                  className="w-full h-14 bg-green-600 hover:bg-green-700 text-lg font-bold"
-                >
-                  <Wallet className="w-5 h-5 mr-2" />
-                  BAYAR
-                </Button>
-              </div>
+            {/* Pay Button */}
+            <div className="flex-1 flex flex-col justify-end p-4">
+              <Button
+                onClick={handlePosCheckout}
+                disabled={posCart.length === 0}
+                className="w-full h-14 bg-green-600 hover:bg-green-700 text-lg font-bold"
+              >
+                <Wallet className="w-5 h-5 mr-2" />
+                BAYAR
+              </Button>
             </div>
           </div>
         </div>
