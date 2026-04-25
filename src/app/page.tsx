@@ -5714,31 +5714,31 @@ export default function RestaurantApp() {
         {/* Product List Dialog */}
         <Dialog open={showPosProductListDialog} onOpenChange={setShowPosProductListDialog}>
           <DialogContent className="max-w-5xl max-h-[85vh] overflow-hidden flex flex-col p-0">
-            <div className="p-4 border-b bg-gradient-to-r from-orange-50 to-amber-50">
-              <DialogTitle className="text-lg font-bold mb-4">Daftar Produk</DialogTitle>
+            <div className="p-3 border-b bg-gradient-to-r from-orange-50 to-amber-50">
+              <DialogTitle className="text-base font-bold mb-3">Daftar Produk</DialogTitle>
 
               {/* Search Input */}
-              <div className="relative mb-4">
+              <div className="relative mb-3">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <Input
                   placeholder="Cari nama produk..."
                   value={posProductSearchQuery}
                   onChange={(e) => setPosProductSearchQuery(e.target.value)}
-                  className="pl-10 border-orange-200 focus:border-orange-400"
+                  className="pl-10 border-orange-200 focus:border-orange-400 h-9"
                 />
               </div>
 
               {/* Category Tabs */}
               <Tabs value={posProductTab} onValueChange={setPosProductTab} className="w-full">
-                <TabsList className="w-full h-auto bg-white border border-orange-200 p-1 flex-wrap">
-                  <TabsTrigger value="all" className="flex-1 min-w-max text-xs px-3 py-2 data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                <TabsList className="w-full h-9 bg-white border border-orange-200 p-1 overflow-x-auto">
+                  <TabsTrigger value="all" className="flex-1 min-w-max text-xs px-2 py-1 h-7 data-[state=active]:bg-orange-500 data-[state=active]:text-white">
                     Semua
                   </TabsTrigger>
                   {categories.map(cat => (
                     <TabsTrigger
                       key={cat.id}
                       value={cat.name}
-                      className="flex-1 min-w-max text-xs px-3 py-2 data-[state=active]:bg-orange-500 data-[state=active]:text-white"
+                      className="flex-1 min-w-max text-xs px-2 py-1 h-7 data-[state=active]:bg-orange-500 data-[state=active]:text-white"
                     >
                       {cat.name}
                     </TabsTrigger>
@@ -5748,8 +5748,8 @@ export default function RestaurantApp() {
             </div>
 
             <ScrollArea className="flex-1">
-              <div className="p-4">
-                <div className="grid grid-cols-2 gap-4">
+              <div className="p-3">
+                <div className="grid grid-cols-2 gap-3">
                   {allProducts.filter(product => {
                     // Filter by search query
                     const matchesSearch = product.name.toLowerCase().includes(posProductSearchQuery.toLowerCase())
