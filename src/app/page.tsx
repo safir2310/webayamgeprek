@@ -472,9 +472,8 @@ export default function RestaurantApp() {
   const [resetPhone, setResetPhone] = useState('')
   const [resetNewPassword, setResetNewPassword] = useState('')
   const [resetConfirmPassword, setResetConfirmPassword] = useState('')
-  const [resetStep, setResetStep] = useState<'initial' | 'otp' | 'new-password' | 'success'>('initial')
+  const [resetStep, setResetStep] = useState<'initial' | 'otp' | 'verify-otp' | 'new-password' | 'success'>('initial')
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
-  const [loginTab, setLoginTab] = useState<'login' | 'forgot-password'>('login')
 
   // POS state
   const [posCart, setPosCart] = useState<CartItem[]>([])
@@ -1392,227 +1391,228 @@ export default function RestaurantApp() {
               </div>
             </div>
 
-            {/* Tabs below password field */}
-            <Tabs value={loginTab} onValueChange={(value) => setLoginTab(value as 'login' | 'forgot-password')}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="login">Masuk</TabsTrigger>
-                <TabsTrigger value="forgot-password">Lupa Password</TabsTrigger>
-              </TabsList>
+            {/* Login Button */}
+            <Button onClick={handleLogin} className="w-full bg-orange-500 hover:bg-orange-600">
+              <LogIn className="w-4 h-4 mr-2" />
+              Masuk
+            </Button>
 
-              {/* Login Tab */}
-              <TabsContent value="login" className="space-y-4">
-                <Button onClick={handleLogin} className="w-full bg-orange-500 hover:bg-orange-600">
-                  <LogIn className="w-4 h-4 mr-2" />
-                  Masuk
+            <Separator />
+
+            {/* Forgot Password Section */}
+            {resetStep === 'initial' && (
+              <div className="space-y-4">
+                <Button
+                  onClick={() => setResetStep('otp')}
+                  variant="outline"
+                  className="w-full"
+                >
+                  <Lock className="mr-2 h-4 w-4" />
+                  Lupa Password?
                 </Button>
-              </TabsContent>
+              </div>
+            )}
 
-              {/* Forgot Password Tab */}
-              <TabsContent value="forgot-password" className="space-y-4">
-                {resetStep === 'initial' && (
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Masukkan email dan nomor HP untuk menerima kode OTP
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Email</Label>
-                      <div className="relative">
-                        <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          type="email"
-                          placeholder="email@example.com"
-                          value={resetEmail}
-                          onChange={(e) => setResetEmail(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Nomor HP</Label>
-                      <div className="relative">
-                        <Phone className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          type="tel"
-                          placeholder="08123456789"
-                          value={resetPhone}
-                          onChange={(e) => setResetPhone(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-                    <Button
-                      onClick={async () => {
-                        if (!resetEmail || !resetPhone) {
-                          toast({
-                            title: 'Data Tidak Lengkap',
-                            description: 'Mohon isi email dan nomor HP',
-                            variant: 'destructive'
-                          })
-                          return
-                        }
-                        try {
-                          const response = await fetch('/api/auth/forgot-password-simple', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ email: resetEmail, phone: resetPhone }),
-                          })
-                          const data = await response.json()
-                          if (!response.ok) {
-                            toast({
-                              title: 'Gagal',
-                              description: data.error || 'Terjadi kesalahan',
-                              variant: 'destructive'
-                            })
-                            return
-                          }
-                          toast({
-                            title: 'OTP Terkirim',
-                            description: 'Kode OTP telah dikirim ke email dan nomor HP Anda',
-                          })
-                          setResetStep('otp')
-                        } catch (error) {
-                          console.error('Send OTP error:', error)
-                          toast({
-                            title: 'Gagal',
-                            description: 'Terjadi kesalahan koneksi',
-                            variant: 'destructive'
-                          })
-                        }
-                      }}
-                      className="w-full bg-orange-500 hover:bg-orange-600"
-                    >
-                      <Lock className="mr-2 h-4 w-4" />
-                      Kirim OTP
-                    </Button>
+            {resetStep === 'otp' && (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Masukkan email dan nomor HP untuk menerima kode OTP
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="email@example.com"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      className="pl-10"
+                    />
                   </div>
-                )}
+                </div>
+                <div className="space-y-2">
+                  <Label>Nomor HP</Label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="tel"
+                      placeholder="08123456789"
+                      value={resetPhone}
+                      onChange={(e) => setResetPhone(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={async () => {
+                    if (!resetEmail || !resetPhone) {
+                      toast({
+                        title: 'Data Tidak Lengkap',
+                        description: 'Mohon isi email dan nomor HP',
+                        variant: 'destructive'
+                      })
+                      return
+                    }
+                    try {
+                      const response = await fetch('/api/auth/forgot-password-simple', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ email: resetEmail, phone: resetPhone }),
+                      })
+                      const data = await response.json()
+                      if (!response.ok) {
+                        toast({
+                          title: 'Gagal',
+                          description: data.error || 'Terjadi kesalahan',
+                          variant: 'destructive'
+                        })
+                        return
+                      }
+                      toast({
+                        title: 'OTP Terkirim',
+                        description: 'Kode OTP telah dikirim ke email dan nomor HP Anda',
+                      })
+                      setResetStep('verify-otp')
+                    } catch (error) {
+                      console.error('Send OTP error:', error)
+                      toast({
+                        title: 'Gagal',
+                        description: 'Terjadi kesalahan koneksi',
+                        variant: 'destructive'
+                      })
+                    }
+                  }}
+                  className="w-full bg-orange-500 hover:bg-orange-600"
+                >
+                  <Lock className="mr-2 h-4 w-4" />
+                  Kirim OTP
+                </Button>
+                <Button
+                  onClick={() => setResetStep('initial')}
+                  variant="ghost"
+                  className="w-full"
+                >
+                  Batal
+                </Button>
+              </div>
+            )}
 
-                {resetStep === 'otp' && (
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground mb-2">
-                        Masukkan 4 digit kode OTP yang telah dikirim ke email dan nomor HP Anda
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Kode OTP (4 Digit)</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          type="text"
-                          placeholder="••••"
-                          value={resetOtp}
-                          onChange={(e) => setResetOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                          className="pl-10 text-center text-2xl tracking-widest"
-                          maxLength={4}
-                        />
-                      </div>
-                    </div>
-                    <Button
-                      onClick={handleVerifyOtp}
-                      disabled={isVerifyingOtp || resetOtp.length !== 4}
-                      className="w-full bg-orange-500 hover:bg-orange-600"
-                    >
-                      {isVerifyingOtp ? 'Memverifikasi...' : 'Verifikasi OTP'}
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setResetStep('initial')
-                        setResetOtp('')
-                        setResetNewPassword('')
-                        setResetConfirmPassword('')
-                      }}
-                      variant="ghost"
-                      className="w-full"
-                    >
-                      Batal
-                    </Button>
+            {resetStep === 'verify-otp' && (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    Masukkan 4 digit kode OTP yang telah dikirim ke email dan nomor HP Anda
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Kode OTP (4 Digit)</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="text"
+                      placeholder="••••"
+                      value={resetOtp}
+                      onChange={(e) => setResetOtp(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                      className="pl-10 text-center text-2xl tracking-widest"
+                      maxLength={4}
+                    />
                   </div>
-                )}
+                </div>
+                <Button
+                  onClick={handleVerifyOtp}
+                  disabled={isVerifyingOtp || resetOtp.length !== 4}
+                  className="w-full bg-orange-500 hover:bg-orange-600"
+                >
+                  {isVerifyingOtp ? 'Memverifikasi...' : 'Verifikasi OTP'}
+                </Button>
+                <Button
+                  onClick={() => setResetStep('otp')}
+                  variant="ghost"
+                  className="w-full"
+                >
+                  Kembali
+                </Button>
+              </div>
+            )}
 
-                {resetStep === 'new-password' && (
-                  <div className="space-y-4">
-                    <div className="text-center">
-                      <p className="text-sm text-muted-foreground mb-2">
-                        OTP berhasil diverifikasi! Silakan masukkan password baru Anda
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Password Baru</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          type="password"
-                          placeholder="•••••••"
-                          value={resetNewPassword}
-                          onChange={(e) => setResetNewPassword(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Konfirmasi Password Baru</Label>
-                      <div className="relative">
-                        <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                        <Input
-                          type="password"
-                          placeholder="•••••••"
-                          value={resetConfirmPassword}
-                          onChange={(e) => setResetConfirmPassword(e.target.value)}
-                          className="pl-10"
-                        />
-                      </div>
-                    </div>
-                    <Button
-                      onClick={handleResetPassword}
-                      className="w-full bg-orange-500 hover:bg-orange-600"
-                    >
-                      Reset Password
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        setResetStep('initial')
-                        setResetOtp('')
-                        setResetNewPassword('')
-                        setResetConfirmPassword('')
-                      }}
-                      variant="ghost"
-                      className="w-full"
-                    >
-                      Batal
-                    </Button>
+            {resetStep === 'new-password' && (
+              <div className="space-y-4">
+                <div className="text-center">
+                  <p className="text-sm text-muted-foreground mb-2">
+                    OTP berhasil diverifikasi! Silakan masukkan password baru Anda
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Password Baru</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="password"
+                      placeholder="•••••••"
+                      value={resetNewPassword}
+                      onChange={(e) => setResetNewPassword(e.target.value)}
+                      className="pl-10"
+                    />
                   </div>
-                )}
+                </div>
+                <div className="space-y-2">
+                  <Label>Konfirmasi Password Baru</Label>
+                  <div className="relative">
+                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="password"
+                      placeholder="•••••••"
+                      value={resetConfirmPassword}
+                      onChange={(e) => setResetConfirmPassword(e.target.value)}
+                      className="pl-10"
+                    />
+                  </div>
+                </div>
+                <Button
+                  onClick={handleResetPassword}
+                  className="w-full bg-orange-500 hover:bg-orange-600"
+                >
+                  Reset Password
+                </Button>
+                <Button
+                  onClick={() => {
+                    setResetStep('verify-otp')
+                  }}
+                  variant="ghost"
+                  className="w-full"
+                >
+                  Kembali
+                </Button>
+              </div>
+            )}
 
-                {resetStep === 'success' && (
-                  <div className="text-center space-y-4">
-                    <CheckCircle className="w-20 h-20 text-green-500 mx-auto" />
-                    <div>
-                      <h3 className="text-xl font-bold mb-2">Password Berhasil Diubah!</h3>
-                      <p className="text-muted-foreground">
-                        Anda sekarang dapat login dengan password baru Anda
-                      </p>
-                    </div>
-                    <Button
-                      onClick={() => {
-                        setResetStep('initial')
-                        setResetOtp('')
-                        setResetNewPassword('')
-                        setResetConfirmPassword('')
-                        setResetEmail('')
-                        setResetPhone('')
-                        setLoginTab('login')
-                      }}
-                      className="w-full bg-orange-500 hover:bg-orange-600"
-                    >
-                      Kembali ke Login
-                    </Button>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+            {resetStep === 'success' && (
+              <div className="text-center space-y-4">
+                <CheckCircle className="w-20 h-20 text-green-500 mx-auto" />
+                <div>
+                  <h3 className="text-xl font-bold mb-2">Password Berhasil Diubah!</h3>
+                  <p className="text-muted-foreground">
+                    Anda sekarang dapat login dengan password baru Anda
+                  </p>
+                </div>
+                <Button
+                  onClick={() => {
+                    setResetStep('initial')
+                    setResetOtp('')
+                    setResetNewPassword('')
+                    setResetConfirmPassword('')
+                    setResetEmail('')
+                    setResetPhone('')
+                  }}
+                  className="w-full bg-orange-500 hover:bg-orange-600"
+                >
+                  Kembali ke Login
+                </Button>
+              </div>
+            )}
 
             <div className="text-center pt-4">
               <p className="text-sm text-muted-foreground">
