@@ -471,10 +471,6 @@ export default function RestaurantApp() {
   const [isShiftOpen, setIsShiftOpen] = useState(false)
   const [shiftAmount, setShiftAmount] = useState(0)
 
-  // Login role selection
-  const [loginRole, setLoginRole] = useState<'customer' | 'cashier' | 'admin'>('customer')
-  const [activeTab, setActiveTab] = useState<'customer' | 'cashier' | 'admin'>('customer')
-
   // Payment methods and redeem products state
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
   const [redeemProducts, setRedeemProducts] = useState<any[]>([])
@@ -657,34 +653,6 @@ export default function RestaurantApp() {
           return
         }
 
-        // Validate that the user role matches the selected tab role
-        if (activeTab === 'cashier' && data.user.role !== 'cashier') {
-          toast({
-            title: 'Login Gagal',
-            description: 'Akun ini bukan akun kasir. Silakan gunakan akun kasir yang valid.',
-            variant: 'destructive'
-          })
-          return
-        }
-
-        if (activeTab === 'admin' && data.user.role !== 'admin') {
-          toast({
-            title: 'Login Gagal',
-            description: 'Akun ini bukan akun admin. Silakan gunakan akun admin yang valid.',
-            variant: 'destructive'
-          })
-          return
-        }
-
-        if (activeTab === 'customer' && (data.user.role === 'cashier' || data.user.role === 'admin')) {
-          toast({
-            title: 'Perhatian',
-            description: 'Akun ini memiliki akses staff. Silakan pilih tab yang sesuai.',
-            variant: 'destructive'
-          })
-          return
-        }
-
         // Save token to localStorage
         if (data.token) {
           localStorage.setItem('auth_token', data.token)
@@ -694,17 +662,23 @@ export default function RestaurantApp() {
         setIsLoggedIn(true)
         setUser(data.user)
 
-        // Handle role-based routing
+        // Auto route based on user role from database
         if (data.user.role === 'admin') {
           // Redirect to admin panel
-          window.location.href = '/admin/dashboard'
+          toast({
+            title: 'Login Berhasil',
+            description: 'Selamat datang, Admin! Mengalihkan ke Admin Panel...',
+          })
+          setTimeout(() => {
+            window.location.href = '/admin/dashboard'
+          }, 1000)
           return
         } else if (data.user.role === 'cashier') {
           // Go to POS screen
           setScreen('pos')
           toast({
             title: 'Login Berhasil',
-            description: 'Selamat datang, Kasir! Anda sekarang dapat menggunakan POS.',
+            description: 'Selamat datang, Kasir! Mengalihkan ke POS...',
           })
         } else {
           // Regular user - go to home screen
@@ -1267,134 +1241,54 @@ export default function RestaurantApp() {
             <div className="text-center">
               <div className="text-6xl mb-4">🍗</div>
               <h1 className="text-3xl font-bold mb-2">Selamat Datang</h1>
-              <p className="text-muted-foreground">Login untuk memesan makanan</p>
+              <p className="text-muted-foreground">Login untuk melanjutkan</p>
             </div>
 
-            <Tabs defaultValue="customer" value={activeTab} onValueChange={(value) => {
-              setActiveTab(value as 'customer' | 'cashier' | 'admin')
-              setLoginRole(value as 'customer' | 'cashier' | 'admin')
-            }}>
-              <TabsList className="grid w-full grid-cols-3 h-12">
-                <TabsTrigger value="customer" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
-                  <User className="mr-2 h-4 w-4" />
-                  Pelanggan
-                </TabsTrigger>
-                <TabsTrigger value="cashier" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
-                  <Utensils className="mr-2 h-4 w-4" />
-                  Kasir
-                </TabsTrigger>
-                <TabsTrigger value="admin" className="data-[state=active]:bg-orange-500 data-[state=active]:text-white">
-                  <ShieldCheck className="mr-2 h-4 w-4" />
-                  Admin
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="customer" className="space-y-4 mt-6">
-                <div className="space-y-2">
-                  <Label>Email Pelanggan</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      type="email"
-                      placeholder="pelanggan@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
+            <div className="space-y-4">
+              <div className="space-y-2">
+                <Label>Email</Label>
+                <div className="relative">
+                  <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    type="email"
+                    placeholder="email@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
-                <div className="space-y-2">
-                  <Label>Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
+              </div>
+              <div className="space-y-2">
+                <Label>Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10"
+                  />
                 </div>
-              </TabsContent>
-
-              <TabsContent value="cashier" className="space-y-4 mt-6">
-                <div className="space-y-2">
-                  <Label>Email Kasir</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      type="email"
-                      placeholder="cashier@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-              </TabsContent>
-
-              <TabsContent value="admin" className="space-y-4 mt-6">
-                <div className="space-y-2">
-                  <Label>Email Admin</Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      type="email"
-                      placeholder="admin@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Password</Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      type="password"
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-10"
-                    />
-                  </div>
-                </div>
-              </TabsContent>
-            </Tabs>
+              </div>
+            </div>
 
             <Button onClick={handleLogin} className="w-full bg-orange-500 hover:bg-orange-600">
               <LogIn className="w-4 h-4 mr-2" />
-              Masuk sebagai {activeTab === 'cashier' ? 'Kasir' : activeTab === 'admin' ? 'Admin' : 'Pelanggan'}
+              Masuk
             </Button>
 
-            {activeTab === 'customer' && (
-              <div className="text-center">
-                <p className="text-sm text-muted-foreground">
-                  Belum punya akun pelanggan?{' '}
-                  <button
-                    onClick={() => setScreen('register')}
-                    className="text-orange-500 hover:underline font-medium"
-                  >
-                    Daftar
-                  </button>
-                </p>
-              </div>
-            )}
+            <div className="text-center">
+              <p className="text-sm text-muted-foreground">
+                Belum punya akun?{' '}
+                <button
+                  onClick={() => setScreen('register')}
+                  className="text-orange-500 hover:underline font-medium"
+                >
+                  Daftar
+                </button>
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
