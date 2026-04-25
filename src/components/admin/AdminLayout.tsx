@@ -200,9 +200,9 @@ export default function AdminLayout({
       </header>
 
       {/* Main Content */}
-      <div className="flex">
+      <div className="flex" style={{ height: 'calc(100vh - 4rem)' }}>
         {/* Desktop Sidebar */}
-        <div className="hidden lg:block w-72 flex-shrink-0 sticky top-16 self-start bg-white border-r h-[calc(100vh-4rem)] overflow-y-auto">
+        <div className="hidden lg:flex flex-col w-72 flex-shrink-0 bg-white border-r">
           <AdminSidebar
             currentTab={currentTab}
             onTabChange={onTabChange}
@@ -254,7 +254,7 @@ export default function AdminLayout({
         )}
 
         {/* Content Area */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
+        <main className="flex-1 overflow-auto p-4 sm:p-6 lg:p-8 max-w-7xl mx-auto w-full">
           {children}
         </main>
       </div>

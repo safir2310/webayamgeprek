@@ -118,9 +118,9 @@ export default function AdminSidebar({
   }
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col h-full">
       {/* Logo & Collapse Button */}
-      <div className="p-4 border-b">
+      <div className="p-4 border-b flex-shrink-0">
         <div className="flex items-center justify-between">
           {!collapsed && (
             <div className="flex items-center gap-3">
@@ -149,9 +149,9 @@ export default function AdminSidebar({
         </div>
       </div>
 
-      {/* Navigation */}
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-6">
+      {/* Navigation - Scrollable */}
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-6">
           {/* Main Navigation */}
           {!collapsed && (
             <div>
@@ -202,9 +202,9 @@ export default function AdminSidebar({
         </div>
       </ScrollArea>
 
-      {/* User Profile */}
+      {/* User Profile - Fixed at bottom */}
       {!collapsed && user && (
-        <div className="p-4 border-t">
+        <div className="p-4 border-t flex-shrink-0">
           <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-xl p-4">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-orange-200 rounded-full flex items-center justify-center flex-shrink-0">
@@ -230,7 +230,7 @@ export default function AdminSidebar({
 
       {/* Collapsed Logout Button */}
       {collapsed && (
-        <div className="p-4 border-t">
+        <div className="p-4 border-t flex-shrink-0">
           <Button
             variant="ghost"
             size="icon"
