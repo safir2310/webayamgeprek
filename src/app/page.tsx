@@ -2872,16 +2872,16 @@ export default function RestaurantApp() {
 
         {/* Receipt Preview Dialog */}
         <Dialog open={showReceiptPreviewDialog} onOpenChange={setShowReceiptPreviewDialog}>
-          <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Preview Struk</DialogTitle>
-              <DialogDescription>
+          <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto p-0">
+            <div className="sticky top-0 bg-white border-b z-10 p-4">
+              <DialogTitle className="text-lg font-bold text-orange-600">Preview Struk</DialogTitle>
+              <DialogDescription className="text-sm">
                 Cek struk sebelum download sebagai PDF
               </DialogDescription>
-            </DialogHeader>
+            </div>
 
             {previewOrderData && (
-              <div className="bg-gradient-to-b from-white to-orange-50 my-4 mx-auto max-w-sm shadow-lg border-2 border-orange-200 rounded-lg overflow-hidden">
+              <div className="bg-gradient-to-b from-white to-orange-50 my-4 mx-auto shadow-lg border-2 border-orange-200 rounded-lg overflow-hidden">
                 {/* Top Border */}
                 <div className="h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
 
@@ -3004,10 +3004,11 @@ export default function RestaurantApp() {
               </div>
             )}
 
-            <DialogFooter className="flex gap-3">
+            <DialogFooter className="flex gap-3 px-4 pb-4 pt-2">
               <Button
                 variant="outline"
                 onClick={() => setShowReceiptPreviewDialog(false)}
+                className="flex-1"
               >
                 Tutup
               </Button>
@@ -3044,7 +3045,7 @@ export default function RestaurantApp() {
                     })
                   }
                 }}
-                className="bg-green-600 hover:bg-green-700 gap-2"
+                className="flex-1 bg-green-600 hover:bg-green-700 gap-2"
               >
                 <Download className="w-4 h-4" />
                 Download PDF
