@@ -366,6 +366,7 @@ export default function RestaurantApp() {
   const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [user, setUser] = useState<any>(null)
   const [memberData, setMemberData] = useState<any>(null)
+  const [splashCompleted, setSplashCompleted] = useState(false)
   const [cart, setCart] = useState<CartItem[]>([])
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -502,17 +503,20 @@ export default function RestaurantApp() {
   const [chatMessages, setChatMessages] = useState<any[]>([])
   const [chatInput, setChatInput] = useState('')
 
-  // Splash screen effect
+  // Splash screen effect - only runs once
   useEffect(() => {
-    const timer = setTimeout(() => {
-      if (isLoggedIn) {
-        setScreen('home')
-      } else {
-        setScreen('login')
-      }
-    }, 2000)
-    return () => clearTimeout(timer)
-  }, [isLoggedIn])
+    if (!splashCompleted) {
+      const timer = setTimeout(() => {
+        if (isLoggedIn) {
+          setScreen('home')
+        } else {
+          setScreen('login')
+        }
+        setSplashCompleted(true)
+      }, 2000)
+      return () => clearTimeout(timer)
+    }
+  }, []) // Remove isLoggedIn dependency
 
   // Fetch featured products from database
   useEffect(() => {
