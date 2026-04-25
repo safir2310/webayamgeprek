@@ -1774,7 +1774,7 @@ export default function RestaurantApp() {
           setShowChat(open)
           if (open) markChatAsRead()
         }}>
-          <DialogContent className="max-w-sm h-[500px] flex flex-col p-0">
+          <DialogContent className="max-w-xs h-[500px] flex flex-col p-0">
             <DialogTitle className="sr-only">Customer Service</DialogTitle>
             <div className="p-4 border-b bg-gradient-to-r from-orange-500 to-orange-400">
               <div className="flex items-center gap-3">
@@ -2060,7 +2060,7 @@ export default function RestaurantApp() {
           setShowChat(open)
           if (open) markChatAsRead()
         }}>
-          <DialogContent className="max-w-sm h-[500px] flex flex-col p-0">
+          <DialogContent className="max-w-xs h-[500px] flex flex-col p-0">
             <DialogTitle className="sr-only">Customer Service</DialogTitle>
             <div className="p-4 border-b bg-gradient-to-r from-orange-500 to-orange-400">
               <div className="flex items-center gap-3">
@@ -2475,7 +2475,7 @@ export default function RestaurantApp() {
           setShowChat(open)
           if (open) markChatAsRead()
         }}>
-          <DialogContent className="max-w-sm h-[500px] flex flex-col p-0">
+          <DialogContent className="max-w-xs h-[500px] flex flex-col p-0">
             <DialogTitle className="sr-only">Customer Service</DialogTitle>
             <div className="p-4 border-b bg-gradient-to-r from-orange-500 to-orange-400">
               <div className="flex items-center gap-3">
@@ -3145,7 +3145,7 @@ export default function RestaurantApp() {
           setShowChat(open)
           if (open) markChatAsRead()
         }}>
-          <DialogContent className="max-w-sm h-[500px] flex flex-col p-0">
+          <DialogContent className="max-w-xs h-[500px] flex flex-col p-0">
             <DialogTitle className="sr-only">Customer Service</DialogTitle>
             <div className="p-4 border-b bg-gradient-to-r from-orange-500 to-orange-400">
               <div className="flex items-center gap-3">
@@ -4761,7 +4761,7 @@ export default function RestaurantApp() {
           setShowChat(open)
           if (open) markChatAsRead()
         }}>
-          <DialogContent className="max-w-sm h-[500px] flex flex-col p-0">
+          <DialogContent className="max-w-xs h-[500px] flex flex-col p-0">
             <DialogTitle className="sr-only">Customer Service</DialogTitle>
             <div className="p-4 border-b bg-gradient-to-r from-orange-500 to-orange-400">
               <div className="flex items-center gap-3">
