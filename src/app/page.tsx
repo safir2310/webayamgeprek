@@ -5712,15 +5712,15 @@ export default function RestaurantApp() {
 
               {/* Category Tabs */}
               <Tabs value={posProductTab} onValueChange={setPosProductTab} className="w-full">
-                <TabsList className="w-full h-9 bg-white border border-orange-200 p-1 overflow-x-auto">
-                  <TabsTrigger value="all" className="flex-1 min-w-max text-xs px-2 py-1 h-7 data-[state=active]:bg-orange-500 data-[state=active]:text-white">
+                <TabsList className="w-full h-9 bg-white border border-orange-200 p-1 overflow-x-auto overflow-y-hidden scrollbar-thin scrollbar-thumb-orange-300 scrollbar-track-orange-100">
+                  <TabsTrigger value="all" className="flex-shrink-0 text-xs px-3 py-1 h-7 data-[state=active]:bg-orange-500 data-[state=active]:text-white">
                     Semua
                   </TabsTrigger>
                   {categories.map(cat => (
                     <TabsTrigger
                       key={cat.id}
                       value={cat.name}
-                      className="flex-1 min-w-max text-xs px-2 py-1 h-7 data-[state=active]:bg-orange-500 data-[state=active]:text-white"
+                      className="flex-shrink-0 text-xs px-3 py-1 h-7 data-[state=active]:bg-orange-500 data-[state=active]:text-white"
                     >
                       {cat.name}
                     </TabsTrigger>
