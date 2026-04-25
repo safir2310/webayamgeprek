@@ -1378,8 +1378,18 @@ export default function RestaurantApp() {
                 </div>
               </div>
               <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <Label>Password</Label>
+                <Label>Password</Label>
+                <div className="relative">
+                  <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    type="password"
+                    placeholder="••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    className="pl-10"
+                  />
+                </div>
+                <div className="text-right">
                   <Button
                     onClick={() => {
                       setShowForgotPasswordDialog(true)
@@ -1390,16 +1400,6 @@ export default function RestaurantApp() {
                   >
                     Lupa Password?
                   </Button>
-                </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
-                  <Input
-                    type="password"
-                    placeholder="••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    className="pl-10"
-                  />
                 </div>
               </div>
             </div>
