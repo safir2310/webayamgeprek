@@ -293,9 +293,8 @@ const getStatusBadgeColor = (status: string): string => {
 // Helper function to calculate POS totals
 const calculatePOSTotals = (cart: CartItem[], taxRate: number, discount: number) => {
   const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.qty, 0)
-  const taxAmount = subtotal * taxRate
-  const total = subtotal + taxAmount - discount
-  return { subtotal, taxAmount, total }
+  const total = subtotal - discount
+  return { subtotal, total }
 }
 
 // Header Component with Notification and Chat
@@ -1516,12 +1515,11 @@ export default function RestaurantApp() {
       return
     }
 
-    const { subtotal, taxAmount, total } = calculatePOSTotals(posCart, posTax, posDiscount)
+    const { subtotal, total } = calculatePOSTotals(posCart, posTax, posDiscount)
 
     setPosOrderData({
       items: posCart,
       subtotal,
-      tax: taxAmount,
       discount: posDiscount,
       total,
       customerName: posCustomerName,
@@ -2894,15 +2892,11 @@ export default function RestaurantApp() {
                       <span>-Rp {appliedVoucher.discount.toLocaleString()}</span>
                     </div>
                   )}
-                  <div className="flex justify-between text-sm">
-                    <span className="text-muted-foreground">Pajak (10%)</span>
-                    <span>Rp {(getCartTotal() * 0.1).toLocaleString()}</span>
-                  </div>
                   <Separator />
                   <div className="flex justify-between font-bold text-lg">
                     <span>Total</span>
                     <span className="text-orange-600">
-                      Rp {(getCartTotal() * 1.1 - (appliedVoucher?.discount || 0)).toLocaleString()}
+                      Rp {(getCartTotal() - (appliedVoucher?.discount || 0)).toLocaleString()}
                     </span>
                   </div>
                 </CardContent>
@@ -3182,14 +3176,10 @@ export default function RestaurantApp() {
                   <span className="text-muted-foreground">Subtotal</span>
                   <span>Rp {getCartTotal().toLocaleString()}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Pajak (10%)</span>
-                  <span>Rp {(getCartTotal() * 0.1).toLocaleString()}</span>
-                </div>
                 <div className="flex justify-between font-bold text-lg pt-2">
                   <span>Total</span>
                   <span className="text-orange-600">
-                    Rp {(getCartTotal() * 1.1).toLocaleString()}
+                    Rp {getCartTotal().toLocaleString()}
                   </span>
                 </div>
               </div>
@@ -3506,10 +3496,6 @@ export default function RestaurantApp() {
                         <div className="flex justify-between">
                           <span className="text-gray-600">Subtotal</span>
                           <span>Rp {previewOrderData.subtotal.toLocaleString()}</span>
-                        </div>
-                        <div className="flex justify-between">
-                          <span className="text-gray-600">Pajak (10%)</span>
-                          <span>Rp {previewOrderData.tax.toLocaleString()}</span>
                         </div>
                         {previewOrderData.discount > 0 && (
                           <div className="flex justify-between text-green-600">
@@ -5404,7 +5390,7 @@ export default function RestaurantApp() {
 
   // ========== POS SCREEN ==========
   if (screen === 'pos') {
-    const { subtotal, taxAmount, total } = calculatePOSTotals(posCart, posTax, posDiscount)
+    const { subtotal, total } = calculatePOSTotals(posCart, posTax, posDiscount)
 
     return (
       <div className="min-h-screen bg-gray-100">
@@ -5634,10 +5620,6 @@ export default function RestaurantApp() {
               <div className="flex justify-between text-sm">
                 <span className="text-gray-600">Subtotal</span>
                 <span className="font-medium">Rp {subtotal.toLocaleString()}</span>
-              </div>
-              <div className="flex justify-between text-sm">
-                <span className="text-gray-600">Pajak (10%)</span>
-                <span className="font-medium">Rp {taxAmount.toLocaleString()}</span>
               </div>
               {posDiscount > 0 && (
                 <div className="flex justify-between text-sm text-green-600">
@@ -6052,10 +6034,6 @@ export default function RestaurantApp() {
                   <div className="flex justify-between text-sm">
                     <span className="text-gray-600">Subtotal</span>
                     <span>Rp {posOrderData?.subtotal.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Pajak (10%)</span>
-                    <span>Rp {posOrderData?.tax.toLocaleString()}</span>
                   </div>
                   {posOrderData?.discount && posOrderData.discount > 0 && (
                     <div className="flex justify-between text-sm text-green-600">
