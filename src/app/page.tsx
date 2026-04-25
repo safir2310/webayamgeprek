@@ -2881,7 +2881,8 @@ export default function RestaurantApp() {
             </div>
 
             {previewOrderData && (
-              <div className="bg-gradient-to-b from-white to-orange-50 my-4 mx-auto shadow-lg border-2 border-orange-200 rounded-lg overflow-hidden">
+              <div className="flex justify-center py-4">
+                <div className="bg-gradient-to-b from-white to-orange-50 shadow-lg border-2 border-orange-200 rounded-lg overflow-hidden w-full max-w-xs">
                 {/* Top Border */}
                 <div className="h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
 
@@ -3001,6 +3002,7 @@ export default function RestaurantApp() {
 
                 {/* Bottom Border */}
                 <div className="h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
+                </div>
               </div>
             )}
 
