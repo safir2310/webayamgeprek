@@ -444,6 +444,11 @@ export default function RestaurantApp() {
   const [terbaruProducts, setTerbaruProducts] = useState<Product[]>([])
   const [loadingProducts, setLoadingProducts] = useState(true)
 
+  // All products and categories from database
+  const [allProducts, setAllProducts] = useState<Product[]>([])
+  const [categories, setCategories] = useState<any[]>([])
+  const [loadingAllProducts, setLoadingAllProducts] = useState(true)
+
   const [memberId, setMemberId] = useState(() => {
     // Generate member ID on initial load
     const digits = Math.floor(100000 + Math.random() * 900000)
@@ -575,6 +580,55 @@ export default function RestaurantApp() {
     }
 
     fetchRedeemProducts()
+  }, [])
+
+  // Fetch all products from database
+  useEffect(() => {
+    const fetchAllProducts = async () => {
+      try {
+        setLoadingAllProducts(true)
+        const response = await fetch('/api/products')
+        const data = await response.json()
+
+        if (data.products) {
+          // Format products to match Product interface
+          const formattedProducts = data.products.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            description: p.description || '',
+            price: p.price,
+            stock: p.stock,
+            image: p.image || '🍗',
+            category: p.category?.name || 'Other'
+          }))
+          setAllProducts(formattedProducts)
+        }
+      } catch (error) {
+        console.error('Failed to fetch all products:', error)
+      } finally {
+        setLoadingAllProducts(false)
+      }
+    }
+
+    fetchAllProducts()
+  }, [])
+
+  // Fetch categories from database
+  useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const response = await fetch('/api/categories')
+        const data = await response.json()
+
+        if (data.categories) {
+          setCategories(data.categories)
+        }
+      } catch (error) {
+        console.error('Failed to fetch categories:', error)
+      }
+    }
+
+    fetchCategories()
   }, [])
 
   const handleLogin = async () => {
@@ -1147,13 +1201,13 @@ export default function RestaurantApp() {
     return cart.reduce((sum, item) => sum + item.product.price * item.qty, 0)
   }
 
-  const filteredProducts = mockProducts.filter(product => {
+  const filteredProducts = allProducts.filter(product => {
     const matchesSearch = product.name.toLowerCase().includes(searchQuery.toLowerCase())
     const matchesCategory = selectedCategory === 'all' || product.category === selectedCategory
     return matchesSearch && matchesCategory
   })
 
-  const categories = ['all', 'Main', 'Drink', 'Snack']
+  const menuCategories = ['all', ...(categories.map(c => c.name))]
 
   // ========== SPLASH SCREEN ==========
   if (screen === 'splash') {
@@ -3510,7 +3564,7 @@ export default function RestaurantApp() {
                     </CardContent>
                   </Card>
                 ) : (
-                  mockProducts
+                  allProducts
                     .filter(p => favorites.includes(p.id))
                     .map((product) => (
                       <Card key={product.id}>
