@@ -158,7 +158,6 @@ export default function ForgotPasswordPage() {
           </Link>
 
           <div className="text-center">
-            <div className="text-6xl mb-4">🍗</div>
             <h1 className="text-3xl font-bold mb-2">Lupa Password</h1>
             <p className="text-muted-foreground">
               {step === 'verify' && 'Verifikasi identitas Anda untuk mereset password'}
