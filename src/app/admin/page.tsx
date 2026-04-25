@@ -39,10 +39,13 @@ import {
   UserCog,
   Gift,
   Bell,
-  MessageCircle
+  MessageCircle,
+  Percent,
+  Ticket,
+  Star
 } from 'lucide-react'
 
-type TabType = 'dashboard' | 'orders' | 'products' | 'categories' | 'stock' | 'users' | 'cashiers' | 'payments' | 'redeem' | 'reports' | 'notifications' | 'chat'
+type TabType = 'dashboard' | 'orders' | 'products' | 'categories' | 'featured' | 'promos' | 'vouchers' | 'stock' | 'users' | 'cashiers' | 'payments' | 'redeem' | 'reports' | 'settings' | 'notifications' | 'chat'
 
 interface DashboardStats {
   totalSales: number
@@ -142,6 +145,50 @@ export default function AdminPage() {
   })
   const [selectedReport, setSelectedReport] = useState<any>(null)
 
+  // Featured products state
+  const [featuredProducts, setFeaturedProducts] = useState<any[]>([])
+
+  // Promos state
+  const [promos, setPromos] = useState<any[]>([])
+  const [showPromoDialog, setShowPromoDialog] = useState(false)
+  const [editingPromo, setEditingPromo] = useState<any>(null)
+  const [newPromo, setNewPromo] = useState({
+    name: '',
+    description: '',
+    discountPercent: 0,
+    startDate: '',
+    endDate: '',
+    minPurchase: 0,
+    isActive: true
+  })
+
+  // Vouchers state
+  const [vouchers, setVouchers] = useState<any[]>([])
+  const [showVoucherDialog, setShowVoucherDialog] = useState(false)
+  const [editingVoucher, setEditingVoucher] = useState<any>(null)
+  const [newVoucher, setNewVoucher] = useState({
+    code: '',
+    description: '',
+    discountPercent: 0,
+    maxDiscount: 0,
+    minPurchase: 0,
+    usageLimit: 0,
+    startDate: '',
+    endDate: '',
+    isActive: true
+  })
+
+  // Settings state
+  const [settings, setSettings] = useState<any>({
+    storeName: 'Ayam Geprek Sambal Ijo',
+    storeAddress: '',
+    storePhone: '',
+    storeEmail: '',
+    openingHours: '',
+    taxRate: 10,
+    serviceCharge: 0
+  })
+
   useEffect(() => {
     loadDashboardStats()
     loadNotifications()
@@ -154,6 +201,10 @@ export default function AdminPage() {
     loadRedeemProducts()
     loadChatMessages()
     loadReports()
+    loadFeaturedProducts()
+    loadPromos()
+    loadVouchers()
+    loadSettings()
   }, [])
 
   useEffect(() => {
@@ -864,6 +915,281 @@ export default function AdminPage() {
       toast({
         title: 'Gagal',
         description: 'Terjadi kesalahan saat menghapus produk',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  // Featured Products handlers
+  const loadFeaturedProducts = async () => {
+    try {
+      const response = await fetch('/api/admin/featured-products')
+      const data = await response.json()
+      if (response.ok && data.featuredProducts) {
+        setFeaturedProducts(data.featuredProducts)
+      }
+    } catch (error) {
+      console.error('Failed to load featured products:', error)
+    }
+  }
+
+  const handleToggleFeatured = async (productId: string, isCurrentlyFeatured: boolean) => {
+    try {
+      const response = await fetch('/api/admin/featured-products', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ productId, isFeatured: !isCurrentlyFeatured })
+      })
+
+      if (response.ok) {
+        loadFeaturedProducts()
+        toast({
+          title: 'Berhasil',
+          description: isCurrentlyFeatured ? 'Produk dihapus dari unggulan' : 'Produk ditambahkan ke unggulan',
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat mengubah status unggulan',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  // Promos handlers
+  const loadPromos = async () => {
+    try {
+      const response = await fetch('/api/admin/promos')
+      const data = await response.json()
+      if (response.ok && data.promos) {
+        setPromos(data.promos)
+      }
+    } catch (error) {
+      console.error('Failed to load promos:', error)
+    }
+  }
+
+  const handleSavePromo = async () => {
+    try {
+      if (editingPromo) {
+        const response = await fetch(`/api/admin/promos/${editingPromo.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newPromo)
+        })
+
+        if (response.ok) {
+          setPromos(promos.map(p =>
+            p.id === editingPromo.id ? { ...p, ...newPromo } : p
+          ))
+          setShowPromoDialog(false)
+          setEditingPromo(null)
+          toast({
+            title: 'Berhasil',
+            description: 'Promo telah diperbarui',
+          })
+        }
+      } else {
+        const response = await fetch('/api/admin/promos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newPromo)
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setPromos([...promos, data.promo])
+          setShowPromoDialog(false)
+          toast({
+            title: 'Berhasil',
+            description: 'Promo baru telah ditambahkan',
+          })
+        }
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menyimpan promo',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleDeletePromo = async (id: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus promo ini?')) return
+
+    try {
+      const response = await fetch(`/api/admin/promos/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setPromos(promos.filter(p => p.id !== id))
+        toast({
+          title: 'Berhasil',
+          description: 'Promo telah dihapus',
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menghapus promo',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleEditPromo = (promo: any) => {
+    setEditingPromo(promo)
+    setNewPromo({
+      name: promo.name,
+      description: promo.description,
+      discountPercent: promo.discountPercent,
+      startDate: new Date(promo.startDate).toISOString().split('T')[0],
+      endDate: new Date(promo.endDate).toISOString().split('T')[0],
+      minPurchase: promo.minPurchase,
+      isActive: promo.isActive
+    })
+    setShowPromoDialog(true)
+  }
+
+  // Vouchers handlers
+  const loadVouchers = async () => {
+    try {
+      const response = await fetch('/api/admin/vouchers')
+      const data = await response.json()
+      if (response.ok && data.vouchers) {
+        setVouchers(data.vouchers)
+      }
+    } catch (error) {
+      console.error('Failed to load vouchers:', error)
+    }
+  }
+
+  const handleSaveVoucher = async () => {
+    try {
+      if (editingVoucher) {
+        const response = await fetch(`/api/admin/vouchers/${editingVoucher.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newVoucher)
+        })
+
+        if (response.ok) {
+          setVouchers(vouchers.map(v =>
+            v.id === editingVoucher.id ? { ...v, ...newVoucher } : v
+          ))
+          setShowVoucherDialog(false)
+          setEditingVoucher(null)
+          toast({
+            title: 'Berhasil',
+            description: 'Voucher telah diperbarui',
+          })
+        }
+      } else {
+        const response = await fetch('/api/admin/vouchers', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...newVoucher, code: newVoucher.code.toUpperCase() })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setVouchers([...vouchers, data.voucher])
+          setShowVoucherDialog(false)
+          toast({
+            title: 'Berhasil',
+            description: 'Voucher baru telah ditambahkan',
+          })
+        }
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menyimpan voucher',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleDeleteVoucher = async (id: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus voucher ini?')) return
+
+    try {
+      const response = await fetch(`/api/admin/vouchers/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setVouchers(vouchers.filter(v => v.id !== id))
+        toast({
+          title: 'Berhasil',
+          description: 'Voucher telah dihapus',
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menghapus voucher',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleEditVoucher = (voucher: any) => {
+    setEditingVoucher(voucher)
+    setNewVoucher({
+      code: voucher.code,
+      description: voucher.description,
+      discountPercent: voucher.discountPercent,
+      maxDiscount: voucher.maxDiscount,
+      minPurchase: voucher.minPurchase,
+      usageLimit: voucher.usageLimit,
+      startDate: new Date(voucher.startDate).toISOString().split('T')[0],
+      endDate: new Date(voucher.endDate).toISOString().split('T')[0],
+      isActive: voucher.isActive
+    })
+    setShowVoucherDialog(true)
+  }
+
+  // Settings handlers
+  const loadSettings = async () => {
+    try {
+      const response = await fetch('/api/admin/settings')
+      const data = await response.json()
+      if (response.ok && data.settings) {
+        setSettings(data.settings)
+      }
+    } catch (error) {
+      console.error('Failed to load settings:', error)
+    }
+  }
+
+  const handleSaveSettings = async () => {
+    try {
+      const response = await fetch('/api/admin/settings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(settings)
+      })
+
+      if (response.ok) {
+        toast({
+          title: 'Berhasil',
+          description: 'Pengaturan telah disimpan',
+        })
+      } else {
+        toast({
+          title: 'Gagal',
+          description: 'Gagal menyimpan pengaturan',
+          variant: 'destructive'
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menyimpan pengaturan',
         variant: 'destructive'
       })
     }
@@ -1937,6 +2263,346 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* Featured Products Tab */}
+      {activeTab === 'featured' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Produk Unggulan</h2>
+              <p className="text-gray-600 mt-1">Kelola produk yang ditampilkan di halaman utama</p>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {products.map((product) => {
+              const isFeatured = featuredProducts.some(fp => fp.productId === product.id)
+              return (
+                <Card key={product.id} className="hover:shadow-md transition-shadow">
+                  <CardContent className="p-4">
+                    <div className="flex items-start gap-3">
+                      <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        {product.image ? (
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-full h-full object-cover"
+                          />
+                        ) : (
+                          <Package className="h-6 w-6 text-gray-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <h3 className="font-semibold truncate">{product.name}</h3>
+                        <p className="text-sm text-orange-600 font-medium">{formatCurrency(product.price)}</p>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 mt-4">
+                      <Button
+                        size="sm"
+                        variant={isFeatured ? 'default' : 'outline'}
+                        className="flex-1"
+                        onClick={() => handleToggleFeatured(product.id, isFeatured)}
+                      >
+                        <Star className={`h-3 w-3 mr-1 ${isFeatured ? 'fill-yellow-400' : ''}`} />
+                        {isFeatured ? 'Unggulan' : 'Set Unggulan'}
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
+            {products.length === 0 && (
+              <div className="col-span-full text-center py-12 text-gray-500">
+                <Star className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg">Belum ada produk</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Promos Tab */}
+      {activeTab === 'promos' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Promo</h2>
+              <p className="text-gray-600 mt-1">Kelola promo dan diskon</p>
+            </div>
+            <Button onClick={() => {
+              setEditingPromo(null)
+              setNewPromo({
+                name: '',
+                description: '',
+                discountPercent: 0,
+                startDate: '',
+                endDate: '',
+                minPurchase: 0,
+                isActive: true
+              })
+              setShowPromoDialog(true)
+            }}>
+              <Plus className="h-4 w-4 mr-2" />
+              Tambah Promo
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {promos.map((promo) => (
+              <Card key={promo.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="flex items-start justify-between gap-2 mb-3">
+                    <Badge className={promo.isActive ? 'bg-orange-100 text-orange-700' : 'bg-gray-100 text-gray-600'}>
+                      {promo.isActive ? 'Aktif' : 'Nonaktif'}
+                    </Badge>
+                    <Switch
+                      checked={promo.isActive}
+                      onCheckedChange={(checked) => {
+                        const response = fetch(`/api/admin/promos/${promo.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ ...promo, isActive: checked })
+                        }).then(res => {
+                          if (res.ok) {
+                            loadPromos()
+                            toast({
+                              title: 'Berhasil',
+                              description: checked ? 'Promo diaktifkan' : 'Promo dinonaktifkan',
+                            })
+                          }
+                        })
+                      }}
+                    />
+                  </div>
+                  <h3 className="font-semibold text-lg mb-1">{promo.name}</h3>
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{promo.description || 'Tidak ada deskripsi'}</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Diskon</span>
+                      <span className="font-bold text-orange-600">{promo.discountPercent}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Min. Belanja</span>
+                      <span className="font-medium">{formatCurrency(promo.minPurchase)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Periode</span>
+                      <span className="font-medium text-xs">
+                        {new Date(promo.startDate).toLocaleDateString('id-ID')} - {new Date(promo.endDate).toLocaleDateString('id-ID')}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => handleEditPromo(promo)}
+                    >
+                      <Edit2 className="h-3 w-3 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDeletePromo(promo.id)}
+                    >
+                      <Trash2 className="h-3 w-3 text-red-500" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {promos.length === 0 && (
+              <div className="col-span-full text-center py-12 text-gray-500">
+                <Percent className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg">Belum ada promo</p>
+                <p className="text-sm mt-2">Klik "Tambah Promo" untuk memulai</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Vouchers Tab */}
+      {activeTab === 'vouchers' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Voucher</h2>
+              <p className="text-gray-600 mt-1">Kelola kode voucher diskon</p>
+            </div>
+            <Button onClick={() => {
+              setEditingVoucher(null)
+              setNewVoucher({
+                code: '',
+                description: '',
+                discountPercent: 0,
+                maxDiscount: 0,
+                minPurchase: 0,
+                usageLimit: 0,
+                startDate: '',
+                endDate: '',
+                isActive: true
+              })
+              setShowVoucherDialog(true)
+            }}>
+              <Plus className="h-4 w-4 mr-2" />
+              Tambah Voucher
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {vouchers.map((voucher) => (
+              <Card key={voucher.id} className="hover:shadow-md transition-shadow">
+                <CardContent className="p-4">
+                  <div className="bg-gradient-to-r from-orange-500 to-amber-500 rounded-lg p-3 mb-3">
+                    <Ticket className="h-6 w-6 text-white mb-2" />
+                    <p className="text-2xl font-bold text-white tracking-wider">{voucher.code}</p>
+                  </div>
+                  <p className="text-sm text-gray-600 mb-3 line-clamp-2">{voucher.description || 'Tidak ada deskripsi'}</p>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Diskon</span>
+                      <span className="font-bold text-orange-600">{voucher.discountPercent}%</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Maks. Diskon</span>
+                      <span className="font-medium">{formatCurrency(voucher.maxDiscount)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Min. Belanja</span>
+                      <span className="font-medium">{formatCurrency(voucher.minPurchase)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-500">Batas Penggunaan</span>
+                      <span className="font-medium">{voucher.usageLimit || '∞'}</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => handleEditVoucher(voucher)}
+                    >
+                      <Edit2 className="h-3 w-3 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDeleteVoucher(voucher.id)}
+                    >
+                      <Trash2 className="h-3 w-3 text-red-500" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {vouchers.length === 0 && (
+              <div className="col-span-full text-center py-12 text-gray-500">
+                <Ticket className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg">Belum ada voucher</p>
+                <p className="text-sm mt-2">Klik "Tambah Voucher" untuk memulai</p>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Settings Tab */}
+      {activeTab === 'settings' && (
+        <div className="space-y-6">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900">Pengaturan</h2>
+            <p className="text-gray-600 mt-1">Pengaturan restoran dan sistem</p>
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Informasi Toko</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Nama Toko</Label>
+                <Input
+                  value={settings.storeName}
+                  onChange={(e) => setSettings({ ...settings, storeName: e.target.value })}
+                  placeholder="Nama toko"
+                />
+              </div>
+              <div>
+                <Label>Alamat</Label>
+                <Textarea
+                  value={settings.storeAddress}
+                  onChange={(e) => setSettings({ ...settings, storeAddress: e.target.value })}
+                  placeholder="Alamat lengkap toko"
+                  rows={3}
+                />
+              </div>
+              <div>
+                <Label>Nomor Telepon</Label>
+                <Input
+                  value={settings.storePhone}
+                  onChange={(e) => setSettings({ ...settings, storePhone: e.target.value })}
+                  placeholder="Nomor telepon toko"
+                />
+              </div>
+              <div>
+                <Label>Email</Label>
+                <Input
+                  type="email"
+                  value={settings.storeEmail}
+                  onChange={(e) => setSettings({ ...settings, storeEmail: e.target.value })}
+                  placeholder="Email toko"
+                />
+              </div>
+              <div>
+                <Label>Jam Operasional</Label>
+                <Input
+                  value={settings.openingHours}
+                  onChange={(e) => setSettings({ ...settings, openingHours: e.target.value })}
+                  placeholder="Contoh: 09:00 - 22:00"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Pengaturan Pembayaran</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <div>
+                <Label>Pajak (%)</Label>
+                <Input
+                  type="number"
+                  value={settings.taxRate}
+                  onChange={(e) => setSettings({ ...settings, taxRate: parseFloat(e.target.value) || 0 })}
+                  placeholder="Persentase pajak"
+                />
+              </div>
+              <div>
+                <Label>Biaya Layanan (%)</Label>
+                <Input
+                  type="number"
+                  value={settings.serviceCharge}
+                  onChange={(e) => setSettings({ ...settings, serviceCharge: parseFloat(e.target.value) || 0 })}
+                  placeholder="Persentase biaya layanan"
+                />
+              </div>
+            </CardContent>
+          </Card>
+
+          <div className="flex justify-end gap-2">
+            <Button onClick={handleSaveSettings} className="min-w-[150px]">
+              Simpan Pengaturan
+            </Button>
+          </div>
+        </div>
+      )}
+
       {/* Notifications Tab */}
       {activeTab === 'notifications' && (
         <div className="space-y-6">
@@ -2633,6 +3299,169 @@ export default function AdminPage() {
           <DialogFooter>
             <Button variant="outline" onClick={() => setSelectedReport(null)}>
               Tutup
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Promo Dialog */}
+      <Dialog open={showPromoDialog} onOpenChange={setShowPromoDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingPromo ? 'Edit Promo' : 'Tambah Promo'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Nama Promo</Label>
+              <Input
+                value={newPromo.name}
+                onChange={(e) => setNewPromo({ ...newPromo, name: e.target.value })}
+                placeholder="Nama promo"
+              />
+            </div>
+            <div>
+              <Label>Deskripsi</Label>
+              <Textarea
+                value={newPromo.description}
+                onChange={(e) => setNewPromo({ ...newPromo, description: e.target.value })}
+                placeholder="Deskripsi promo"
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label>Diskon (%)</Label>
+              <Input
+                type="number"
+                value={newPromo.discountPercent}
+                onChange={(e) => setNewPromo({ ...newPromo, discountPercent: parseInt(e.target.value) || 0 })}
+                placeholder="Persentase diskon"
+              />
+            </div>
+            <div>
+              <Label>Min. Belanja</Label>
+              <Input
+                type="number"
+                value={newPromo.minPurchase}
+                onChange={(e) => setNewPromo({ ...newPromo, minPurchase: parseInt(e.target.value) || 0 })}
+                placeholder="Minimum pembelian"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Tanggal Mulai</Label>
+                <Input
+                  type="date"
+                  value={newPromo.startDate}
+                  onChange={(e) => setNewPromo({ ...newPromo, startDate: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Tanggal Selesai</Label>
+                <Input
+                  type="date"
+                  value={newPromo.endDate}
+                  onChange={(e) => setNewPromo({ ...newPromo, endDate: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowPromoDialog(false)}>
+              Batal
+            </Button>
+            <Button onClick={handleSavePromo}>
+              Simpan
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Voucher Dialog */}
+      <Dialog open={showVoucherDialog} onOpenChange={setShowVoucherDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>{editingVoucher ? 'Edit Voucher' : 'Tambah Voucher'}</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Kode Voucher</Label>
+              <Input
+                value={newVoucher.code}
+                onChange={(e) => setNewVoucher({ ...newVoucher, code: e.target.value.toUpperCase() })}
+                placeholder="KODEVOUCHER"
+                disabled={!!editingVoucher}
+              />
+            </div>
+            <div>
+              <Label>Deskripsi</Label>
+              <Textarea
+                value={newVoucher.description}
+                onChange={(e) => setNewVoucher({ ...newVoucher, description: e.target.value })}
+                placeholder="Deskripsi voucher"
+                rows={3}
+              />
+            </div>
+            <div>
+              <Label>Diskon (%)</Label>
+              <Input
+                type="number"
+                value={newVoucher.discountPercent}
+                onChange={(e) => setNewVoucher({ ...newVoucher, discountPercent: parseInt(e.target.value) || 0 })}
+                placeholder="Persentase diskon"
+              />
+            </div>
+            <div>
+              <Label>Maks. Diskon</Label>
+              <Input
+                type="number"
+                value={newVoucher.maxDiscount}
+                onChange={(e) => setNewVoucher({ ...newVoucher, maxDiscount: parseInt(e.target.value) || 0 })}
+                placeholder="Maksimum diskon"
+              />
+            </div>
+            <div>
+              <Label>Min. Belanja</Label>
+              <Input
+                type="number"
+                value={newVoucher.minPurchase}
+                onChange={(e) => setNewVoucher({ ...newVoucher, minPurchase: parseInt(e.target.value) || 0 })}
+                placeholder="Minimum pembelian"
+              />
+            </div>
+            <div>
+              <Label>Batas Penggunaan</Label>
+              <Input
+                type="number"
+                value={newVoucher.usageLimit}
+                onChange={(e) => setNewVoucher({ ...newVoucher, usageLimit: parseInt(e.target.value) || 0 })}
+                placeholder="0 untuk tidak terbatas"
+              />
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label>Tanggal Mulai</Label>
+                <Input
+                  type="date"
+                  value={newVoucher.startDate}
+                  onChange={(e) => setNewVoucher({ ...newVoucher, startDate: e.target.value })}
+                />
+              </div>
+              <div>
+                <Label>Tanggal Selesai</Label>
+                <Input
+                  type="date"
+                  value={newVoucher.endDate}
+                  onChange={(e) => setNewVoucher({ ...newVoucher, endDate: e.target.value })}
+                />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowVoucherDialog(false)}>
+              Batal
+            </Button>
+            <Button onClick={handleSaveVoucher}>
+              Simpan
             </Button>
           </DialogFooter>
         </DialogContent>

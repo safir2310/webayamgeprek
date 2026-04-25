@@ -26,7 +26,11 @@ import {
   UserCog,
   Settings,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Percent,
+  Ticket,
+  Star,
+  LayoutGrid
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { getToken, logout } from '@/lib/auth'
@@ -83,12 +87,16 @@ export default function AdminLayout({
     { id: 'orders', label: 'Pesanan', icon: ShoppingCart },
     { id: 'products', label: 'Produk', icon: Package },
     { id: 'categories', label: 'Kategori', icon: Tag },
+    { id: 'featured', label: 'Unggulan', icon: Star },
+    { id: 'promos', label: 'Promo', icon: Percent },
+    { id: 'vouchers', label: 'Voucher', icon: Ticket },
     { id: 'stock', label: 'Stok', icon: Warehouse },
     { id: 'users', label: 'Pelanggan', icon: Users },
     { id: 'cashiers', label: 'Kasir', icon: UserCog },
     { id: 'payments', label: 'Pembayaran', icon: CreditCard },
     { id: 'redeem', label: 'Tukar Poin', icon: Gift },
     { id: 'reports', label: 'Laporan', icon: BarChart3 },
+    { id: 'settings', label: 'Pengaturan', icon: Settings },
     { id: 'notifications', label: 'Notifikasi', icon: Bell },
     { id: 'chat', label: 'Chat', icon: MessageCircle },
   ]
