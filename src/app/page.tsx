@@ -1356,7 +1356,7 @@ export default function RestaurantApp() {
     return (
       <div className="min-h-screen bg-gradient-to-br from-orange-500 via-orange-400 to-yellow-400 flex items-center justify-center p-4">
         <Card className="w-full max-w-md p-6">
-          <CardContent className="space-y-6 pt-6">
+          <CardContent className="space-y-4 pt-6">
             <div className="text-center">
               <div className="text-6xl mb-4">🍗</div>
               <h1 className="text-3xl font-bold mb-2">Selamat Datang</h1>
@@ -1364,7 +1364,7 @@ export default function RestaurantApp() {
             </div>
 
             {/* Login Form */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div className="space-y-2">
                 <Label>Email</Label>
                 <div className="relative">
@@ -1409,7 +1409,7 @@ export default function RestaurantApp() {
               Masuk
             </Button>
 
-            <div className="text-center pt-4">
+            <div className="text-center pt-3">
               <p className="text-sm text-muted-foreground">
                 Belum punya akun?{' '}
                 <button
