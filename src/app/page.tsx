@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent } from '@/components/ui/card'
@@ -1390,16 +1391,14 @@ export default function RestaurantApp() {
                   />
                 </div>
                 <div className="text-right">
-                  <Button
-                    onClick={() => {
-                      setShowForgotPasswordDialog(true)
-                      setResetStep('otp')
-                    }}
-                    variant="link"
-                    className="text-sm text-muted-foreground hover:text-orange-500 whitespace-nowrap"
-                  >
-                    Lupa Password?
-                  </Button>
+                  <Link href="/forgot-password">
+                    <Button
+                      variant="link"
+                      className="text-sm text-muted-foreground hover:text-orange-500 whitespace-nowrap"
+                    >
+                      Lupa Password?
+                    </Button>
+                  </Link>
                 </div>
               </div>
             </div>
