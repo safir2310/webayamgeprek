@@ -71,7 +71,8 @@ import {
   FileText,
   Info,
   Download,
-  Trash2
+  Trash2,
+  Barcode
 } from 'lucide-react'
 
 type ScreenType = 'splash' | 'login' | 'register' | 'home' | 'menu' | 'cart' | 'checkout' | 'orderStatus' | 'account' | 'pos' | 'shift' | 'posPayment'
@@ -84,6 +85,7 @@ interface Product {
   stock: number
   image: string
   category: string
+  barcode?: string
 }
 
 interface CartItem {
@@ -526,6 +528,7 @@ export default function RestaurantApp() {
   const [notifications, setNotifications] = useState<any[]>([])
   const [chatMessages, setChatMessages] = useState<any[]>([])
   const [chatInput, setChatInput] = useState('')
+  const [isGeneratingBarcodes, setIsGeneratingBarcodes] = useState(false)
 
   // Splash screen effect - only runs once
   useEffect(() => {
@@ -639,7 +642,8 @@ export default function RestaurantApp() {
             price: p.price,
             stock: p.stock,
             image: p.image || '🍗',
-            category: p.category?.name || 'Other'
+            category: p.category?.name || 'Other',
+            barcode: p.barcode || undefined
           }))
           setAllProducts(formattedProducts)
         }
@@ -1258,6 +1262,44 @@ export default function RestaurantApp() {
       removeFromFavorites(productId)
     } else {
       addToFavorites(productId)
+    }
+  }
+
+  // Generate barcodes for products
+  const handleGenerateBarcodes = async () => {
+    try {
+      setIsGeneratingBarcodes(true)
+      const response = await fetch('/api/admin/products/generate-barcodes', {
+        method: 'POST'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        toast({
+          title: 'Gagal Generate Barcode',
+          description: data.error || 'Terjadi kesalahan',
+          variant: 'destructive'
+        })
+        return
+      }
+
+      toast({
+        title: 'Berhasil Generate Barcode',
+        description: data.message || `Barcode berhasil dibuat untuk ${data.count} produk`,
+      })
+
+      // Refresh products
+      window.location.reload()
+    } catch (error) {
+      console.error('Error generating barcodes:', error)
+      toast({
+        title: 'Gagal Generate Barcode',
+        description: 'Terjadi kesalahan koneksi',
+        variant: 'destructive'
+      })
+    } finally {
+      setIsGeneratingBarcodes(false)
     }
   }
 
@@ -5415,6 +5457,16 @@ export default function RestaurantApp() {
               <Button
                 variant="ghost"
                 size="icon"
+                onClick={handleGenerateBarcodes}
+                disabled={isGeneratingBarcodes}
+                className="text-white hover:bg-white/20"
+                title="Generate Barcode"
+              >
+                <Barcode className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
                 onClick={() => setScreen('shift')}
                 className="text-white hover:bg-white/20"
               >
@@ -5665,6 +5717,12 @@ export default function RestaurantApp() {
                 </div>
                 <div>
                   <h3 className="text-xl font-bold">{selectedProductForDialog.name}</h3>
+                  {selectedProductForDialog.barcode && (
+                    <div className="flex items-center gap-2 mt-2 bg-gray-100 px-3 py-2 rounded-md">
+                      <Barcode className="w-4 h-4 text-gray-600" />
+                      <span className="font-mono text-sm font-semibold text-gray-700">{selectedProductForDialog.barcode}</span>
+                    </div>
+                  )}
                   <p className="text-sm text-gray-600 mt-2">{selectedProductForDialog.description || 'Tidak ada deskripsi'}</p>
                   <p className="text-xs text-gray-500 mt-1">Kategori: {selectedProductForDialog.category}</p>
                 </div>
