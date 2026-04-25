@@ -17,7 +17,20 @@ export async function GET() {
       }
     })
 
-    return NextResponse.json({ products })
+    // Clean up image data - only return first 100 chars or emoji if base64 is too long
+    const cleanedProducts = products.map(product => {
+      let cleanedImage = product.image
+      if (product.image && product.image.length > 100) {
+        // If it's a very long base64 string, truncate it for display
+        cleanedImage = product.image.substring(0, 100)
+      }
+      return {
+        ...product,
+        image: cleanedImage
+      }
+    })
+
+    return NextResponse.json({ products: cleanedProducts })
   } catch (error) {
     console.error('Products API error:', error)
     return NextResponse.json(

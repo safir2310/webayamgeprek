@@ -1136,12 +1136,21 @@ export default function AdminPage() {
                     <Card key={product.id} className="hover:shadow-md transition-shadow">
                       <CardContent className="p-4">
                         <div className="flex items-start gap-4">
-                          <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0">
-                            {product.image ? (
-                              <img src={product.image} alt={product.name} className="w-full h-full object-cover rounded-lg" />
+                          <div className="w-16 h-16 bg-gray-100 rounded-lg flex items-center justify-center flex-shrink-0 overflow-hidden">
+                            {product.image && product.image.length < 100 ? (
+                              <img
+                                src={product.image}
+                                alt={product.name}
+                                className="w-full h-full object-cover rounded-lg"
+                                onError={(e) => {
+                                  (e.target as HTMLImageElement).style.display = 'none'
+                                  ;(e.target as HTMLImageElement).nextElementSibling?.classList.remove('hidden')
+                                }}
+                              />
                             ) : (
                               <Package className="h-8 w-8 text-gray-400" />
                             )}
+                            <Package className="h-8 w-8 text-gray-400 hidden" />
                           </div>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-start justify-between gap-2 mb-2">
