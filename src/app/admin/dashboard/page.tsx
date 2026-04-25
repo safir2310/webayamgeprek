@@ -9,7 +9,32 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, Dialog
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { ShieldCheck, Utensils, Users, ShoppingCart, ArrowRight, LogOut, CreditCard, QrCode, Wallet, WalletCards, Plus, Edit2, Trash2, Gift, Star, Package } from 'lucide-react'
+import {
+  ShieldCheck,
+  Utensils,
+  Users,
+  ShoppingCart,
+  ArrowRight,
+  LogOut,
+  CreditCard,
+  QrCode,
+  Wallet,
+  WalletCards,
+  Plus,
+  Edit2,
+  Trash2,
+  Gift,
+  Star,
+  Package,
+  Home,
+  LayoutDashboard,
+  Settings,
+  UserCog,
+  Receipt,
+  ChevronDown,
+  ChevronRight,
+  X
+} from 'lucide-react'
 import { logout, getToken } from '@/lib/auth'
 import { toast } from '@/hooks/use-toast'
 
@@ -28,6 +53,23 @@ export default function AdminDashboardPage() {
     totalUsers: 89,
     totalProducts: 24,
   })
+
+  // Sidebar state
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false)
+  const [activeSection, setActiveSection] = useState('dashboard')
+
+  // Menu items
+  const menuItems = [
+    { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+    { id: 'products', label: 'Produk', icon: Package },
+    { id: 'orders', label: 'Pesanan', icon: ShoppingCart },
+    { id: 'users', label: 'Pengguna', icon: Users },
+    { id: 'members', label: 'Member', icon: UserCog },
+    { id: 'reports', label: 'Laporan', icon: Receipt },
+    { id: 'settings', label: 'Pengaturan', icon: Settings },
+  ]
 
   // Payment methods state
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
@@ -311,53 +353,183 @@ export default function AdminDashboardPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white border-b shadow-sm sticky top-0 z-10">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16">
+    <div className="min-h-screen bg-gray-50 flex">
+      {/* Mobile Sidebar Overlay */}
+      {mobileSidebarOpen && (
+        <div
+          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside
+        className={`
+          fixed lg:static inset-y-0 left-0 z-50
+          ${sidebarCollapsed ? 'w-20' : 'w-72'}
+          ${mobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'}
+          lg:translate-x-0
+          transition-all duration-300 ease-in-out
+          bg-gradient-to-b from-gray-900 to-gray-800
+          text-white
+          flex flex-col
+        `}
+      >
+        {/* Sidebar Header */}
+        <div className="p-4 border-b border-gray-700 flex items-center justify-between">
+          {!sidebarCollapsed ? (
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center shadow-md">
                 <Utensils className="w-5 h-5 text-white" />
               </div>
               <div>
-                <h1 className="text-lg font-bold text-gray-900">
-                  Admin Dashboard
-                </h1>
-                <p className="text-xs text-gray-500">Ayam Geprek Sambal Ijo</p>
+                <h1 className="text-lg font-bold">Admin Panel</h1>
+                <p className="text-xs text-gray-400">Sambal Ijo</p>
               </div>
             </div>
+          ) : (
+            <div className="w-10 h-10 bg-gradient-to-br from-orange-500 to-amber-500 rounded-xl flex items-center justify-center shadow-md mx-auto">
+              <Utensils className="w-5 h-5 text-white" />
+            </div>
+          )}
+          <div className="hidden lg:flex items-center gap-1">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+              className="text-gray-400 hover:text-white hover:bg-gray-700"
+            >
+              {sidebarCollapsed ? <ChevronRight className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+            </Button>
+          </div>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setMobileSidebarOpen(false)}
+            className="lg:hidden text-gray-400 hover:text-white hover:bg-gray-700"
+          >
+            <X className="w-5 h-5" />
+          </Button>
+        </div>
 
-            <div className="flex items-center gap-4">
-              <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-orange-100 rounded-full flex items-center justify-center">
-                  <ShieldCheck className="w-4 h-4 text-orange-600" />
-                </div>
-                <div className="hidden sm:block">
-                  <p className="text-sm font-medium text-gray-900">{user.name}</p>
-                  <p className="text-xs text-gray-500 capitalize">{user.role}</p>
-                </div>
+        {/* Navigation Menu */}
+        <nav className="flex-1 overflow-y-auto py-4 px-3 space-y-1">
+          {menuItems.map((item) => {
+            const Icon = item.icon
+            const isActive = activeSection === item.id
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveSection(item.id)
+                  setMobileSidebarOpen(false)
+                }}
+                className={`
+                  w-full flex items-center gap-3 px-4 py-3 rounded-xl
+                  transition-all duration-200
+                  ${isActive
+                    ? 'bg-gradient-to-r from-orange-500 to-orange-600 text-white shadow-lg'
+                    : 'text-gray-300 hover:bg-gray-700 hover:text-white'
+                  }
+                `}
+              >
+                <Icon className={`w-5 h-5 flex-shrink-0 ${sidebarCollapsed ? 'mx-auto' : ''}`} />
+                {!sidebarCollapsed && (
+                  <span className="font-medium whitespace-nowrap">{item.label}</span>
+                )}
+                {isActive && !sidebarCollapsed && (
+                  <div className="ml-auto w-2 h-2 bg-white rounded-full" />
+                )}
+              </button>
+            )
+          })}
+        </nav>
+
+        {/* Sidebar Footer - User Info */}
+        <div className="p-4 border-t border-gray-700">
+          {!sidebarCollapsed ? (
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 bg-orange-500/20 rounded-full flex items-center justify-center flex-shrink-0">
+                <ShieldCheck className="w-5 h-5 text-orange-400" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium truncate">{user?.name || 'Admin'}</p>
+                <p className="text-xs text-gray-400 capitalize truncate">{user?.role || 'Administrator'}</p>
               </div>
               <Button
-                variant="outline"
-                size="sm"
+                variant="ghost"
+                size="icon"
                 onClick={handleLogout}
-                className="gap-2"
+                className="text-gray-400 hover:text-red-400 hover:bg-gray-700"
               >
-                <LogOut className="w-4 h-4" />
-                <span className="hidden sm:inline">Keluar</span>
+                <LogOut className="w-5 h-5" />
               </Button>
             </div>
-          </div>
+          ) : (
+            <div className="flex flex-col items-center gap-2">
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={handleLogout}
+                className="text-gray-400 hover:text-red-400 hover:bg-gray-700 w-full"
+              >
+                <LogOut className="w-5 h-5" />
+              </Button>
+            </div>
+          )}
         </div>
-      </header>
+      </aside>
 
-      {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      {/* Main Content Area */}
+      <div className="flex-1 flex flex-col min-h-screen">
+        {/* Top Header */}
+        <header className="bg-white border-b shadow-sm sticky top-0 z-30">
+          <div className="px-4 sm:px-6 lg:px-8">
+            <div className="flex items-center justify-between h-16">
+              <div className="flex items-center gap-4">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => setMobileSidebarOpen(true)}
+                  className="lg:hidden"
+                >
+                  <LayoutDashboard className="w-5 h-5" />
+                </Button>
+                <div>
+                  <h1 className="text-xl font-bold text-gray-900 capitalize">
+                    {activeSection === 'dashboard' ? 'Dashboard' :
+                     activeSection === 'products' ? 'Kelola Produk' :
+                     activeSection === 'orders' ? 'Kelola Pesanan' :
+                     activeSection === 'users' ? 'Kelola Pengguna' :
+                     activeSection === 'members' ? 'Kelola Member' :
+                     activeSection === 'reports' ? 'Laporan' :
+                     activeSection === 'settings' ? 'Pengaturan' : 'Dashboard'}
+                  </h1>
+                </div>
+              </div>
+
+              <div className="hidden lg:flex items-center gap-4">
+                <div className="flex items-center gap-2 px-4 py-2 bg-gray-50 rounded-lg">
+                  <ShieldCheck className="w-4 h-4 text-orange-600" />
+                  <span className="text-sm font-medium text-gray-700">{user?.name || 'Admin'}</span>
+                  <Badge variant="outline" className="text-xs">
+                    {user?.role || 'Administrator'}
+                  </Badge>
+                </div>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        {/* Main Content */}
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
+          {/* Dashboard Content */}
+          {activeSection === 'dashboard' && (
+            <>
         {/* Welcome */}
         <div className="mb-8">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
-            Selamat Datang, {user.name}!
+            Selamat Datang, {user?.name}!
           </h2>
           <p className="text-gray-600">
             Berikut ringkasan aktivitas restoran Anda
@@ -462,9 +634,15 @@ export default function AdminDashboardPage() {
             <span>Pengaturan</span>
           </Button>
         </div>
+            </>
+          )}
+
+          {/* Settings Content */}
+          {activeSection === 'settings' && (
+            <>
 
         {/* Payment Methods Management */}
-        <Card className="mt-8">
+        <Card className="mb-8">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -582,7 +760,7 @@ export default function AdminDashboardPage() {
         </Dialog>
 
         {/* Redeem Products Management */}
-        <Card className="mt-8">
+        <Card className="mb-8">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div>
@@ -727,7 +905,42 @@ export default function AdminDashboardPage() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
-      </main>
+            </>
+          )}
+
+          {/* Placeholder for other sections */}
+          {activeSection !== 'dashboard' && activeSection !== 'settings' && (
+            <Card className="mb-8">
+              <CardContent className="p-12 text-center">
+                <div className="flex flex-col items-center gap-4">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center">
+                    <Settings className="w-8 h-8 text-gray-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-xl font-bold text-gray-900 mb-2">
+                      {activeSection === 'products' ? 'Kelola Produk' :
+                       activeSection === 'orders' ? 'Kelola Pesanan' :
+                       activeSection === 'users' ? 'Kelola Pengguna' :
+                       activeSection === 'members' ? 'Kelola Member' :
+                       activeSection === 'reports' ? 'Laporan' : 'Halaman Ini'}
+                    </h3>
+                    <p className="text-gray-600">
+                      Halaman ini sedang dalam pengembangan. Silakan kembali ke Dashboard atau Pengaturan.
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => setActiveSection('dashboard')}
+                    className="gap-2"
+                  >
+                    <LayoutDashboard className="w-4 h-4" />
+                    Kembali ke Dashboard
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </main>
+      </div>
     </div>
   )
 }
