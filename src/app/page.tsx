@@ -2872,141 +2872,150 @@ export default function RestaurantApp() {
 
         {/* Receipt Preview Dialog */}
         <Dialog open={showReceiptPreviewDialog} onOpenChange={setShowReceiptPreviewDialog}>
-          <DialogContent className="max-w-sm max-h-[90vh] overflow-y-auto p-0">
-            <div className="sticky top-0 bg-white border-b z-10 p-4">
+          <DialogContent className="max-w-sm max-h-[90vh] p-0 flex flex-col">
+            <div className="sticky top-0 bg-white border-b z-10 p-4 shrink-0">
               <DialogTitle className="text-lg font-bold text-orange-600">Preview Struk</DialogTitle>
               <DialogDescription className="text-sm">
                 Cek struk sebelum download sebagai PDF
               </DialogDescription>
             </div>
 
-            {previewOrderData && (
-              <div className="flex justify-center py-4">
-                <div className="bg-gradient-to-b from-white to-orange-50 shadow-lg border-2 border-orange-200 rounded-lg overflow-hidden w-full max-w-xs">
-                {/* Top Border */}
-                <div className="h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
+            <div className="flex-1 overflow-y-auto">
+              {previewOrderData ? (
+                <div className="flex justify-center py-4">
+                  <div className="bg-gradient-to-b from-white to-orange-50 shadow-lg border-2 border-orange-200 rounded-lg overflow-hidden w-full max-w-xs">
+                    {/* Top Border */}
+                    <div className="h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
 
-                {/* Header */}
-                <div className="text-center p-4 pb-2">
-                  <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-500 rounded-full mb-2 shadow-lg">
-                    <span className="text-3xl">🍗</span>
-                  </div>
-                  <h2 className="text-xl font-black text-orange-600 mb-1 tracking-tight">AYAM GEPREK SAMBAL IJO</h2>
-                  <p className="text-xs text-orange-500 font-medium">🍗 Lezat • Pedas • Bikin Nagih</p>
-                </div>
-
-                {/* Address */}
-                <div className="text-center px-4 pb-3 border-b border-dashed border-orange-300">
-                  <p className="text-xs text-gray-600">Jl. Medan - Banda Aceh, Simpang Camat</p>
-                  <p className="text-xs text-gray-600">Gampong Tijue, 24151</p>
-                  <p className="text-xs text-gray-600 font-medium">WA: 085260812758</p>
-                </div>
-
-                {/* Order Info Card */}
-                <div className="p-4 space-y-3">
-                  {/* Order Number Badge */}
-                  <div className="bg-orange-100 rounded-lg p-3 text-center border border-orange-300">
-                    <p className="text-xs text-orange-600 font-medium">ORDER</p>
-                    <p className="text-lg font-black text-orange-700">#{previewOrderData.orderNumber}</p>
-                    <p className="text-xs text-gray-500">
-                      {new Date(previewOrderData.createdAt).toLocaleString('id-ID', {
-                        day: '2-digit',
-                        month: 'short',
-                        year: 'numeric',
-                        hour: '2-digit',
-                        minute: '2-digit'
-                      })}
-                    </p>
-                  </div>
-
-                  {/* Order Details */}
-                  <div className="space-y-2 text-sm bg-gray-50 rounded-lg p-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Customer:</span>
-                      <span className="font-semibold">{previewOrderData.user?.name || '-'}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Payment:</span>
-                      <span className="font-semibold">{getPaymentMethodDisplayName(previewOrderData.paymentMethod)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Status:</span>
-                      <span className={`font-bold px-2 py-0.5 rounded text-xs ${getStatusBadgeColor(previewOrderData.status)}`}>
-                        {getOrderStatusDisplay(previewOrderData.status).toUpperCase()}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Order Items */}
-                <div className="px-4 py-3 border-t border-dashed border-orange-300">
-                  <div className="flex text-xs font-bold text-orange-600 mb-2 pb-2 border-b border-orange-300">
-                    <span className="w-10">QTY</span>
-                    <span className="flex-1">ITEM</span>
-                    <span className="w-16 text-right">PRICE</span>
-                    <span className="w-16 text-right">TOTAL</span>
-                  </div>
-                  <div className="space-y-2">
-                    {previewOrderData?.items.map((item, idx) => (
-                      <div key={idx} className="flex text-xs">
-                        <span className="w-10 font-medium text-gray-700">{item.qty}x</span>
-                        <span className="flex-1 text-gray-800">{item.product.name}</span>
-                        <span className="w-16 text-right text-gray-600">Rp{item.price.toLocaleString()}</span>
-                        <span className="w-16 text-right font-medium text-gray-800">Rp{item.subtotal.toLocaleString()}</span>
+                    {/* Header */}
+                    <div className="text-center p-4 pb-2">
+                      <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-500 rounded-full mb-2 shadow-lg">
+                        <span className="text-3xl">🍗</span>
                       </div>
-                    ))}
-                  </div>
-                </div>
+                      <h2 className="text-xl font-black text-orange-600 mb-1 tracking-tight">AYAM GEPREK SAMBAL IJO</h2>
+                      <p className="text-xs text-orange-500 font-medium">🍗 Lezat • Pedas • Bikin Nagih</p>
+                    </div>
 
-                {/* Totals */}
-                <div className="px-4 py-3 border-t border-dashed border-orange-300 bg-orange-50/50">
-                  <div className="space-y-1.5 text-xs">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Subtotal</span>
-                      <span>Rp {previewOrderData.subtotal.toLocaleString()}</span>
+                    {/* Address */}
+                    <div className="text-center px-4 pb-3 border-b border-dashed border-orange-300">
+                      <p className="text-xs text-gray-600">Jl. Medan - Banda Aceh, Simpang Camat</p>
+                      <p className="text-xs text-gray-600">Gampong Tijue, 24151</p>
+                      <p className="text-xs text-gray-600 font-medium">WA: 085260812758</p>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Pajak (10%)</span>
-                      <span>Rp {previewOrderData.tax.toLocaleString()}</span>
+
+                    {/* Order Info Card */}
+                    <div className="p-4 space-y-3">
+                      {/* Order Number Badge */}
+                      <div className="bg-orange-100 rounded-lg p-3 text-center border border-orange-300">
+                        <p className="text-xs text-orange-600 font-medium">ORDER</p>
+                        <p className="text-lg font-black text-orange-700">#{previewOrderData.orderNumber}</p>
+                        <p className="text-xs text-gray-500">
+                          {new Date(previewOrderData.createdAt).toLocaleString('id-ID', {
+                            day: '2-digit',
+                            month: 'short',
+                            year: 'numeric',
+                            hour: '2-digit',
+                            minute: '2-digit'
+                          })}
+                        </p>
+                      </div>
+
+                      {/* Order Details */}
+                      <div className="space-y-2 text-sm bg-gray-50 rounded-lg p-3">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Customer:</span>
+                          <span className="font-semibold">{previewOrderData.user?.name || '-'}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Payment:</span>
+                          <span className="font-semibold">{getPaymentMethodDisplayName(previewOrderData.paymentMethod)}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Status:</span>
+                          <span className={`font-bold px-2 py-0.5 rounded text-xs ${getStatusBadgeColor(previewOrderData.status)}`}>
+                            {getOrderStatusDisplay(previewOrderData.status).toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    {previewOrderData.discount > 0 && (
-                      <div className="flex justify-between text-green-600">
-                        <span>Diskon</span>
-                        <span>-Rp {previewOrderData.discount.toLocaleString()}</span>
+
+                    {/* Order Items */}
+                    <div className="px-4 py-3 border-t border-dashed border-orange-300">
+                      <div className="flex text-xs font-bold text-orange-600 mb-2 pb-2 border-b border-orange-300">
+                        <span className="w-10">QTY</span>
+                        <span className="flex-1">ITEM</span>
+                        <span className="w-16 text-right">PRICE</span>
+                        <span className="w-16 text-right">TOTAL</span>
+                      </div>
+                      <div className="space-y-2">
+                        {previewOrderData?.items.map((item, idx) => (
+                          <div key={idx} className="flex text-xs">
+                            <span className="w-10 font-medium text-gray-700">{item.qty}x</span>
+                            <span className="flex-1 text-gray-800">{item.product.name}</span>
+                            <span className="w-16 text-right text-gray-600">Rp{item.price.toLocaleString()}</span>
+                            <span className="w-16 text-right font-medium text-gray-800">Rp{item.subtotal.toLocaleString()}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* Totals */}
+                    <div className="px-4 py-3 border-t border-dashed border-orange-300 bg-orange-50/50">
+                      <div className="space-y-1.5 text-xs">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Subtotal</span>
+                          <span>Rp {previewOrderData.subtotal.toLocaleString()}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Pajak (10%)</span>
+                          <span>Rp {previewOrderData.tax.toLocaleString()}</span>
+                        </div>
+                        {previewOrderData.discount > 0 && (
+                          <div className="flex justify-between text-green-600">
+                            <span>Diskon</span>
+                            <span>-Rp {previewOrderData.discount.toLocaleString()}</span>
+                          </div>
+                        )}
+                        <div className="flex justify-between pt-2 border-t-2 border-orange-400">
+                          <span className="text-sm font-bold text-orange-700">TOTAL BAYAR</span>
+                          <span className="text-lg font-black text-orange-600">Rp {previewOrderData.total.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {previewOrderData.note && (
+                      <div className="px-4 py-2 border-t border-dashed border-orange-300">
+                        <p className="text-xs text-gray-600 italic">Note: {previewOrderData.note}</p>
                       </div>
                     )}
-                    <div className="flex justify-between pt-2 border-t-2 border-orange-400">
-                      <span className="text-sm font-bold text-orange-700">TOTAL BAYAR</span>
-                      <span className="text-lg font-black text-orange-600">Rp {previewOrderData.total.toLocaleString()}</span>
+
+                    {/* Footer */}
+                    <div className="p-4 text-center border-t border-dashed border-orange-300 bg-gradient-to-b from-orange-50 to-white">
+                      <p className="text-sm font-bold text-orange-600 mb-1">TERIMA KASIH</p>
+                      <p className="text-xs text-gray-600 mb-2">Simpan struk ini sebagai bukti pembayaran</p>
+                      <p className="text-xs text-gray-500 italic mb-3">Barang yang sudah dibeli tidak dapat ditukar/dikembalikan</p>
+                      <div className="flex justify-center items-center gap-2 text-xs text-gray-600">
+                        <span>📱 Follow us:</span>
+                        <span className="font-medium">@ayamgepreksambalijo</span>
+                      </div>
+                      <p className="text-xs text-orange-500 font-bold mt-2">⭐ Rate us & Leave Review!</p>
                     </div>
+
+                    {/* Bottom Border */}
+                    <div className="h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500" />
                   </div>
                 </div>
-
-                {previewOrderData.note && (
-                  <div className="px-4 py-2 border-t border-dashed border-orange-300">
-                    <p className="text-xs text-gray-600 italic">Note: {previewOrderData.note}</p>
+              ) : (
+                <div className="flex items-center justify-center py-20">
+                  <div className="text-center">
+                    <div className="w-12 h-12 border-4 border-orange-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                    <p className="text-gray-600">Memuat data struk...</p>
                   </div>
-                )}
-
-                {/* Footer */}
-                <div className="p-4 text-center border-t border-dashed border-orange-300 bg-gradient-to-b from-orange-50 to-white">
-                  <p className="text-sm font-bold text-orange-600 mb-1">TERIMA KASIH</p>
-                  <p className="text-xs text-gray-600 mb-2">Simpan struk ini sebagai bukti pembayaran</p>
-                  <p className="text-xs text-gray-500 italic mb-3">Barang yang sudah dibeli tidak dapat ditukar/dikembalikan</p>
-                  <div className="flex justify-center items-center gap-2 text-xs text-gray-600">
-                    <span>📱 Follow us:</span>
-                    <span className="font-medium">@ayamgepreksambalijo</span>
-                  </div>
-                  <p className="text-xs text-orange-500 font-bold mt-2">⭐ Rate us & Leave Review!</p>
                 </div>
+              )}
+            </div>
 
-                {/* Bottom Border */}
-                <div className="h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
-                </div>
-              </div>
-            )}
-
-            <DialogFooter className="flex gap-3 px-4 pb-4 pt-2">
+            <DialogFooter className="flex gap-3 px-4 pb-4 pt-2 shrink-0 border-t">
               <Button
                 variant="outline"
                 onClick={() => setShowReceiptPreviewDialog(false)}
