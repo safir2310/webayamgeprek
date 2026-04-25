@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import React, { useState, useEffect } from 'react'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -501,6 +501,7 @@ export default function RestaurantApp() {
   const [showProductDialog, setShowProductDialog] = useState(false)
   const [selectedProductForDialog, setSelectedProductForDialog] = useState<Product | null>(null)
   const [posProductTab, setPosProductTab] = useState('all')
+  const [showPosProductListDialog, setShowPosProductListDialog] = useState(false)
 
   // Payment methods and redeem products state
   const [paymentMethods, setPaymentMethods] = useState<any[]>([])
@@ -5396,10 +5397,10 @@ export default function RestaurantApp() {
         <div className="flex h-[calc(100vh-100px)]">
           {/* LEFT PANEL - Scanner, Products, Cart */}
           <div className="w-2/3 flex flex-col border-r bg-white">
-            {/* Barcode Scanner & Product Tabs */}
+            {/* Barcode Scanner with Product Tabs */}
             <div className="p-4 border-b bg-gradient-to-r from-orange-50 to-amber-50">
-              {/* Barcode Scanner */}
-              <div className="flex gap-2 mb-4">
+              <div className="flex gap-3">
+                {/* Barcode Scanner */}
                 <div className="flex-1 flex items-center gap-3 bg-white border rounded-lg px-4 py-3">
                   <Scan className="w-6 h-6 text-orange-500 flex-shrink-0" />
                   <Input
@@ -5414,6 +5415,25 @@ export default function RestaurantApp() {
                     className="border-none focus-visible:ring-0 px-2 py-1 text-lg"
                   />
                 </div>
+
+                {/* Product Category Tabs */}
+                <div className="flex gap-2 overflow-x-auto pb-1 items-center">
+                  {menuCategories.map(cat => (
+                    <Button
+                      key={cat}
+                      variant="outline"
+                      onClick={() => {
+                        setPosProductTab(cat)
+                        setShowPosProductListDialog(true)
+                      }}
+                      size="sm"
+                      className="flex-shrink-0 bg-white hover:bg-orange-50"
+                    >
+                      {cat === 'all' ? 'Semua' : cat}
+                    </Button>
+                  ))}
+                </div>
+
                 <Button
                   onClick={() => handlePosBarcodeScan(posBarcodeInput)}
                   className="bg-orange-500 hover:bg-orange-600 px-6"
@@ -5421,71 +5441,6 @@ export default function RestaurantApp() {
                   <Search className="w-5 h-5" />
                 </Button>
               </div>
-
-              {/* Product Category Tabs */}
-              <div className="flex gap-2 overflow-x-auto pb-1">
-                {menuCategories.map(cat => (
-                  <Button
-                    key={cat}
-                    variant={posProductTab === cat ? "default" : "outline"}
-                    onClick={() => setPosProductTab(cat)}
-                    size="sm"
-                    className={`flex-shrink-0 ${posProductTab === cat ? "bg-orange-500 hover:bg-orange-600" : ""}`}
-                  >
-                    {cat === 'all' ? 'Semua' : cat}
-                  </Button>
-                ))}
-              </div>
-            </div>
-
-            {/* Product List */}
-            <div className="flex-1 overflow-y-auto p-4 bg-gray-50">
-              <div className="grid grid-cols-4 gap-3">
-                {posFilteredProducts.map(product => (
-                  <Card
-                    key={product.id}
-                    className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200 overflow-hidden group"
-                    onClick={() => handlePosShowProductDialog(product)}
-                  >
-                    <CardContent className="p-3">
-                      <div className="relative">
-                        <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg h-24 flex items-center justify-center overflow-hidden mb-2">
-                          {product.image?.startsWith('data:') ? (
-                            <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
-                          ) : (
-                            <span className="text-4xl">{product.image || '🍗'}</span>
-                          )}
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="absolute top-0 right-0 z-10 bg-white/90 hover:bg-white shadow-sm h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            handlePosAddToCart(product)
-                            toast({
-                              title: 'Ditambahkan',
-                              description: `${product.name} ditambahkan ke keranjang`,
-                            })
-                          }}
-                        >
-                          <Plus className="w-4 h-4" />
-                        </Button>
-                      </div>
-                      <p className="text-sm font-semibold line-clamp-2 mb-1">{product.name}</p>
-                      <p className="text-sm text-orange-600 font-bold">Rp {product.price.toLocaleString()}</p>
-                      <p className="text-xs text-gray-500">Stok: {product.stock}</p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-              {posFilteredProducts.length === 0 && (
-                <div className="col-span-4 text-center py-12 text-gray-400">
-                  <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
-                  <p className="text-lg font-medium">Tidak ada produk ditemukan</p>
-                  <p className="text-sm mt-1">Coba kata kunci lain atau pilih kategori berbeda</p>
-                </div>
-              )}
             </div>
 
             {/* Cart Section */}
@@ -5776,6 +5731,70 @@ export default function RestaurantApp() {
             )}
           </DialogContent>
         </Dialog>
+
+        {/* Product List Dialog */}
+        <Dialog open={showPosProductListDialog} onOpenChange={setShowPosProductListDialog}>
+          <DialogContent className="max-w-4xl max-h-[80vh] overflow-hidden flex flex-col">
+            <DialogHeader>
+              <DialogTitle>
+                Daftar Produk - {posProductTab === 'all' ? 'Semua Kategori' : posProductTab}
+              </DialogTitle>
+            </DialogHeader>
+            <ScrollArea className="flex-1">
+              <div className="grid grid-cols-3 gap-4 p-4">
+                {posFilteredProducts.length > 0 ? (
+                  posFilteredProducts.map(product => (
+                    <Card
+                      key={product.id}
+                      className="cursor-pointer hover:shadow-lg hover:scale-105 transition-all duration-200 overflow-hidden group"
+                      onClick={() => {
+                        handlePosShowProductDialog(product)
+                        setShowPosProductListDialog(false)
+                      }}
+                    >
+                      <CardContent className="p-3">
+                        <div className="relative">
+                          <div className="bg-gradient-to-br from-orange-50 to-amber-50 rounded-lg h-32 flex items-center justify-center overflow-hidden mb-2">
+                            {product.image?.startsWith('data:') ? (
+                              <img src={product.image} alt={product.name} className="w-full h-full object-cover" />
+                            ) : (
+                              <span className="text-5xl">{product.image || '🍗'}</span>
+                            )}
+                          </div>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="absolute top-1 right-1 z-10 bg-white/90 hover:bg-white shadow-sm h-7 w-7 opacity-0 group-hover:opacity-100 transition-opacity"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              handlePosAddToCart(product)
+                              toast({
+                                title: 'Ditambahkan',
+                                description: `${product.name} ditambahkan ke keranjang`,
+                              })
+                            }}
+                          >
+                            <Plus className="w-4 h-4" />
+                          </Button>
+                        </div>
+                        <p className="text-sm font-semibold line-clamp-2 mb-1">{product.name}</p>
+                        <p className="text-lg text-orange-600 font-bold">Rp {product.price.toLocaleString()}</p>
+                        <p className="text-xs text-gray-500 mt-1">Stok: {product.stock}</p>
+                      </CardContent>
+                    </Card>
+                  ))
+                ) : (
+                  <div className="col-span-3 text-center py-12 text-gray-400">
+                    <Package className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                    <p className="text-lg font-medium">Tidak ada produk ditemukan</p>
+                    <p className="text-sm mt-1">Coba kategori lain</p>
+                  </div>
+                )}
+              </div>
+            </ScrollArea>
+          </DialogContent>
+        </Dialog>
+      </div>
     )
   }
 
