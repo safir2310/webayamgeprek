@@ -74,6 +74,7 @@ export default function AdminPage() {
   const [products, setProducts] = useState<any[]>([])
   const [showProductDialog, setShowProductDialog] = useState(false)
   const [editingProduct, setEditingProduct] = useState<any>(null)
+  const [productImagePreview, setProductImagePreview] = useState<string>('')
   const [newProduct, setNewProduct] = useState({
     name: '',
     description: '',
@@ -428,6 +429,42 @@ export default function AdminPage() {
         variant: 'destructive'
       })
     }
+  }
+
+  const handleProductImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: 'Gagal',
+          description: 'Mohon pilih file gambar',
+          variant: 'destructive'
+        })
+        return
+      }
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        toast({
+          title: 'Gagal',
+          description: 'Ukuran gambar maksimal 2MB',
+          variant: 'destructive'
+        })
+        return
+      }
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        const base64String = reader.result as string
+        setProductImagePreview(base64String)
+        setNewProduct({ ...newProduct, image: base64String })
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleRemoveProductImage = () => {
+    setProductImagePreview('')
+    setNewProduct({ ...newProduct, image: '' })
   }
 
   // Category handlers
@@ -1099,6 +1136,7 @@ export default function AdminPage() {
             <Button
               onClick={() => {
                 setEditingProduct(null)
+                setProductImagePreview('')
                 setNewProduct({
                   name: '',
                   description: '',
@@ -1189,6 +1227,7 @@ export default function AdminPage() {
                               variant="outline"
                               onClick={() => {
                                 setEditingProduct(product)
+                                setProductImagePreview(product.image || '')
                                 setNewProduct({
                                   name: product.name,
                                   description: product.description || '',
@@ -1944,18 +1983,90 @@ export default function AdminPage() {
               />
             </div>
             <div>
-              <Label>URL Gambar</Label>
-              <Input
-                value={newProduct.image}
-                onChange={(e) => setNewProduct({ ...newProduct, image: e.target.value })}
-                placeholder="URL gambar produk (opsional)"
-              />
+              <Label>Gambar Produk</Label>
+              <div className="space-y-3">
+                {/* File Upload from Gallery */}
+                <div className="flex items-center gap-2">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('product-image-upload')?.click()}
+                    className="flex-1"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="mr-2"
+                    >
+                      <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+                      <polyline points="17 8 12 3 7 8" />
+                      <line x1="12" y1="3" x2="12" y2="15" />
+                    </svg>
+                    Upload dari Galeri
+                  </Button>
+                  <input
+                    id="product-image-upload"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleProductImageUpload}
+                    className="hidden"
+                  />
+                  {productImagePreview && (
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="icon"
+                      onClick={handleRemoveProductImage}
+                    >
+                      <XCircle className="h-4 w-4" />
+                    </Button>
+                  )}
+                </div>
+
+                {/* Image Preview */}
+                {productImagePreview && (
+                  <div className="w-full aspect-video bg-gray-100 rounded-lg overflow-hidden border-2 border-dashed border-gray-300">
+                    <img
+                      src={productImagePreview}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+
+                {/* URL Input */}
+                <div className="relative">
+                  <div className="absolute inset-0 flex items-center">
+                    <span className="w-full border-t border-gray-200"></span>
+                  </div>
+                  <div className="relative flex justify-center text-xs uppercase">
+                    <span className="bg-white px-2 text-gray-500">Atau masukkan URL</span>
+                  </div>
+                </div>
+                <Input
+                  value={newProduct.image && !productImagePreview ? newProduct.image : ''}
+                  onChange={(e) => {
+                    setProductImagePreview(e.target.value)
+                    setNewProduct({ ...newProduct, image: e.target.value })
+                  }}
+                  placeholder="URL gambar produk"
+                  disabled={!!productImagePreview}
+                />
+              </div>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => {
               setShowProductDialog(false)
               setEditingProduct(null)
+              setProductImagePreview('')
             }}>
               Batal
             </Button>
