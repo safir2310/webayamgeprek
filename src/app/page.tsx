@@ -257,23 +257,35 @@ const formatTimeAgo = (dateString: string) => {
 // Helper function to get payment method display name
 const getPaymentMethodDisplayName = (method: string): string => {
   const methods: Record<string, string> = {
-    cash: 'Cash',
-    qris: 'QRIS',
-    transfer: 'Transfer Bank',
+    cash: '💵 CASH',
+    qris: '📱 QRIS',
+    transfer: '🏦 TRANSFER',
   }
-  return methods[method] || method
+  return methods[method] || method.toUpperCase()
 }
 
 // Helper function to get order status display
 const getOrderStatusDisplay = (status: string): string => {
   const statuses: Record<string, string> = {
-    pending: 'Menunggu Pembayaran',
-    paid: 'Sudah Dibayar',
-    processing: 'Sedang Diproses',
+    pending: 'Menunggu',
+    paid: 'Lunas',
+    processing: 'Diproses',
     completed: 'Selesai',
-    cancelled: 'Dibatalkan',
+    cancelled: 'Batal',
   }
   return statuses[status] || status
+}
+
+// Helper function to get status badge color
+const getStatusBadgeColor = (status: string): string => {
+  const colors: Record<string, string> = {
+    pending: 'bg-yellow-100 text-yellow-700',
+    paid: 'bg-green-100 text-green-700',
+    processing: 'bg-blue-100 text-blue-700',
+    completed: 'bg-green-100 text-green-700',
+    cancelled: 'bg-red-100 text-red-700',
+  }
+  return colors[status] || 'bg-gray-100 text-gray-700'
 }
 
 // Header Component with Notification and Chat
@@ -2815,108 +2827,126 @@ export default function RestaurantApp() {
             </DialogHeader>
 
             {previewOrderData && (
-              <div className="border-4 border-double border-gray-300 p-6 bg-white my-4">
+              <div className="bg-gradient-to-b from-white to-orange-50 my-4 mx-auto max-w-sm shadow-lg border-2 border-orange-200 rounded-lg overflow-hidden">
+                {/* Top Border */}
+                <div className="h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
+
                 {/* Header */}
-                <div className="text-center mb-4">
-                  <h2 className="text-2xl font-bold text-orange-600 mb-1">Ayam Geprek Sambal Ijo</h2>
-                  <p className="text-sm text-gray-600">Jl. Medan - Banda Aceh, Simpang Camat, Gampong Tijue, 24151</p>
-                  <p className="text-sm text-gray-600">085260812758</p>
+                <div className="text-center p-4 pb-2">
+                  <div className="inline-flex items-center justify-center w-16 h-16 bg-orange-500 rounded-full mb-2 shadow-lg">
+                    <span className="text-3xl">🍗</span>
+                  </div>
+                  <h2 className="text-xl font-black text-orange-600 mb-1 tracking-tight">AYAM GEPREK SAMBAL IJO</h2>
+                  <p className="text-xs text-orange-500 font-medium">🍗 Lezat • Pedas • Bikin Nagih</p>
                 </div>
 
-                <Separator className="my-4" />
+                {/* Address */}
+                <div className="text-center px-4 pb-3 border-b border-dashed border-orange-300">
+                  <p className="text-xs text-gray-600">Jl. Medan - Banda Aceh, Simpang Camat</p>
+                  <p className="text-xs text-gray-600">Gampong Tijue, 24151</p>
+                  <p className="text-xs text-gray-600 font-medium">WA: 085260812758</p>
+                </div>
 
-                {/* Order Info */}
-                <div className="mb-4">
-                  <div className="flex justify-between mb-2">
-                    <span className="font-semibold">Order #{previewOrderData.orderNumber}</span>
-                    <span className="text-sm text-gray-600">
-                      {new Date(previewOrderData.createdAt).toLocaleString('id-ID')}
-                    </span>
+                {/* Order Info Card */}
+                <div className="p-4 space-y-3">
+                  {/* Order Number Badge */}
+                  <div className="bg-orange-100 rounded-lg p-3 text-center border border-orange-300">
+                    <p className="text-xs text-orange-600 font-medium">ORDER</p>
+                    <p className="text-lg font-black text-orange-700">#{previewOrderData.orderNumber}</p>
+                    <p className="text-xs text-gray-500">
+                      {new Date(previewOrderData.createdAt).toLocaleString('id-ID', {
+                        day: '2-digit',
+                        month: 'short',
+                        year: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                      })}
+                    </p>
                   </div>
-                  <div className="space-y-1 text-sm">
+
+                  {/* Order Details */}
+                  <div className="space-y-2 text-sm bg-gray-50 rounded-lg p-3">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Customer:</span>
-                      <span className="font-medium">{previewOrderData.user?.name || '-'}</span>
+                      <span className="font-semibold">{previewOrderData.user?.name || '-'}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Metode Pembayaran:</span>
-                      <span className="font-medium">{getPaymentMethodDisplayName(previewOrderData.paymentMethod)}</span>
+                      <span className="text-gray-600">Payment:</span>
+                      <span className="font-semibold">{getPaymentMethodDisplayName(previewOrderData.paymentMethod)}</span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Status:</span>
-                      <span className="font-medium">{getOrderStatusDisplay(previewOrderData.status)}</span>
+                      <span className={`font-bold px-2 py-0.5 rounded text-xs ${getStatusBadgeColor(previewOrderData.status)}`}>
+                        {getOrderStatusDisplay(previewOrderData.status).toUpperCase()}
+                      </span>
                     </div>
                   </div>
                 </div>
-
-                <Separator className="my-4" />
 
                 {/* Order Items */}
-                <div className="mb-4">
-                  <table className="w-full text-sm">
-                    <thead>
-                      <tr className="border-b-2 border-gray-300">
-                        <th className="py-2 text-left">Item</th>
-                        <th className="py-2 text-center">Qty</th>
-                        <th className="py-2 text-right">Harga</th>
-                        <th className="py-2 text-right">Subtotal</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {previewOrderData?.items.map((item, idx) => (
-                        <tr key={idx} className="border-b border-gray-200">
-                          <td className="py-2">{item.product.name}</td>
-                          <td className="py-2 text-center">{item.qty}</td>
-                          <td className="py-2 text-right">Rp {item.price.toLocaleString()}</td>
-                          <td className="py-2 text-right">Rp {item.subtotal.toLocaleString()}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+                <div className="px-4 py-3 border-t border-dashed border-orange-300">
+                  <div className="flex text-xs font-bold text-orange-600 mb-2 pb-2 border-b border-orange-300">
+                    <span className="w-10">QTY</span>
+                    <span className="flex-1">ITEM</span>
+                    <span className="w-16 text-right">PRICE</span>
+                    <span className="w-16 text-right">TOTAL</span>
+                  </div>
+                  <div className="space-y-2">
+                    {previewOrderData?.items.map((item, idx) => (
+                      <div key={idx} className="flex text-xs">
+                        <span className="w-10 font-medium text-gray-700">{item.qty}x</span>
+                        <span className="flex-1 text-gray-800">{item.product.name}</span>
+                        <span className="w-16 text-right text-gray-600">Rp{item.price.toLocaleString()}</span>
+                        <span className="w-16 text-right font-medium text-gray-800">Rp{item.subtotal.toLocaleString()}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                <Separator className="my-4" />
-
                 {/* Totals */}
-                <div className="space-y-2 text-sm">
-                  <div className="flex justify-between">
-                    <span>Subtotal:</span>
-                    <span>Rp {previewOrderData.subtotal.toLocaleString()}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span>Pajak (10%):</span>
-                    <span>Rp {previewOrderData.tax.toLocaleString()}</span>
-                  </div>
-                  {previewOrderData.discount > 0 && (
-                    <div className="flex justify-between text-green-600">
-                      <span>Diskon:</span>
-                      <span>-Rp {previewOrderData.discount.toLocaleString()}</span>
+                <div className="px-4 py-3 border-t border-dashed border-orange-300 bg-orange-50/50">
+                  <div className="space-y-1.5 text-xs">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span>Rp {previewOrderData.subtotal.toLocaleString()}</span>
                     </div>
-                  )}
-                  <div className="flex justify-between text-lg font-bold border-t-2 border-gray-300 pt-2">
-                    <span>Total:</span>
-                    <span className="text-orange-600">Rp {previewOrderData.total.toLocaleString()}</span>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Pajak (10%)</span>
+                      <span>Rp {previewOrderData.tax.toLocaleString()}</span>
+                    </div>
+                    {previewOrderData.discount > 0 && (
+                      <div className="flex justify-between text-green-600">
+                        <span>Diskon</span>
+                        <span>-Rp {previewOrderData.discount.toLocaleString()}</span>
+                      </div>
+                    )}
+                    <div className="flex justify-between pt-2 border-t-2 border-orange-400">
+                      <span className="text-sm font-bold text-orange-700">TOTAL BAYAR</span>
+                      <span className="text-lg font-black text-orange-600">Rp {previewOrderData.total.toLocaleString()}</span>
+                    </div>
                   </div>
                 </div>
 
                 {previewOrderData.note && (
-                  <>
-                    <Separator className="my-4" />
-                    <div className="text-sm">
-                      <span className="font-semibold">Catatan: </span>
-                      <span>{previewOrderData.note}</span>
-                    </div>
-                  </>
+                  <div className="px-4 py-2 border-t border-dashed border-orange-300">
+                    <p className="text-xs text-gray-600 italic">Note: {previewOrderData.note}</p>
+                  </div>
                 )}
 
-                <Separator className="my-4" />
-
-                {/* Thank you message */}
-                <div className="text-center">
-                  <p className="font-semibold text-orange-600 mb-1">Terima kasih atas pesanan Anda!</p>
-                  <p className="text-sm text-gray-600">Simpan struk ini sebagai bukti pembayaran</p>
-                  <p className="text-sm text-gray-600 mt-1">Ayam Geprek Sambal Ijo</p>
+                {/* Footer */}
+                <div className="p-4 text-center border-t border-dashed border-orange-300 bg-gradient-to-b from-orange-50 to-white">
+                  <p className="text-sm font-bold text-orange-600 mb-1">TERIMA KASIH</p>
+                  <p className="text-xs text-gray-600 mb-2">Simpan struk ini sebagai bukti pembayaran</p>
+                  <p className="text-xs text-gray-500 italic mb-3">Barang yang sudah dibeli tidak dapat ditukar/dikembalikan</p>
+                  <div className="flex justify-center items-center gap-2 text-xs text-gray-600">
+                    <span>📱 Follow us:</span>
+                    <span className="font-medium">@ayamgepreksambalijo</span>
+                  </div>
+                  <p className="text-xs text-orange-500 font-bold mt-2">⭐ Rate us & Leave Review!</p>
                 </div>
+
+                {/* Bottom Border */}
+                <div className="h-1 bg-gradient-to-r from-orange-500 via-orange-400 to-orange-500"></div>
               </div>
             )}
 
