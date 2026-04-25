@@ -72,7 +72,8 @@ import {
   Info,
   Download,
   Trash2,
-  Barcode
+  Barcode,
+  AlertTriangle
 } from 'lucide-react'
 
 type ScreenType = 'splash' | 'login' | 'register' | 'home' | 'menu' | 'cart' | 'checkout' | 'orderStatus' | 'account' | 'pos' | 'shift' | 'posPayment'
@@ -531,6 +532,7 @@ export default function RestaurantApp() {
   const [chatMessages, setChatMessages] = useState<any[]>([])
   const [chatInput, setChatInput] = useState('')
   const [isGeneratingBarcodes, setIsGeneratingBarcodes] = useState(false)
+  const [showClearCartDialog, setShowClearCartDialog] = useState(false)
 
   // Splash screen effect - only runs once
   useEffect(() => {
@@ -3642,6 +3644,45 @@ export default function RestaurantApp() {
           </DialogContent>
         </Dialog>
 
+        {/* Clear Cart Confirmation Dialog */}
+        <Dialog open={showClearCartDialog} onOpenChange={setShowClearCartDialog}>
+          <DialogContent className="max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2 text-red-600">
+                <AlertTriangle className="w-6 h-6" />
+                Hapus Semua Item dari Keranjang?
+              </DialogTitle>
+              <DialogDescription>
+                Apakah Anda yakin ingin menghapus semua item dari keranjang? Tindakan ini tidak dapat dibatalkan.
+              </DialogDescription>
+            </DialogHeader>
+            <DialogFooter className="flex gap-3">
+              <Button
+                variant="outline"
+                onClick={() => setShowClearCartDialog(false)}
+                className="flex-1"
+              >
+                Batal
+              </Button>
+              <Button
+                variant="destructive"
+                onClick={() => {
+                  setPosCart([])
+                  setShowClearCartDialog(false)
+                  toast({
+                    title: 'Keranjang Dikosongkan',
+                    description: 'Semua item berhasil dihapus dari keranjang',
+                  })
+                }}
+                className="flex-1"
+              >
+                <Trash2 className="w-4 h-4 mr-2" />
+                Hapus Semua
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
         {/* Bottom Navigation */}
         <div className="fixed bottom-0 left-0 right-0 bg-white border-t p-2">
           <div className="flex justify-around">
@@ -5585,11 +5626,7 @@ export default function RestaurantApp() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => {
-                      if (confirm('Hapus semua item dari keranjang?')) {
-                        setPosCart([])
-                      }
-                    }}
+                    onClick={() => setShowClearCartDialog(true)}
                     className="w-full text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="w-4 h-4 mr-2" />
