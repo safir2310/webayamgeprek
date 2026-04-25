@@ -13,33 +13,50 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { otp, newPassword } = resetPasswordSchema.parse(body)
 
-    // Find user by OTP
+    // Find OTP data
     const allOtps = otpStorage.getAll()
 
     // Find matching OTP
-    let matchedUserId: string | null = null
-    for (const [userId, data] of allOtps.entries()) {
+    let matchedKey: string | null = null
+    let matchedOtpData: any = null
+    for (const [key, data] of allOtps.entries()) {
       if (data.otp === otp && Date.now() <= data.expiresAt) {
-        matchedUserId = userId
+        matchedKey = key
+        matchedOtpData = data
         break
       }
     }
 
-    if (!matchedUserId) {
+    if (!matchedKey || !matchedOtpData) {
       return NextResponse.json(
         { error: 'Kode OTP salah atau kadaluarsa' },
         { status: 400 }
       )
     }
 
+    // Find user by email and phone
+    const user = await db.user.findFirst({
+      where: {
+        email: matchedOtpData.email,
+        phone: matchedOtpData.phone,
+      },
+    })
+
+    if (!user) {
+      return NextResponse.json(
+        { error: 'User tidak ditemukan' },
+        { status: 404 }
+      )
+    }
+
     // Update password
     await db.user.update({
-      where: { id: matchedUserId },
+      where: { id: user.id },
       data: { password: newPassword },
     })
 
     // Delete used OTP
-    otpStorage.delete(matchedUserId)
+    otpStorage.delete(matchedKey)
 
     return NextResponse.json({
       message: 'Password berhasil direset',

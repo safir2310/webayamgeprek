@@ -15,15 +15,17 @@ export async function POST(req: NextRequest) {
     const allOtps = otpStorage.getAll()
 
     // Find matching OTP
-    let matchedUserId: string | null = null
-    for (const [userId, data] of allOtps.entries()) {
+    let matchedKey: string | null = null
+    let matchedOtpData: any = null
+    for (const [key, data] of allOtps.entries()) {
       if (data.otp === otp && Date.now() <= data.expiresAt) {
-        matchedUserId = userId
+        matchedKey = key
+        matchedOtpData = data
         break
       }
     }
 
-    if (!matchedUserId) {
+    if (!matchedKey || !matchedOtpData) {
       return NextResponse.json(
         { error: 'Kode OTP salah atau kadaluarsa' },
         { status: 400 }
@@ -31,12 +33,10 @@ export async function POST(req: NextRequest) {
     }
 
     // OTP is valid, allow password reset
-    // Store the verified user ID in a temporary way
-    // For simplicity, we'll use the otpStorage to mark this OTP as verified for password reset
     return NextResponse.json({
       message: 'OTP berhasil diverifikasi',
-      userId: matchedUserId,
-      email: allOtps.get(matchedUserId)?.email,
+      email: matchedOtpData.email,
+      phone: matchedOtpData.phone,
     })
   } catch (error) {
     if (error instanceof z.ZodError) {
