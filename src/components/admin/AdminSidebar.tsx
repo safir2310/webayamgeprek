@@ -21,7 +21,8 @@ import {
   ChevronRight,
   LogOut,
   Utensils,
-  Settings
+  Settings,
+  Sparkles
 } from 'lucide-react'
 
 interface SidebarTab {
@@ -56,6 +57,7 @@ export default function AdminSidebar({
     { id: 'orders', label: 'Pesanan', icon: ShoppingCart },
     { id: 'products', label: 'Produk', icon: Package },
     { id: 'categories', label: 'Kategori', icon: Tag },
+    { id: 'features', label: 'Fitur', icon: Sparkles },
     { id: 'stock', label: 'Stok', icon: Warehouse },
   ]
 

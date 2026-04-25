@@ -30,7 +30,8 @@ import {
   Percent,
   Ticket,
   Star,
-  LayoutGrid
+  LayoutGrid,
+  Sparkles
 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { getToken, logout } from '@/lib/auth'
@@ -87,6 +88,7 @@ export default function AdminLayout({
     { id: 'orders', label: 'Pesanan', icon: ShoppingCart },
     { id: 'products', label: 'Produk', icon: Package },
     { id: 'categories', label: 'Kategori', icon: Tag },
+    { id: 'features', label: 'Fitur', icon: Sparkles },
     { id: 'featured', label: 'Unggulan', icon: Star },
     { id: 'promos', label: 'Promo', icon: Percent },
     { id: 'vouchers', label: 'Voucher', icon: Ticket },

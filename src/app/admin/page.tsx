@@ -42,10 +42,11 @@ import {
   MessageCircle,
   Percent,
   Ticket,
-  Star
+  Star,
+  Sparkles
 } from 'lucide-react'
 
-type TabType = 'dashboard' | 'orders' | 'products' | 'categories' | 'featured' | 'promos' | 'vouchers' | 'stock' | 'users' | 'cashiers' | 'payments' | 'redeem' | 'reports' | 'settings' | 'notifications' | 'chat'
+type TabType = 'dashboard' | 'orders' | 'products' | 'categories' | 'features' | 'featured' | 'promos' | 'vouchers' | 'stock' | 'users' | 'cashiers' | 'payments' | 'redeem' | 'reports' | 'settings' | 'notifications' | 'chat'
 
 interface DashboardStats {
   totalSales: number
@@ -148,6 +149,19 @@ export default function AdminPage() {
   // Featured products state
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([])
 
+  // Features state
+  const [features, setFeatures] = useState<any[]>([])
+  const [showFeatureDialog, setShowFeatureDialog] = useState(false)
+  const [editingFeature, setEditingFeature] = useState<any>(null)
+  const [newFeature, setNewFeature] = useState({
+    title: '',
+    description: '',
+    icon: '',
+    badge: '',
+    isActive: true,
+    sortOrder: 0
+  })
+
   // Promos state
   const [promos, setPromos] = useState<any[]>([])
   const [showPromoDialog, setShowPromoDialog] = useState(false)
@@ -202,6 +216,7 @@ export default function AdminPage() {
     loadChatMessages()
     loadReports()
     loadFeaturedProducts()
+    loadFeatures()
     loadPromos()
     loadVouchers()
     loadSettings()
@@ -955,6 +970,102 @@ export default function AdminPage() {
         variant: 'destructive'
       })
     }
+  }
+
+  // Features handlers
+  const loadFeatures = async () => {
+    try {
+      const response = await fetch('/api/admin/features')
+      const data = await response.json()
+      if (response.ok) {
+        setFeatures(data)
+      }
+    } catch (error) {
+      console.error('Failed to load features:', error)
+    }
+  }
+
+  const handleSaveFeature = async () => {
+    try {
+      if (editingFeature) {
+        const response = await fetch(`/api/admin/features/${editingFeature.id}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(newFeature)
+        })
+
+        if (response.ok) {
+          setFeatures(features.map(f =>
+            f.id === editingFeature.id ? { ...f, ...newFeature } : f
+          ))
+          setShowFeatureDialog(false)
+          setEditingFeature(null)
+          toast({
+            title: 'Berhasil',
+            description: 'Fitur telah diperbarui',
+          })
+        }
+      } else {
+        const response = await fetch('/api/admin/features', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ...newFeature, sortOrder: features.length + 1 })
+        })
+
+        if (response.ok) {
+          const data = await response.json()
+          setFeatures([...features, data])
+          setShowFeatureDialog(false)
+          toast({
+            title: 'Berhasil',
+            description: 'Fitur baru telah ditambahkan',
+          })
+        }
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menyimpan fitur',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleDeleteFeature = async (id: string) => {
+    if (!confirm('Apakah Anda yakin ingin menghapus fitur ini?')) return
+
+    try {
+      const response = await fetch(`/api/admin/features/${id}`, {
+        method: 'DELETE'
+      })
+
+      if (response.ok) {
+        setFeatures(features.filter(f => f.id !== id))
+        toast({
+          title: 'Berhasil',
+          description: 'Fitur telah dihapus',
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat menghapus fitur',
+        variant: 'destructive'
+      })
+    }
+  }
+
+  const handleEditFeature = (feature: any) => {
+    setEditingFeature(feature)
+    setNewFeature({
+      title: feature.title,
+      description: feature.description || '',
+      icon: feature.icon || '',
+      badge: feature.badge || '',
+      isActive: feature.isActive,
+      sortOrder: feature.sortOrder
+    })
+    setShowFeatureDialog(true)
   }
 
   // Promos handlers
@@ -1791,6 +1902,152 @@ export default function AdminPage() {
               </div>
             )}
           </div>
+        </div>
+      )}
+
+      {/* Features Tab */}
+      {activeTab === 'features' && (
+        <div className="space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Fitur Terbaru</h2>
+              <p className="text-gray-600 mt-1">Kelola fitur-fitur terbaru untuk ditampilkan di aplikasi</p>
+            </div>
+            <Button
+              onClick={() => {
+                setEditingFeature(null)
+                setNewFeature({ title: '', description: '', icon: '', badge: '', isActive: true, sortOrder: 0 })
+                setShowFeatureDialog(true)
+              }}
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Tambah Fitur
+            </Button>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {features.map((feature) => (
+              <Card key={feature.id} className={`hover:shadow-md transition-shadow ${!feature.isActive ? 'opacity-60' : ''}`}>
+                <CardContent className="p-4">
+                  <div className="flex items-start gap-3">
+                    <div className="w-12 h-12 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center flex-shrink-0">
+                      {feature.icon ? (
+                        <span className="text-2xl">{feature.icon}</span>
+                      ) : (
+                        <Sparkles className="h-6 w-6 text-white" />
+                      )}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-start justify-between gap-2">
+                        <h3 className="font-semibold text-lg truncate">{feature.title}</h3>
+                        {feature.badge && (
+                          <Badge className="bg-gradient-to-r from-orange-500 to-amber-500 text-white">
+                            {feature.badge}
+                          </Badge>
+                        )}
+                      </div>
+                      <p className="text-sm text-gray-600 line-clamp-2 mt-1">{feature.description || 'Tidak ada deskripsi'}</p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <Badge variant={feature.isActive ? 'default' : 'secondary'}>
+                          {feature.isActive ? 'Aktif' : 'Nonaktif'}
+                        </Badge>
+                        <span className="text-xs text-gray-500">Urutan: {feature.sortOrder}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex gap-2 mt-4">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="flex-1"
+                      onClick={() => handleEditFeature(feature)}
+                    >
+                      <Edit2 className="h-3 w-3 mr-1" />
+                      Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleDeleteFeature(feature.id)}
+                    >
+                      <Trash2 className="h-3 w-3 text-red-500" />
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            {features.length === 0 && (
+              <div className="col-span-full text-center py-12 text-gray-500">
+                <Sparkles className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-lg">Belum ada fitur</p>
+              </div>
+            )}
+          </div>
+
+          {/* Feature Dialog */}
+          <Dialog open={showFeatureDialog} onOpenChange={setShowFeatureDialog}>
+            <DialogContent className="max-w-md">
+              <DialogHeader>
+                <DialogTitle>{editingFeature ? 'Edit Fitur' : 'Tambah Fitur Baru'}</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 py-4">
+                <div>
+                  <Label htmlFor="feature-title">Judul Fitur *</Label>
+                  <Input
+                    id="feature-title"
+                    value={newFeature.title}
+                    onChange={(e) => setNewFeature({ ...newFeature, title: e.target.value })}
+                    placeholder="Contoh: Pesan Online"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="feature-description">Deskripsi</Label>
+                  <Textarea
+                    id="feature-description"
+                    value={newFeature.description}
+                    onChange={(e) => setNewFeature({ ...newFeature, description: e.target.value })}
+                    placeholder="Deskripsi fitur"
+                    rows={3}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="feature-icon">Icon (Emoji)</Label>
+                  <Input
+                    id="feature-icon"
+                    value={newFeature.icon}
+                    onChange={(e) => setNewFeature({ ...newFeature, icon: e.target.value })}
+                    placeholder="Contoh: 🚀, 💡, ✨"
+                    maxLength={2}
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="feature-badge">Badge</Label>
+                  <Input
+                    id="feature-badge"
+                    value={newFeature.badge}
+                    onChange={(e) => setNewFeature({ ...newFeature, badge: e.target.value })}
+                    placeholder="Contoh: New, Hot, Popular"
+                  />
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch
+                    id="feature-active"
+                    checked={newFeature.isActive}
+                    onCheckedChange={(checked) => setNewFeature({ ...newFeature, isActive: checked })}
+                  />
+                  <Label htmlFor="feature-active">Aktif</Label>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setShowFeatureDialog(false)}>
+                  Batal
+                </Button>
+                <Button onClick={handleSaveFeature}>
+                  {editingFeature ? 'Simpan Perubahan' : 'Tambah Fitur'}
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
         </div>
       )}
 

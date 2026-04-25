@@ -404,3 +404,16 @@ model Settings {
   createdAt      DateTime @default(now())
   updatedAt      DateTime @updatedAt
 }
+
+// Latest Features
+model Feature {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  icon        String?  // emoji or icon name
+  badge       String?  // badge text (New, Hot, etc.)
+  isActive    Boolean  @default(true)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
