@@ -336,3 +336,27 @@ model RedeemProduct {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 }
+
+// Sales Reports
+model SalesReport {
+  id                String   @id @default(cuid())
+  type              String   // daily, weekly, monthly
+  reportDate        DateTime // date of the report
+  totalSales        Float    @default(0)
+  totalOrders       Int      @default(0)
+  totalTransactions Int      @default(0)
+  totalItems        Int      @default(0)
+  averageOrderValue Float    @default(0)
+  cashSales         Float    @default(0)
+  qrisSales         Float    @default(0)
+  transferSales     Float    @default(0)
+  completedOrders   Int      @default(0)
+  cancelledOrders   Int      @default(0)
+  topSellingItems   String?  // JSON string with top products
+  paymentBreakdown  String?  // JSON string with payment method breakdown
+  categoryBreakdown String?  // JSON string with category breakdown
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([type, reportDate])
+}

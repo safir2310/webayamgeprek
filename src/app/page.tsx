@@ -533,6 +533,29 @@ export default function RestaurantApp() {
   const [chatInput, setChatInput] = useState('')
   const [isGeneratingBarcodes, setIsGeneratingBarcodes] = useState(false)
   const [showClearCartDialog, setShowClearCartDialog] = useState(false)
+  
+  // Report state for POS
+  const [showReportDialog, setShowReportDialog] = useState(false)
+  const [todayReport, setTodayReport] = useState<any>(null)
+
+  // Load today's report when POS screen is active
+  useEffect(() => {
+    const loadTodayReport = async () => {
+      try {
+        const response = await fetch('/api/reports?type=today&limit=1')
+        const data = await response.json()
+        if (response.ok && data.reports && data.reports.length > 0) {
+          setTodayReport(data.reports[0])
+        }
+      } catch (error) {
+        console.error('Failed to load today report:', error)
+      }
+    }
+
+    if (screen === 'pos' && isShiftOpen) {
+      loadTodayReport()
+    }
+  }, [screen, isShiftOpen])
 
   // Splash screen effect - only runs once
   useEffect(() => {
@@ -5512,6 +5535,14 @@ export default function RestaurantApp() {
                 title="Generate Barcode"
               >
                 <Barcode className="w-5 h-5" />
+              </Button>
+              <Button
+                variant="ghost"
+                size="icon"
+                onClick={() => setShowReportDialog(true)}
+                className="text-white hover:bg-white/20"
+              >
+                <FileText className="w-5 h-5" />
               </Button>
               <Button
                 variant="ghost"

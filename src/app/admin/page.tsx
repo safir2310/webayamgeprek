@@ -132,6 +132,16 @@ export default function AdminPage() {
     stock: -1
   })
 
+  // Reports state
+  const [reports, setReports] = useState<any[]>([])
+  const [reportTypeFilter, setReportTypeFilter] = useState<string>('all')
+  const [showGenerateReportDialog, setShowGenerateReportDialog] = useState(false)
+  const [newReport, setNewReport] = useState({
+    type: 'daily',
+    date: new Date().toISOString().split('T')[0]
+  })
+  const [selectedReport, setSelectedReport] = useState<any>(null)
+
   useEffect(() => {
     loadDashboardStats()
     loadNotifications()
@@ -143,7 +153,12 @@ export default function AdminPage() {
     loadPaymentMethods()
     loadRedeemProducts()
     loadChatMessages()
+    loadReports()
   }, [])
+
+  useEffect(() => {
+    loadReports()
+  }, [reportTypeFilter])
 
   const loadDashboardStats = async () => {
     try {
@@ -268,6 +283,51 @@ export default function AdminPage() {
       }
     } catch (error) {
       console.error('Failed to load chat messages:', error)
+    }
+  }
+
+  const loadReports = async () => {
+    try {
+      const typeParam = reportTypeFilter !== 'all' ? `?type=${reportTypeFilter}` : ''
+      const response = await fetch(`/api/admin/reports${typeParam}`)
+      const data = await response.json()
+      if (response.ok && data.reports) {
+        setReports(data.reports)
+      }
+    } catch (error) {
+      console.error('Failed to load reports:', error)
+    }
+  }
+
+  const handleGenerateReport = async () => {
+    try {
+      const response = await fetch('/api/admin/reports/generate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(newReport)
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        setShowGenerateReportDialog(false)
+        toast({
+          title: 'Berhasil',
+          description: 'Laporan berhasil dibuat',
+        })
+        loadReports()
+      } else {
+        toast({
+          title: 'Gagal',
+          description: 'Gagal membuat laporan',
+          variant: 'destructive'
+        })
+      }
+    } catch (error) {
+      toast({
+        title: 'Gagal',
+        description: 'Terjadi kesalahan saat membuat laporan',
+        variant: 'destructive'
+      })
     }
   }
 
@@ -1768,72 +1828,109 @@ export default function AdminPage() {
       {/* Reports Tab */}
       {activeTab === 'reports' && (
         <div className="space-y-6">
-          <div>
-            <h2 className="text-3xl font-bold text-gray-900">Laporan</h2>
-            <p className="text-gray-600 mt-1">Analisis dan laporan penjualan</p>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div>
+              <h2 className="text-3xl font-bold text-gray-900">Laporan Penjualan</h2>
+              <p className="text-gray-600 mt-1">Rekap dan analisis laporan penjualan</p>
+            </div>
+            <div className="flex gap-2">
+              <Button onClick={loadReports} variant="outline">
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
+              <Button onClick={() => setShowGenerateReportDialog(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Buat Laporan
+              </Button>
+            </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <TrendingUp className="h-12 w-12 mx-auto text-orange-500 mb-3" />
-                  <h3 className="font-semibold text-lg mb-2">Laporan Penjualan</h3>
-                  <p className="text-sm text-gray-600">Analisis penjualan harian, mingguan, dan bulanan</p>
-                </div>
-              </CardContent>
-            </Card>
+          <Card>
+            <CardContent className="p-4">
+              <div className="mb-4">
+                <Select value={reportTypeFilter} onValueChange={setReportTypeFilter}>
+                  <SelectTrigger className="w-full sm:w-48">
+                    <SelectValue placeholder="Filter Tipe" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">Semua Tipe</SelectItem>
+                    <SelectItem value="daily">Harian</SelectItem>
+                    <SelectItem value="weekly">Mingguan</SelectItem>
+                    <SelectItem value="monthly">Bulanan</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
 
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <ShoppingCart className="h-12 w-12 mx-auto text-green-500 mb-3" />
-                  <h3 className="font-semibold text-lg mb-2">Laporan Pesanan</h3>
-                  <p className="text-sm text-gray-600">Detail dan status pesanan</p>
+              <ScrollArea className="h-[calc(100vh-350px)]">
+                <div className="space-y-3">
+                  {reports.map((report) => (
+                    <Card key={report.id} className="hover:shadow-md transition-shadow cursor-pointer" onClick={() => setSelectedReport(report)}>
+                      <CardContent className="p-4">
+                        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <Badge className={
+                                report.type === 'daily' ? 'bg-blue-100 text-blue-700 border-blue-200' :
+                                report.type === 'weekly' ? 'bg-green-100 text-green-700 border-green-200' :
+                                'bg-purple-100 text-purple-700 border-purple-200'
+                              }>
+                                {report.type === 'daily' ? 'Harian' :
+                                 report.type === 'weekly' ? 'Mingguan' :
+                                 'Bulanan'}
+                              </Badge>
+                              <span className="text-sm text-gray-500">
+                                {new Date(report.reportDate).toLocaleDateString('id-ID', {
+                                  day: 'numeric',
+                                  month: 'long',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                            </div>
+                            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-sm">
+                              <div>
+                                <p className="text-gray-500">Total Penjualan</p>
+                                <p className="font-bold text-orange-600">{formatCurrency(report.totalSales)}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500">Total Pesanan</p>
+                                <p className="font-medium">{report.totalOrders}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500">Total Item</p>
+                                <p className="font-medium">{report.totalItems}</p>
+                              </div>
+                              <div>
+                                <p className="text-gray-500">Rata-rata</p>
+                                <p className="font-medium">{formatCurrency(report.averageOrderValue)}</p>
+                              </div>
+                            </div>
+                          </div>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setSelectedReport(report)
+                            }}
+                          >
+                            <Eye className="h-3 w-3 mr-1" />
+                            Detail
+                          </Button>
+                        </div>
+                      </CardContent>
+                    </Card>
+                  ))}
+                  {reports.length === 0 && (
+                    <div className="text-center py-12 text-gray-500">
+                      <TrendingUp className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                      <p className="text-lg">Belum ada laporan</p>
+                      <p className="text-sm mt-2">Klik "Buat Laporan" untuk memulai</p>
+                    </div>
+                  )}
                 </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <Package className="h-12 w-12 mx-auto text-blue-500 mb-3" />
-                  <h3 className="font-semibold text-lg mb-2">Laporan Produk</h3>
-                  <p className="text-sm text-gray-600">Analisis performa produk</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <Users className="h-12 w-12 mx-auto text-purple-500 mb-3" />
-                  <h3 className="font-semibold text-lg mb-2">Laporan Pelanggan</h3>
-                  <p className="text-sm text-gray-600">Demografi dan perilaku pelanggan</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <DollarSign className="h-12 w-12 mx-auto text-yellow-500 mb-3" />
-                  <h3 className="font-semibold text-lg mb-2">Laporan Pendapatan</h3>
-                  <p className="text-sm text-gray-600">Ringkasan pendapatan dan profit</p>
-                </div>
-              </CardContent>
-            </Card>
-
-            <Card className="hover:shadow-md transition-shadow cursor-pointer">
-              <CardContent className="p-6">
-                <div className="text-center">
-                  <AlertTriangle className="h-12 w-12 mx-auto text-red-500 mb-3" />
-                  <h3 className="font-semibold text-lg mb-2">Laporan Stok</h3>
-                  <p className="text-sm text-gray-600">Laporan pergerakan stok</p>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
+              </ScrollArea>
+            </CardContent>
+          </Card>
         </div>
       )}
 
@@ -2353,6 +2450,186 @@ export default function AdminPage() {
             </Button>
             <Button onClick={handleSaveRedeemProduct}>
               {editingRedeem ? 'Update' : 'Simpan'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Generate Report Dialog */}
+      <Dialog open={showGenerateReportDialog} onOpenChange={setShowGenerateReportDialog}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Buat Laporan Baru</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div>
+              <Label>Tipe Laporan</Label>
+              <Select value={newReport.type} onValueChange={(value) => setNewReport({ ...newReport, type: value })}>
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Harian</SelectItem>
+                  <SelectItem value="weekly">Mingguan</SelectItem>
+                  <SelectItem value="monthly">Bulanan</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Tanggal Laporan</Label>
+              <Input
+                type="date"
+                value={newReport.date}
+                onChange={(e) => setNewReport({ ...newReport, date: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowGenerateReportDialog(false)}>
+              Batal
+            </Button>
+            <Button onClick={handleGenerateReport}>
+              Generate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Report Detail Dialog */}
+      <Dialog open={!!selectedReport} onOpenChange={() => setSelectedReport(null)}>
+        <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>
+              Detail Laporan {selectedReport?.type === 'daily' ? 'Harian' : selectedReport?.type === 'weekly' ? 'Mingguan' : 'Bulanan'}
+            </DialogTitle>
+          </DialogHeader>
+          {selectedReport && (
+            <div className="space-y-6 py-4">
+              {/* Overview Cards */}
+              <div className="grid grid-cols-2 gap-4">
+                <Card>
+                  <CardContent className="p-4">
+                    <p className="text-sm text-gray-600 mb-1">Total Penjualan</p>
+                    <p className="text-2xl font-bold text-orange-600">{formatCurrency(selectedReport.totalSales)}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <p className="text-sm text-gray-600 mb-1">Total Pesanan</p>
+                    <p className="text-2xl font-bold text-green-600">{selectedReport.totalOrders}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <p className="text-sm text-gray-600 mb-1">Total Item</p>
+                    <p className="text-2xl font-bold text-blue-600">{selectedReport.totalItems}</p>
+                  </CardContent>
+                </Card>
+                <Card>
+                  <CardContent className="p-4">
+                    <p className="text-sm text-gray-600 mb-1">Rata-rata Pesanan</p>
+                    <p className="text-2xl font-bold text-purple-600">{formatCurrency(selectedReport.averageOrderValue)}</p>
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Payment Breakdown */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Pembayaran per Metode</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-3">
+                    <div className="flex justify-between items-center p-3 bg-green-50 rounded-lg">
+                      <span className="font-medium">Cash</span>
+                      <span className="font-bold text-green-600">{formatCurrency(selectedReport.cashSales)}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-blue-50 rounded-lg">
+                      <span className="font-medium">QRIS</span>
+                      <span className="font-bold text-blue-600">{formatCurrency(selectedReport.qrisSales)}</span>
+                    </div>
+                    <div className="flex justify-between items-center p-3 bg-purple-50 rounded-lg">
+                      <span className="font-medium">Transfer</span>
+                      <span className="font-bold text-purple-600">{formatCurrency(selectedReport.transferSales)}</span>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Order Status */}
+              <Card>
+                <CardHeader>
+                  <CardTitle>Status Pesanan</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="p-3 bg-green-50 rounded-lg text-center">
+                      <p className="text-sm text-gray-600 mb-1">Selesai</p>
+                      <p className="text-2xl font-bold text-green-600">{selectedReport.completedOrders}</p>
+                    </div>
+                    <div className="p-3 bg-red-50 rounded-lg text-center">
+                      <p className="text-sm text-gray-600 mb-1">Dibatalkan</p>
+                      <p className="text-2xl font-bold text-red-600">{selectedReport.cancelledOrders}</p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              {/* Top Selling Items */}
+              {selectedReport.topSellingItems && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Produk Terlaris</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <ScrollArea className="h-64">
+                      <div className="space-y-2">
+                        {JSON.parse(selectedReport.topSellingItems).slice(0, 10).map((item: any, index: number) => (
+                          <div key={index} className="flex justify-between items-center p-3 border rounded-lg hover:bg-gray-50">
+                            <div className="flex items-center gap-3">
+                              <Badge variant="outline" className="w-8 h-8 flex items-center justify-center rounded-full">
+                                {index + 1}
+                              </Badge>
+                              <span className="font-medium">{item.name}</span>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-bold text-orange-600">{item.qty} pcs</p>
+                              <p className="text-sm text-gray-600">{formatCurrency(item.revenue)}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </ScrollArea>
+                  </CardContent>
+                </Card>
+              )}
+
+              {/* Category Breakdown */}
+              {selectedReport.categoryBreakdown && (
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Penjualan per Kategori</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-3">
+                      {JSON.parse(selectedReport.categoryBreakdown).map((cat: any, index: number) => (
+                        <div key={index} className="flex justify-between items-center p-3 border rounded-lg">
+                          <span className="font-medium">{cat.name}</span>
+                          <div className="text-right">
+                            <p className="font-bold text-orange-600">{cat.count} pcs</p>
+                            <p className="text-sm text-gray-600">{formatCurrency(cat.revenue)}</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setSelectedReport(null)}>
+              Tutup
             </Button>
           </DialogFooter>
         </DialogContent>
