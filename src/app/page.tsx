@@ -474,6 +474,7 @@ export default function RestaurantApp() {
   const [resetConfirmPassword, setResetConfirmPassword] = useState('')
   const [resetStep, setResetStep] = useState<'initial' | 'otp' | 'verify-otp' | 'new-password' | 'success'>('initial')
   const [isVerifyingOtp, setIsVerifyingOtp] = useState(false)
+  const [showForgotPasswordDialog, setShowForgotPasswordDialog] = useState(false)
 
   // POS state
   const [posCart, setPosCart] = useState<CartItem[]>([])
@@ -1391,35 +1392,53 @@ export default function RestaurantApp() {
               </div>
             </div>
 
-            {/* Login Button */}
-            <Button onClick={handleLogin} className="w-full bg-orange-500 hover:bg-orange-600">
-              <LogIn className="w-4 h-4 mr-2" />
-              Masuk
-            </Button>
+            {/* Login Button with Forgot Password link */}
+            <div className="flex items-center justify-between gap-2">
+              <Button onClick={handleLogin} className="flex-1 bg-orange-500 hover:bg-orange-600">
+                <LogIn className="w-4 h-4 mr-2" />
+                Masuk
+              </Button>
+              <Button
+                onClick={() => {
+                  setShowForgotPasswordDialog(true)
+                  setResetStep('otp')
+                }}
+                variant="link"
+                className="text-sm text-muted-foreground hover:text-orange-500"
+              >
+                Lupa Password?
+              </Button>
+            </div>
 
-            <Separator />
-
-            {/* Forgot Password Section */}
-            {resetStep === 'initial' && (
-              <div className="space-y-4">
-                <Button
-                  onClick={() => setResetStep('otp')}
-                  variant="outline"
-                  className="w-full"
+            <div className="text-center pt-4">
+              <p className="text-sm text-muted-foreground">
+                Belum punya akun?{' '}
+                <button
+                  onClick={() => setScreen('register')}
+                  className="text-orange-500 hover:underline font-medium"
                 >
-                  <Lock className="mr-2 h-4 w-4" />
-                  Lupa Password?
-                </Button>
-              </div>
-            )}
+                  Daftar
+                </button>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Forgot Password Dialog */}
+        <Dialog open={showForgotPasswordDialog} onOpenChange={setShowForgotPasswordDialog}>
+          <DialogContent className="sm:max-w-md">
+            <DialogHeader>
+              <DialogTitle className="flex items-center gap-2">
+                <Lock className="h-5 w-5" />
+                Lupa Password
+              </DialogTitle>
+              <DialogDescription>
+                Masukkan email dan nomor HP untuk mereset password Anda
+              </DialogDescription>
+            </DialogHeader>
 
             {resetStep === 'otp' && (
               <div className="space-y-4">
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Masukkan email dan nomor HP untuk menerima kode OTP
-                  </p>
-                </div>
                 <div className="space-y-2">
                   <Label>Email</Label>
                   <div className="relative">
@@ -1490,23 +1509,11 @@ export default function RestaurantApp() {
                   <Lock className="mr-2 h-4 w-4" />
                   Kirim OTP
                 </Button>
-                <Button
-                  onClick={() => setResetStep('initial')}
-                  variant="ghost"
-                  className="w-full"
-                >
-                  Batal
-                </Button>
               </div>
             )}
 
             {resetStep === 'verify-otp' && (
               <div className="space-y-4">
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    Masukkan 4 digit kode OTP yang telah dikirim ke email dan nomor HP Anda
-                  </p>
-                </div>
                 <div className="space-y-2">
                   <Label>Kode OTP (4 Digit)</Label>
                   <div className="relative">
@@ -1530,7 +1537,7 @@ export default function RestaurantApp() {
                 </Button>
                 <Button
                   onClick={() => setResetStep('otp')}
-                  variant="ghost"
+                  variant="outline"
                   className="w-full"
                 >
                   Kembali
@@ -1540,11 +1547,6 @@ export default function RestaurantApp() {
 
             {resetStep === 'new-password' && (
               <div className="space-y-4">
-                <div className="text-center">
-                  <p className="text-sm text-muted-foreground mb-2">
-                    OTP berhasil diverifikasi! Silakan masukkan password baru Anda
-                  </p>
-                </div>
                 <div className="space-y-2">
                   <Label>Password Baru</Label>
                   <div className="relative">
@@ -1578,10 +1580,8 @@ export default function RestaurantApp() {
                   Reset Password
                 </Button>
                 <Button
-                  onClick={() => {
-                    setResetStep('verify-otp')
-                  }}
-                  variant="ghost"
+                  onClick={() => setResetStep('verify-otp')}
+                  variant="outline"
                   className="w-full"
                 >
                   Kembali
@@ -1590,16 +1590,19 @@ export default function RestaurantApp() {
             )}
 
             {resetStep === 'success' && (
-              <div className="text-center space-y-4">
-                <CheckCircle className="w-20 h-20 text-green-500 mx-auto" />
-                <div>
-                  <h3 className="text-xl font-bold mb-2">Password Berhasil Diubah!</h3>
-                  <p className="text-muted-foreground">
-                    Anda sekarang dapat login dengan password baru Anda
-                  </p>
+              <div className="space-y-4">
+                <div className="text-center space-y-4">
+                  <CheckCircle className="w-20 h-20 text-green-500 mx-auto" />
+                  <div>
+                    <h3 className="text-xl font-bold mb-2">Password Berhasil Diubah!</h3>
+                    <p className="text-muted-foreground">
+                      Anda sekarang dapat login dengan password baru Anda
+                    </p>
+                  </div>
                 </div>
                 <Button
                   onClick={() => {
+                    setShowForgotPasswordDialog(false)
                     setResetStep('initial')
                     setResetOtp('')
                     setResetNewPassword('')
@@ -1609,24 +1612,12 @@ export default function RestaurantApp() {
                   }}
                   className="w-full bg-orange-500 hover:bg-orange-600"
                 >
-                  Kembali ke Login
+                  Tutup
                 </Button>
               </div>
             )}
-
-            <div className="text-center pt-4">
-              <p className="text-sm text-muted-foreground">
-                Belum punya akun?{' '}
-                <button
-                  onClick={() => setScreen('register')}
-                  className="text-orange-500 hover:underline font-medium"
-                >
-                  Daftar
-                </button>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+          </DialogContent>
+        </Dialog>
       </div>
     )
   }
