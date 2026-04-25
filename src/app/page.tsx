@@ -1392,25 +1392,23 @@ export default function RestaurantApp() {
               </div>
             </div>
 
-            {/* Forgot Password Link */}
-            <div className="text-center mb-4">
+            {/* Login Button with Forgot Password link */}
+            <div className="flex items-center justify-between gap-2">
+              <Button onClick={handleLogin} className="flex-1 bg-orange-500 hover:bg-orange-600">
+                <LogIn className="w-4 h-4 mr-2" />
+                Masuk
+              </Button>
               <Button
                 onClick={() => {
                   setShowForgotPasswordDialog(true)
                   setResetStep('otp')
                 }}
                 variant="link"
-                className="text-sm text-muted-foreground hover:text-orange-500"
+                className="text-sm text-muted-foreground hover:text-orange-500 whitespace-nowrap"
               >
                 Lupa Password?
               </Button>
             </div>
-
-            {/* Login Button */}
-            <Button onClick={handleLogin} className="w-full bg-orange-500 hover:bg-orange-600">
-              <LogIn className="w-4 h-4 mr-2" />
-              Masuk
-            </Button>
 
             <div className="text-center pt-4">
               <p className="text-sm text-muted-foreground">
