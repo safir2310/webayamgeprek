@@ -118,12 +118,7 @@ export default function AdminSidebar({
   }
 
   return (
-    <aside
-      className={`hidden lg:flex flex-col bg-white border-r transition-all duration-300 ${
-        collapsed ? 'w-20' : 'w-72'
-      }`}
-      style={{ height: 'calc(100vh - 4rem)' }}
-    >
+    <div className="flex flex-col">
       {/* Logo & Collapse Button */}
       <div className="p-4 border-b">
         <div className="flex items-center justify-between">
@@ -246,6 +241,6 @@ export default function AdminSidebar({
           </Button>
         </div>
       )}
-    </aside>
+    </div>
   )
 }
